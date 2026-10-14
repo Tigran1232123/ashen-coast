@@ -1,0 +1,18 @@
+PASS LAN barrier: client2 
+PASS LAN barrier: client2 loot
+PASS LAN barrier: client2 loot
+PASS LAN barrier: client2 take
+PASS LAN barrier: client2 again
+PASS LAN barrier: client2 retake
+PASS LAN barrier: client2 build
+PASS LAN barrier: client2 water
+PASS LAN barrier: client2 damage
+PASS LAN barrier: client2 effects
+PASS LAN barrier: client2 hire
+PASS hunter hire request is accepted for a player with money
+PASS LAN barrier: client2 hire
+PASS only the hiring player spends one coin
+PASS LAN barrier: client2 ally-house
+PASS LAN barrier: client2 handover-effects
+PASS LAN barrier: client2 done
+RESULT PASSED

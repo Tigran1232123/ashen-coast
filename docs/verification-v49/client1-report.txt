@@ -1,0 +1,23 @@
+PASS LAN barrier: client1 
+PASS LAN barrier: client1 loot
+PASS LAN barrier: client1 loot
+PASS LAN barrier: client1 loot
+PASS LAN barrier: client1 take
+PASS LAN barrier: client1 again
+PASS LAN barrier: client1 retake
+PASS LAN barrier: client1 retake
+PASS LAN barrier: client1 retake
+PASS LAN barrier: client1 build
+PASS client can place a carried pot through a transaction
+PASS LAN barrier: client1 build
+PASS LAN barrier: client1 water
+PASS LAN barrier: client1 damage
+PASS LAN barrier: client1 damage
+PASS LAN barrier: client1 damage
+PASS mannequin DPS acknowledgement reaches only the attacking player
+PASS LAN barrier: client1 effects
+PASS LAN barrier: client1 hire
+PASS LAN barrier: client1 ally-house
+PASS LAN barrier: client1 handover-effects
+PASS LAN barrier: client1 done
+RESULT PASSED

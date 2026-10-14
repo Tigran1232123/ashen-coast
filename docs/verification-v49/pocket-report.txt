@@ -1,0 +1,5 @@
+PASS personal dimension keeps its region while its owner is outside
+PASS another player's dimension cannot appear inside the local dimension
+PASS pocket loot cannot leak into a coast world snapshot
+PASS a foreign dimension's storage keeps its own region key
+RESULT PASSED

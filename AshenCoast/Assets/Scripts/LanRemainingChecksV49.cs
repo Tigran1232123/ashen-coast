@@ -1,0 +1,44 @@
+using System;
+using System.Collections;
+using System.IO;
+using System.Linq;
+using UnityEngine;
+namespace AshenCoast
+{
+    public sealed partial class LanNativeChecksV49
+    {
+        sealed class FragmentStreamV49:MemoryStream
+        {public FragmentStreamV49(byte[] data):base(data){}public override int Read(byte[] buffer,int offset,int count)=>base.Read(buffer,offset,Math.Min(2,count));}
+        IEnumerator RemainingHostV49()
+        {
+            var g=game;var s=g.coop;s.PlayerName="Host";s.StartHost(29449,true);Mark("host-ready.txt");yield return Until(()=>s.players.Count==4 && s.inventory.Ready,45);
+            var payload=System.Text.Encoding.UTF8.GetBytes("Один мир · четыре игрока");Check(LanTransportV49.ReadFrame(new FragmentStreamV49(LanTransportV49.Frame(payload))).SequenceEqual(payload),"fragmented TCP reads reconstruct the complete UTF-8 packet");
+            bool rejected=false;try{LanTransportV49.ReadFrame(new MemoryStream(new byte[]{1,0,64,0}));}catch(InvalidDataException){rejected=true;}Check(rejected,"oversized network frame is rejected before allocation");
+            Warp(WorldArea.Coast,g.ShipBase+Vector2.right*3);Step("loot");yield return Until(()=>File.Exists(FilePath("first-drop.txt")));Step("take");yield return Until(()=>File.Exists(FilePath("taken.txt")));Step("again");yield return Until(()=>File.Exists(FilePath("second-drop.txt")));Step("retake");yield return Until(()=>File.Exists(FilePath("retaken.txt")));Check(File.ReadAllText(FilePath("retaken.txt"))=="yes","a second drop of a previously claimed item can be taken again");
+            Step("build");yield return Until(()=>File.Exists(FilePath("built.txt")));string key=File.ReadAllText(FilePath("built.txt"));yield return Until(()=>g.buildings.stations.Any(p=>s.inventory.Key(p.inventory)==key));var pot=g.buildings.stations.First(p=>s.inventory.Key(p.inventory)==key);Check(pot.kind==ItemKind.StoragePot,"another player's placed pot becomes a shared world station");
+            Step("water");yield return Until(()=>File.Exists(FilePath("water.txt")));Check(pot.inventory.waterRows==1,"water poured by another player is synchronized in the pot");
+            Step("damage");yield return Until(()=>File.Exists(FilePath("damage.txt")));Check(Mathf.Abs(g.woodlice[0].vitals.health-170)<.01f && g.woodlice[0].vitals.Curled,"direct weapon damage and nested curl vitals are applied by the region authority");Check(g.DummyDpsV48(g.dummy)==0,"remote attacks don't increment the host's personal mannequin DPS");
+            Step("effects");yield return Until(()=>File.Exists(FilePath("effects.txt")));yield return Until(()=>s.fx.ReplicaCount>20);Check(UnityEngine.Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None).Any(r=>r.name.StartsWith("LAN effect / Animated Spectrum")),"rainbow waterfall is rendered on the other player's computer");Check(g.spellcraft.fogs.Count>0 && g.arcane.fields.Count>0,"remote fog and tentacles execute on the world authority");
+            g.checkCameraSize=6;g.checkCameraPosition=new Vector3(g.ShipBase.x+5,g.ShipBase.y+2,-20);g.ResetCamera(g.checkCameraPosition.Value);s.MenuOpen=true;yield return new WaitForEndOfFrame();ScreenCapture.CaptureScreenshot(FilePath("v49-coop-ready.png"));yield return null;s.MenuOpen=false;
+            Step("hire");yield return Until(()=>File.Exists(FilePath("hired.txt")));string ally=File.ReadAllText(FilePath("hired.txt"));Check(s.world.allyOwners.ContainsKey(ally),"hired hunter receives an explicit player owner");Step("ally-house");yield return Until(()=>File.Exists(FilePath("ally-house.txt")));yield return new WaitForSecondsRealtime(.5f);Check(s.world.allyRegions[ally]=="house/2" && !s.world.Find(ally).renders[0].gameObject.activeInHierarchy,"only the hiring player's ally follows them into an independent house");
+            Step("handover-effects");Warp(WorldArea.Fort,new Vector2(0,-12));yield return Until(()=>File.Exists(FilePath("effects-owner.txt")));Check(File.ReadAllText(FilePath("effects-owner.txt"))=="yes","ongoing fog and tentacles survive a location authority handover");
+            Step("done");yield return new WaitForSecondsRealtime(.4f);s.Disconnect();
+        }
+        IEnumerator RemainingClientV49()
+        {
+            var g=game;var s=g.coop;s.PlayerName="Client"+number;yield return Until(()=>File.Exists(FilePath("host-ready.txt")));s.Join("127.0.0.1",29449);yield return Until(()=>s.Online && s.inventory.Ready,45);Warp(WorldArea.Coast,g.ShipBase+Vector2.right*3);yield return Until(()=>Stage=="loot");
+            if(number==1){var item=new Item(ItemKind.Clay);g.survivor.inventory.Add(item);Mark("loot-id.txt",item.id);GroundLoot drop=null;s.inventory.Mutate(()=>{g.survivor.inventory.items.Remove(item);drop=g.ScatterLoot(item,g.body.position+Vector2.right*.45f,g.body.position);});yield return Until(()=>!s.inventory.Busy);Mark("first-drop.txt",drop.netIdV49);}
+            yield return Until(()=>Stage=="take");if(number==3){var key=File.ReadAllText(FilePath("first-drop.txt"));yield return Until(()=>g.loot.Any(l=>l.netIdV49==key && !l.collected));var drop=g.loot.First(l=>l.netIdV49==key);drop.flightAge=1;g.CollectLoot(drop);yield return Until(()=>!s.inventory.Busy);Mark("taken.txt");}
+            yield return Until(()=>Stage=="again");if(number==3){var id=File.ReadAllText(FilePath("loot-id.txt"));var item=g.survivor.inventory.items.First(i=>i.id==id);GroundLoot drop=null;s.inventory.Mutate(()=>{g.survivor.inventory.items.Remove(item);drop=g.ScatterLoot(item,g.body.position+Vector2.right*.45f,g.body.position);});yield return Until(()=>!s.inventory.Busy);Mark("second-drop.txt",drop.netIdV49);}
+            yield return Until(()=>Stage=="retake");if(number==1){var key=File.ReadAllText(FilePath("second-drop.txt"));yield return Until(()=>g.loot.Any(l=>l.netIdV49==key && !l.collected));var drop=g.loot.First(l=>l.netIdV49==key);drop.flightAge=1;g.CollectLoot(drop);yield return Until(()=>!s.inventory.Busy);var id=File.ReadAllText(FilePath("loot-id.txt"));Mark("retaken.txt",g.survivor.inventory.items.Any(i=>i.id==id)?"yes":"no");}
+            yield return Until(()=>Stage=="build");if(number==1){var pot=new Item(ItemKind.StoragePot);g.ui.holding.Add(pot);g.coop.inventory.Mutate(()=>{});Check(g.buildings.PlaceCarried(pot,g.ui.holding,g.body.position+Vector2.right),"client can place a carried pot through a transaction");yield return Until(()=>!s.inventory.Busy);var station=g.buildings.stations.Last();Mark("built.txt",s.inventory.Key(station.inventory));}
+            yield return Until(()=>Stage=="water");if(number==3){var key=File.ReadAllText(FilePath("built.txt"));yield return Until(()=>g.buildings.stations.Any(p=>s.inventory.Key(p.inventory)==key));var pot=g.buildings.stations.First(p=>s.inventory.Key(p.inventory)==key);s.inventory.Mutate(()=>VesselWaterV43.Pour(new Item(ItemKind.WaterBottle),pot.inventory));yield return Until(()=>!s.inventory.Busy);Check(pot.inventory.waterRows==1,"client receives its committed vessel water state");Mark("water.txt");}
+            yield return Until(()=>Stage=="damage");if(number==1){Warp(WorldArea.Coast,g.woodlice[0].Position+Vector2.left);yield return new WaitForSecondsRealtime(.2f);g.woodlice[0].Hurt(30);yield return Until(()=>Mathf.Abs(g.woodlice[0].vitals.health-170)<.01f);Warp(WorldArea.Coast,g.DummyBase+Vector2.left);yield return new WaitForSecondsRealtime(.2f);g.DamageDummy(30);yield return Until(()=>g.DummyDpsV48(g.dummy)>0);Check(g.DummyDpsV48(g.dummy)==30,"mannequin DPS acknowledgement reaches only the attacking player");Mark("damage.txt");}
+            yield return Until(()=>Stage=="effects");if(number==3){g.survivor.mana=100;g.spectrum.Summon(g.body.position+Vector2.right*3);g.spectrum.Tick(.8f);g.spellcraft.CreateFog(g.body.position+Vector2.right*5);g.arcane.SummonTentacles(g.body.position+Vector2.right*5,4);yield return new WaitForSecondsRealtime(.7f);Mark("effects.txt");}
+            yield return Until(()=>Stage=="hire");if(number==2){var woman=g.amazons.people.First(p=>p.Hunter && !p.Hired);Warp(WorldArea.Coast,woman.Position+Vector2.left);yield return new WaitForSecondsRealtime(.3f);int coins=g.survivor.Coins;Check(g.amazons.Hire(woman),"hunter hire request is accepted for a player with money");yield return Until(()=>woman.Hired);Check(g.survivor.Coins==coins-1,"only the hiring player spends one coin");Mark("hired.txt",s.world.Key(woman));}
+            yield return Until(()=>Stage=="ally-house");if(number==2){g.amazons.EnterHouse(g.amazons.houses[2]);yield return new WaitForSecondsRealtime(.6f);Mark("ally-house.txt");}
+            yield return Until(()=>Stage=="handover-effects");if(number!=2){yield return new WaitForSecondsRealtime(.6f);if(s.CanSimulate)Mark("effects-owner.txt",g.arcane.fields.Count>0 && g.spellcraft.fogs.Count>0?"yes":"no");}
+            yield return Until(()=>Stage=="done");s.Disconnect();
+        }
+    }
+}

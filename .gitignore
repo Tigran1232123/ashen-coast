@@ -1,0 +1,17 @@
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Bb]uilds/
+.vs/
+.idea/
+.DS_Store
+*.csproj
+*.sln
+*.user
+*.log
+*.zip
+*.exe
+*.pdb
+*.mdb

@@ -1,0 +1,27 @@
+PASS LAN barrier: host0 
+PASS fragmented TCP reads reconstruct the complete UTF-8 packet
+PASS oversized network frame is rejected before allocation
+PASS LAN barrier: host0 loot
+PASS LAN barrier: host0 take
+PASS LAN barrier: host0 again
+PASS LAN barrier: host0 retake
+PASS a second drop of a previously claimed item can be taken again
+PASS LAN barrier: host0 build
+PASS LAN barrier: host0 build
+PASS another player's placed pot becomes a shared world station
+PASS LAN barrier: host0 water
+PASS water poured by another player is synchronized in the pot
+PASS LAN barrier: host0 damage
+PASS direct weapon damage and nested curl vitals are applied by the region authority
+PASS remote attacks don't increment the host's personal mannequin DPS
+PASS LAN barrier: host0 effects
+PASS LAN barrier: host0 effects
+PASS rainbow waterfall is rendered on the other player's computer
+PASS remote fog and tentacles execute on the world authority
+PASS LAN barrier: host0 hire
+PASS hired hunter receives an explicit player owner
+PASS LAN barrier: host0 ally-house
+PASS only the hiring player's ally follows them into an independent house
+PASS LAN barrier: host0 handover-effects
+PASS ongoing fog and tentacles survive a location authority handover
+RESULT PASSED

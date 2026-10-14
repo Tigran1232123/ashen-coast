@@ -1,0 +1,21 @@
+PASS LAN barrier: client3 
+PASS LAN barrier: client3 loot
+PASS LAN barrier: client3 loot
+PASS LAN barrier: client3 take
+PASS LAN barrier: client3 take
+PASS LAN barrier: client3 take
+PASS LAN barrier: client3 again
+PASS LAN barrier: client3 again
+PASS LAN barrier: client3 retake
+PASS LAN barrier: client3 build
+PASS LAN barrier: client3 water
+PASS LAN barrier: client3 water
+PASS LAN barrier: client3 water
+PASS client receives its committed vessel water state
+PASS LAN barrier: client3 damage
+PASS LAN barrier: client3 effects
+PASS LAN barrier: client3 hire
+PASS LAN barrier: client3 ally-house
+PASS LAN barrier: client3 handover-effects
+PASS LAN barrier: client3 done
+RESULT PASSED
