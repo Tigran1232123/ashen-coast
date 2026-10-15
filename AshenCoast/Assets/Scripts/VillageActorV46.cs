@@ -20,7 +20,7 @@ namespace AshenCoast
         public Item Weapon=>IsSlave?weaponSlot.items.FirstOrDefault():innate;
         public int AttackCount{get;private set;}
         public bool Attacking=>attackAge>=0;
-        readonly int index;readonly Item innate;readonly Vector2 home;
+        readonly int index;readonly Item innate;Vector2 home;
         float clock,step,ready,attackAge=-1,duration;Vector2 aim=Vector2.right;
         ICombatTarget victim;bool delivered;readonly Color tint;
         public VillageActorV46(AmazonSettlementV46 owner,Vector2 at,int number,bool slave,bool hunter,bool slaver,ItemKind weapon)

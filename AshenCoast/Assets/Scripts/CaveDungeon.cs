@@ -59,7 +59,7 @@ namespace AshenCoast
     }
     public sealed partial class CaveDungeon : MonoBehaviour
     {
-        public CoastGame game;public GameObject root;public CaveArt art;public SpriteRenderer entrance,exit;
+        public CoastGame game;public GameObject root;public GameObject entranceRootV56;public CaveArt art;public SpriteRenderer entrance,exit;
         public Vector2 Position;public readonly Vector2 ExitPoint=new Vector2(-8,-20);
         public readonly HashSet<Vector2Int> floor=new HashSet<Vector2Int>();
         public readonly Dictionary<Vector2Int,BoxCollider2D> walls=new Dictionary<Vector2Int,BoxCollider2D>();
@@ -75,8 +75,9 @@ namespace AshenCoast
         public void Initialize(CoastGame owner)
         {
             game=owner;art=new CaveArt(game.art);Position=CatacombLayout.Entrance(game.meadow.Seed);root=new GameObject("Winding limestone catacombs");
-            entrance=Portal("Catacomb descent",Position,4.8f,game.coastRoot.transform);
-            for(int side=-1;side<=1;side+=2){var o=new GameObject("Descent stone side footprint");o.transform.SetParent(game.coastRoot.transform,false);o.transform.position=Position+new Vector2(side*1.65f,.8f);o.AddComponent<BoxCollider2D>().size=new Vector2(1.1f,1.6f);}
+            entranceRootV56=new GameObject("Seeded catacomb entrance");entranceRootV56.transform.SetParent(game.coastRoot.transform,false);
+            entrance=Portal("Catacomb descent",Position,4.8f,entranceRootV56.transform);
+            for(int side=-1;side<=1;side+=2){var o=new GameObject("Descent stone side footprint");o.transform.SetParent(entranceRootV56.transform,false);o.transform.position=Position+new Vector2(side*1.65f,.8f);o.AddComponent<BoxCollider2D>().size=new Vector2(1.1f,1.6f);}
             for(int y=-23;y<35;y++)for(int x=-21;x<21;x++){var cell=new Vector2Int(x,y);if(CatacombLayout.Floor(new Vector2(x+.5f,y+.5f)))floor.Add(cell);}
             BuildStone();exit=Portal("Stone stairs up to the meadow",ExitPoint,2.2f,root.transform);
             foreach(var p in new[]{new Vector2(-6,-14),new Vector2(8,-9),new Vector2(11,-11),new Vector2(-10,-2),new Vector2(-7,1),new Vector2(7,7),new Vector2(10,9)})spiders.Add(new CaveSpider(this,p,spiders.Count));

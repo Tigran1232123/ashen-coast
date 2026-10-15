@@ -28,7 +28,8 @@ namespace AshenCoast
     public sealed class ChoppablePoplarV46
     {
         public readonly SpriteRenderer sprite,shadow;
-        public readonly Vector2 position;
+        public Vector2 position {get;private set;}
+        public void MoveHomeV56(Vector2 delta){position+=delta;}
         public int hits{get;private set;}
         public bool Standing=>hits<10;
         public Vector2 FallDirection{get;private set;}

@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace AshenCoast
 {
-    public struct FlowerSite
+    [Serializable] public struct FlowerSite
     {
         public long id;
         public Vector2 position;
@@ -84,6 +84,8 @@ namespace AshenCoast
         public void Initialize(CoastGame owner)
         {
             game=owner;Seed=game.testMode?74391:new System.Random().Next(1,int.MaxValue);
+            var args=Environment.GetCommandLineArgs();int seedAt=Array.IndexOf(args,"-world-seed");
+            if(seedAt>=0 && seedAt+1<args.Length && int.TryParse(args[seedAt+1],out var requested) && requested>0)Seed=requested;
             WorldShape.Configure(Seed);
             Refresh(game.body.position,true);
         }

@@ -27,7 +27,7 @@ namespace AshenCoast
         IEnumerator Host()
         {
             var g=game;var s=g.coop;
-            Check(Application.version=="55.0" && new LanHelloV49().build==55 && new LanPacketV49().version==55,"V55 identifiers agree");
+            Check(Application.version=="56.0" && new LanHelloV49().build==LanProtocolV49.Build && new LanPacketV49().version==LanProtocolV49.Build,"current identifiers agree");
             var coins=new GridInventory(2,1,"stack");coins.Add(new Item(ItemKind.Coin){count=9});var last=new Item(ItemKind.Coin);coins.Add(last);
             Check(last.count==0 && coins.items.Single().count==10,"real stack merge consumes the source coin item");
             bool rejected=false;try{LanItemV49.Capture(last).Restore();}catch(InvalidOperationException){rejected=true;}

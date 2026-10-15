@@ -37,8 +37,7 @@ namespace AshenCoast
         float clock,doorWait;bool entered;
         public void Initialize(CoastGame owner)
         {
-            game=owner;art=new AmazonArtV46(game.art);Centre=WorldShape.NearestLand(new Vector2(-135,230),65);
-            if(Vector2.Distance(Centre,WorldShape.FortPosition)<90)Centre=WorldShape.NearestLand(new Vector2(150,210),65);
+            game=owner;art=new AmazonArtV46(game.art);Centre=CentreForWorldV56();
             WorldShape.AmazonPosition=Centre;
             root=new GameObject("Крылатый стан / Amazon village");root.transform.SetParent(game.coastRoot.transform,false);
             roomRoot=new GameObject("Amazon dwellings / persistent interiors");

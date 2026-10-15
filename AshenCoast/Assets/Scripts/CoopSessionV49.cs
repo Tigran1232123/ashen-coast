@@ -57,7 +57,7 @@ namespace AshenCoast
                     if(incoming.connected){lastSeen[incoming.peer]=Time.unscaledTime;if(!IsHost)Send(new LanPacketV49{kind="hello",body=JsonUtility.ToJson(new LanHelloV49{name=CleanName(PlayerName)})});continue;}
                     if(incoming.disconnected){if(IsHost){players.Remove(incoming.peer);game.snails.Left(incoming.peer);lastSeen.Remove(incoming.peer);Reassign();BroadcastRoster();}else{Disconnect(false);Status="Связь с ведущим потеряна";}continue;}
                     if(incoming.json==null){Status="Не удалось подключиться";if(!IsHost)Disconnect(false);continue;}
-                    packet=JsonUtility.FromJson<LanPacketV49>(incoming.json);if(packet==null || packet.version!=55)throw new InvalidOperationException("Protocol mismatch");
+                    packet=JsonUtility.FromJson<LanPacketV49>(incoming.json);if(packet==null || packet.version!=LanProtocolV49.Build)throw new InvalidOperationException("Protocol mismatch");
                     if(IsHost){packet.peer=incoming.peer;lastSeen[incoming.peer]=Time.unscaledTime;HandleHost(packet);}else Handle(packet);
                 }
                 catch(Exception e){RecordSyncErrorV55(packet,e);if(IsHost)transport?.Drop(incoming.peer);else{Disconnect(false);Status=e.Message=="Protocol mismatch"?"Разные версии игры":"Не удалось синхронизировать игру";MenuOpen=true;}}
@@ -85,7 +85,7 @@ namespace AshenCoast
         {
             if(packet.kind=="hello")
             {
-                var hello=JsonUtility.FromJson<LanHelloV49>(packet.body);if(hello.build!=55 || players.Count>=game.snails.PlayerCount || game.snails.JoinSeat(packet.peer)<0){transport.Drop(packet.peer);return;}
+                var hello=JsonUtility.FromJson<LanHelloV49>(packet.body);if(hello.build!=LanProtocolV49.Build || players.Count>=game.snails.PlayerCount || game.snails.JoinSeat(packet.peer)<0){transport.Drop(packet.peer);return;}
                 players[packet.peer]=new LanPlayerV49{peer=packet.peer,name=CleanName(hello.name),region="area/0",x=-1.5f-packet.peer*.7f,y=-1.65f};
                 transport.Send(packet.peer,JsonUtility.ToJson(new LanPacketV49{kind="welcome",peer=0,body=JsonUtility.ToJson(new LanWelcomeV49{peer=packet.peer,seed=WorldShape.Seed,villageSeed=game.amazons.LayoutSeedV54,seconds=game.DaySeconds,name=hello.name,x=-1.5f-packet.peer*.7f,y=-1.65f,networkTime=Time.realtimeSinceStartup})}));
                 foreach(var entry in snapshots)transport.Send(packet.peer,JsonUtility.ToJson(new LanPacketV49{kind="world",peer=owners.TryGetValue(entry.Key,out var own)?own:0,region=entry.Key,body=entry.Value}));
@@ -120,7 +120,7 @@ namespace AshenCoast
         {
             switch(packet.kind)
             {
-                case "welcome":var welcome=JsonUtility.FromJson<LanWelcomeV49>(packet.body);if(welcome.seed!=WorldShape.Seed)throw new InvalidOperationException("Different world seed");game.amazons.ApplyLayoutSeedV54(welcome.villageSeed);Peer=welcome.peer;Online=true;Connecting=false;worldSeconds=welcome.seconds;receivedTime=Time.unscaledTime;networkBase=welcome.networkTime;networkReceived=Time.realtimeSinceStartup;Status="Подключено";MenuOpen=LocalPaused=false;game.paused=false;Time.timeScale=1;game.journey.SetArea(WorldArea.Coast,new Vector2(welcome.x,welcome.y));game.body.position=new Vector2(welcome.x,welcome.y);game.hero.transform.position=game.body.position;players[Peer]=CapturePlayer();inventory.Joined();break;
+                case "welcome":ReceiveWelcomeV56(JsonUtility.FromJson<LanWelcomeV49>(packet.body));break;
                 case "player":if(packet.peer!=Peer){var state=JsonUtility.FromJson<LanPlayerV49>(packet.body);players[state.peer]=state;UpdateProxy(state);}break;
                 case "roster":var roster=JsonUtility.FromJson<LanRosterV49>(packet.body);var previous=new Dictionary<string,int>(owners);owners.Clear();foreach(var o in roster.owners)owners[o.region]=o.peer;foreach(var p in roster.players){players[p.peer]=p;if(p.peer!=Peer)UpdateProxy(p);}foreach(var p in remote.Keys.ToArray())if(!roster.players.Any(s=>s.peer==p)){remote[p].Dispose();fx?.RemovePeer(p);remote.Remove(p);players.Remove(p);}if(Online && owners.TryGetValue(Region,out var own) && own==Peer && (!previous.TryGetValue(Region,out var old) || old!=Peer) && snapshots.TryGetValue(Region,out var latest))ApplyWorld(Region,latest,true);break;
                 case "world":snapshots[packet.region]=packet.body;if(Online && (packet.region==Region || IsHost) && packet.peer!=Peer)ApplyWorld(packet.region,packet.body,false);break;

@@ -7,11 +7,11 @@ namespace AshenCoast
     public enum BanditRole { Warrior, Archer, Mage }
     public sealed class FortTorch { public Vector2 point;public SpriteRenderer flame;public float phase; }
     public sealed class BanditArrow { public LineRenderer line;public Vector2 position,velocity;public float age; }
-    public sealed class FortWorld : MonoBehaviour
+    public sealed partial class FortWorld : MonoBehaviour
     {
         public CoastGame game;
         public ThreatArt art;
-        public GameObject root;
+        public GameObject root;public GameObject exteriorRootV56;
         public SpriteRenderer exterior,exit,descent;
         readonly HashSet<Collider2D> solids=new HashSet<Collider2D>();
         readonly RaycastHit2D[] castHits=new RaycastHit2D[128];
@@ -56,22 +56,23 @@ namespace AshenCoast
         }
         void Exterior()
         {
-            exterior=Prop("Ruined fortress gateway and towers",art.exterior,Position,16,game.coastRoot.transform);
+            exteriorRootV56=new GameObject("Seeded fortress exterior");exteriorRootV56.transform.SetParent(game.coastRoot.transform,false);
+            exterior=Prop("Ruined fortress gateway and towers",art.exterior,Position,16,exteriorRootV56.transform);
             // This arch-shaped shadow masks grass behind the empty facade while leaving the old ground untouched.
-            var mouth=new GameObject("Dark underground throat inside the gateway");mouth.transform.SetParent(game.coastRoot.transform,false);mouth.transform.position=Position;
+            var mouth=new GameObject("Dark underground throat inside the gateway");mouth.transform.SetParent(exteriorRootV56.transform,false);mouth.transform.position=Position;
             var throat=new Mesh{name="Gateway inner shadow silhouette"};
             throat.vertices=new[]{new Vector3(-1.5f,.05f,0),new Vector3(1.5f,.05f,0),new Vector3(1.5f,3.8f,0),new Vector3(.9f,4.7f,0),new Vector3(0,5.35f,0),new Vector3(-.9f,4.7f,0),new Vector3(-1.5f,3.8f,0)};
             throat.uv=new[]{Vector2.zero,Vector2.zero,Vector2.zero,Vector2.zero,Vector2.zero,Vector2.zero,Vector2.zero};throat.colors=Enumerable.Repeat(new Color(.017f,.023f,.026f,1),7).ToArray();
             throat.triangles=new[]{0,1,2,0,2,3,0,3,4,0,4,5,0,5,6};throat.RecalculateBounds();mouth.AddComponent<MeshFilter>().sharedMesh=throat;
             var throatRenderer=mouth.AddComponent<MeshRenderer>();throatRenderer.sharedMaterial=game.art.lit;throatRenderer.sortingOrder=exterior.sortingOrder-2;
-            descent=Prop("Sunken stairway down into fort dungeon",art.descent,Position+new Vector2(0,-.35f),3.5f,game.coastRoot.transform,exterior.sortingOrder-1);
+            descent=Prop("Sunken stairway down into fort dungeon",art.descent,Position+new Vector2(0,-.35f),3.5f,exteriorRootV56.transform,exterior.sortingOrder-1);
             game.art.AddStoneFootprints(exterior,.65f);
-            Box("Descent west parapet",Position+new Vector2(-1.40f,.6f),new Vector2(.28f,1.6f),game.coastRoot.transform,false);
-            Box("Descent east parapet",Position+new Vector2(1.40f,.6f),new Vector2(.28f,1.6f),game.coastRoot.transform,false);
-            var shade=game.Shadow("Fortress foundation shadow",Position+Vector2.up*.6f,new Vector2(16,2.1f),.36f);shade.transform.SetParent(game.coastRoot.transform,true);
-            Box("Fort exterior west tower base",Position+new Vector2(-5.2f,1.35f),new Vector2(3.7f,2.1f),game.coastRoot.transform,false);
-            Box("Fort exterior east tower base",Position+new Vector2(5.2f,1.35f),new Vector2(3.7f,2.1f),game.coastRoot.transform,false);
-            Box("Fort exterior rear footprint",Position+new Vector2(0,6.2f),new Vector2(16,1.0f),game.coastRoot.transform,false);
+            Box("Descent west parapet",Position+new Vector2(-1.40f,.6f),new Vector2(.28f,1.6f),exteriorRootV56.transform,false);
+            Box("Descent east parapet",Position+new Vector2(1.40f,.6f),new Vector2(.28f,1.6f),exteriorRootV56.transform,false);
+            var shade=game.Shadow("Fortress foundation shadow",Position+Vector2.up*.6f,new Vector2(16,2.1f),.36f);shade.transform.SetParent(exteriorRootV56.transform,true);
+            Box("Fort exterior west tower base",Position+new Vector2(-5.2f,1.35f),new Vector2(3.7f,2.1f),exteriorRootV56.transform,false);
+            Box("Fort exterior east tower base",Position+new Vector2(5.2f,1.35f),new Vector2(3.7f,2.1f),exteriorRootV56.transform,false);
+            Box("Fort exterior rear footprint",Position+new Vector2(0,6.2f),new Vector2(16,1.0f),exteriorRootV56.transform,false);
         }
         void Interior()
         {
