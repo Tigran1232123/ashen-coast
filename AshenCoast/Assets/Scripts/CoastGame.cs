@@ -132,7 +132,7 @@ namespace AshenCoast
         void Awake()
         {
             hoverBlock=new MaterialPropertyBlock();AutoPickup=PlayerPrefs.GetInt("AutoPickup",0)==1;
-            testMode=Environment.GetCommandLineArgs().Contains("-v51-check") || Environment.GetCommandLineArgs().Contains("-coast-test") || Environment.GetCommandLineArgs().Contains("-snail-check") || Environment.GetCommandLineArgs().Contains("-lan-native-check");
+            testMode=Environment.GetCommandLineArgs().Contains("-frog-check") || Environment.GetCommandLineArgs().Contains("-v51-check") || Environment.GetCommandLineArgs().Contains("-coast-test") || Environment.GetCommandLineArgs().Contains("-snail-check") || Environment.GetCommandLineArgs().Contains("-lan-native-check");
             Application.targetFrameRate = 60;
             QualitySettings.vSyncCount = 1;
             art=new ArtBank();newArt=new CoastArtV34(art);v43Art=new CoastArtV43(art); survivor=new Survivor(); shipStorage=CoastTime.CreateShipStorage();
@@ -167,7 +167,7 @@ namespace AshenCoast
             meditation=new Meditation(this);
             v37Art=new CoastArtV37(art);v38Art=new CoastArtV38(art);CoastArtV43.ApplyBooks(art);v44Art=new CoastArtV44(art);v44=gameObject.AddComponent<CombatStatusV44>();v44.Initialize(this);spellcraft=gameObject.AddComponent<Spellcraft>();spellcraft.Initialize(this);spectrum=gameObject.AddComponent<SpectrumWeapon>();spectrum.Initialize(this);amazons=gameObject.AddComponent<AmazonSettlementV46>();amazons.Initialize(this);
             v51Art=new CharacterArtV51(art);snails=gameObject.AddComponent<SnailHomesV50>();snails.Initialize(this);coop=gameObject.AddComponent<CoopSessionV49>();coop.Initialize(this);corpses=gameObject.AddComponent<CorpseWorldV51>();corpses.Initialize(this);if(snails.SetupOpen){paused=true;Time.timeScale=0;}
-            if(Environment.GetCommandLineArgs().Contains("-v51-check"))gameObject.AddComponent<ChecksV51>().game=this;else if(Environment.GetCommandLineArgs().Contains("-snail-check"))gameObject.AddComponent<SnailChecksV50>().game=this;else if(Environment.GetCommandLineArgs().Contains("-lan-native-check"))gameObject.AddComponent<LanNativeChecksV49>().game=this;else if(testMode)gameObject.AddComponent<RuntimeChecks>().game=this;
+            if(Environment.GetCommandLineArgs().Contains("-frog-check"))gameObject.AddComponent<FrogChecksV52>().game=this;else if(Environment.GetCommandLineArgs().Contains("-v51-check"))gameObject.AddComponent<ChecksV51>().game=this;else if(Environment.GetCommandLineArgs().Contains("-snail-check"))gameObject.AddComponent<SnailChecksV50>().game=this;else if(Environment.GetCommandLineArgs().Contains("-lan-native-check"))gameObject.AddComponent<LanNativeChecksV49>().game=this;else if(testMode)gameObject.AddComponent<RuntimeChecks>().game=this;
         }
 
 
@@ -270,7 +270,7 @@ namespace AshenCoast
             else {walkTime=0;walkFrame=1;}
             // The east profile mirrors the registered west profile without changing the travel direction.
             hero.flipX=facing==5 || facing==6;
-            var sheet=survivor.character==CharacterV51.Frog?HeroFramesV51(survivor.character):journey!=null && survivor.equipment[0]?.kind==ItemKind.Lamp?journey.art.lampHero:art.hero;if(survivor.character==CharacterV51.Frog)hero.flipX=false;
+            var sheet=survivor.character==CharacterV51.Frog?HeroFramesV51(survivor.character):journey!=null && survivor.equipment[0]?.kind==ItemKind.Lamp?journey.art.lampHero:art.hero;if(survivor.character==CharacterV51.Frog)hero.flipX=FrogFrameMirroredV52(facing,walking?walkFrame:3);
             var sprite=sheet[facing,walking?walkFrame:3];
             if(hero.sprite!=sprite){hero.sprite=sprite;art.PixelStyle(hero);}
         }

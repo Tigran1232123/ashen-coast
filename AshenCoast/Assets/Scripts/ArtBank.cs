@@ -187,7 +187,7 @@ namespace AshenCoast
             var result=ColumnBands(texture,row*texture.height/rows,(row+1)*texture.height/rows);
             if(result.Count<7 || result.Count>8)throw new System.InvalidOperationException("Woodlouse row "+row+" contains "+result.Count+" frames");return result;
         }
-        List<Vector2Int> ColumnBands(Texture2D texture,int fromTop,int toTop)
+        public List<Vector2Int> ColumnBands(Texture2D texture,int fromTop,int toTop)
         {
             var result=new List<Vector2Int>();var data=pixels[texture];int bottom=texture.height-toTop,top=texture.height-fromTop,start=-1,last=-1;
             for(int x=0;x<texture.width;x++)

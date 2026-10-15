@@ -11,7 +11,12 @@ namespace AshenCoast
         public CharacterArtV51(ArtBank bank)
         {
             var texture=bank.Load("FrogHeroV51");int[] rows={0,193,375,557,750,944,1131,1321,1536};
-            for(int d=0;d<8;d++)for(int f=0;f<8;f++){var source=bank.Slice(texture,new RectInt(f%4*texture.width/4,rows[d],texture.width/4,rows[d+1]-rows[d]),new Vector2(.5f,0),100);var r=source.rect;frog[d,f]=Sprite.Create(texture,r,new Vector2(.5f,0),r.height/1.78f,0,SpriteMeshType.FullRect);}
+            for(int d=0;d<8;d++)
+            {
+                // The authored columns have different gaps; a uniform grid cuts through bodies.
+                var columns=bank.ColumnBands(texture,rows[d],rows[d+1]);if(columns.Count!=4)throw new InvalidOperationException("Frog row "+d+" needs four complete poses");
+                for(int f=0;f<8;f++){var column=columns[f%4];int left=Mathf.Max(0,column.x-2),right=Mathf.Min(texture.width,column.y+3);var source=bank.Slice(texture,new RectInt(left,rows[d],right-left,rows[d+1]-rows[d]),new Vector2(.5f,0),100);var r=source.rect;frog[d,f]=Sprite.Create(texture,r,new Vector2(.5f,0),r.height/1.78f,0,SpriteMeshType.FullRect);}
+            }
             var dead=bank.Load("CorpsesV51");for(int i=0;i<9;i++)corpses[i]=bank.Slice(dead,new RectInt(i%3*dead.width/3,i/3*dead.height/3,dead.width/3,dead.height/3),new Vector2(.5f,.5f),200);
             var room=bank.Load("ShellInteriorsV51");for(int i=0;i<4;i++)rooms[i]=bank.Slice(room,new RectInt(i%2*room.width/2,i/2*room.height/2,room.width/2,room.height/2),new Vector2(.5f,0),200);
             bank.icons[57]=bank.icons[41];
@@ -20,6 +25,7 @@ namespace AshenCoast
     public sealed partial class CoastGame
     {
         public CharacterArtV51 v51Art;public CorpseWorldV51 corpses;
+        public static bool FrogFrameMirroredV52(int facing,int frame)=>facing==2 && frame%4==2;
         public Sprite[,] HeroFramesV51(CharacterV51 kind)=>kind==CharacterV51.Frog && v51Art!=null?v51Art.frog:art.hero;
         public void ChooseCharacterV51(CharacterV51 kind)
         {

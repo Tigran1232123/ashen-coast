@@ -27,7 +27,7 @@ namespace AshenCoast
         {
             bool visible=State!=null && State.region==session.Region;Renderer.gameObject.SetActive(visible);if(!visible)return;
             var g=session.game;var point=Vector2.Lerp(Position,target,1-Mathf.Exp(-dt*23));Renderer.transform.position=point;Body.position=point;
-            Renderer.enabled=Alive;Renderer.sprite=g.HeroFramesV51((CharacterV51)State.character)[Mathf.Clamp(State.facing,0,7),Mathf.Clamp(State.frame,0,7)];Renderer.flipX=State.character==0 && State.facing>=5;
+            Renderer.enabled=Alive;Renderer.sprite=g.HeroFramesV51((CharacterV51)State.character)[Mathf.Clamp(State.facing,0,7),Mathf.Clamp(State.frame,0,7)];Renderer.flipX=State.character==1?CoastGame.FrogFrameMirroredV52(State.facing,State.frame):State.facing>=5;
             Renderer.sortingOrder=CoastGame.Depth(point.y);Renderer.transform.localScale=Vector3.one*Mathf.Clamp(State.scale,.8f,1.2f);g.art.PixelStyle(Renderer);
             gait.Pose(State.facing,State.walk,State.moving,Vector2.zero);if(!Alive && gait.Lower)gait.Lower.enabled=false;shadow.enabled=Alive;shadow.transform.position=point;shadow.sortingOrder=Mathf.Min(-2000,Renderer.sortingOrder-1600);
             bool held=State.weapon>=0 && Enum.IsDefined(typeof(ItemKind),State.weapon);var kind=held?(ItemKind)State.weapon:ItemKind.Dagger;
