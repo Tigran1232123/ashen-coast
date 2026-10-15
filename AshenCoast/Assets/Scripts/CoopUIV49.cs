@@ -33,6 +33,7 @@ namespace AshenCoast
             {if(Button(new Rect(r.x+22,r.y+185,200,42),"Создать игру"))session.StartHost(port);if(Button(new Rect(r.x+248,r.y+185,200,42),"Подключиться"))session.Join(session.Address,port);}
             else if(Button(new Rect(r.x+22,r.y+185,426,42),session.Connecting?"Отменить":"Отключиться"))session.Disconnect();
             GUI.Label(new Rect(r.x+22,r.y+240,426,28),session.Status,text);
+            if(!session.Online && !session.Connecting && !string.IsNullOrEmpty(session.SyncErrorReportV55) && Button(new Rect(r.x+22,r.y+277,426,32),"Открыть отчёт об ошибке"))Application.OpenURL(new System.Uri(session.SyncErrorReportV55).AbsoluteUri);
             if(session.IsHost)
             {if(lanIpsV49==null){try{lanIpsV49=string.Join(", ",NetworkInterface.GetAllNetworkInterfaces().Where(n=>n.OperationalStatus==OperationalStatus.Up).SelectMany(n=>n.GetIPProperties().UnicastAddresses).Select(a=>a.Address).Where(a=>a.AddressFamily==AddressFamily.InterNetwork && !IPAddress.IsLoopback(a)).Select(a=>a.ToString()).Distinct());}catch{lanIpsV49="";}}GUI.Label(new Rect(r.x+22,r.y+271,426,35),"Адрес ведущего: "+lanIpsV49,CachedStyle(small,TextAnchor.MiddleLeft,13,FontStyle.Normal,true));}
             int row=0;foreach(var peer in session.players.Values.OrderBy(p=>p.peer))GUI.Label(new Rect(r.x+22,r.y+315+row++*29,426,28),peer.name+(peer.peer==0?" · ведущий":"")+(peer.peer==session.Peer?" · вы":""),text);
