@@ -3,6 +3,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -19,6 +21,11 @@ namespace AshenCoast
         readonly ConcurrentDictionary<int,Link> links=new ConcurrentDictionary<int,Link>();
         TcpListener listener;Thread acceptThread;volatile bool stopped;int nextPeer;
         public bool Host{get;private set;}public int ConnectionCount=>links.Count;
+        long sentBytesV57,compressedFramesV57;
+        public long SentBytesV57=>Interlocked.Read(ref sentBytesV57);public long CompressedFramesV57=>Interlocked.Read(ref compressedFramesV57);
+        public int CompressionThreadV57{get;private set;}public double CompressionMillisecondsV57{get;private set;}
+        public int PendingFramesV57=>links.Values.Sum(link=>link.Pending);
+        public int ArtificialSendDelayV57;
         public void Listen(int port,bool localTest=false)
         {
             if(listener!=null || links.Count>0)throw new InvalidOperationException("Session already started");
@@ -58,13 +65,13 @@ namespace AshenCoast
         {
             if(links.TryRemove(peer,out var old)){old.Dispose();if(!stopped)inbox.Enqueue(new LanReceivedV49{peer=peer,disconnected=true,error=error});}
         }
-        public bool Send(int peer,string json)
+        public bool Send(int peer,string json,string latestKey=null)
         {
             if(stopped || !links.TryGetValue(peer,out var link))return false;
-            var bytes=Encoding.UTF8.GetBytes(json);if(bytes.Length==0 || bytes.Length>MaxFrame)return false;
-            if(link.Enqueue(Compress(bytes)))return true;Lost(peer,link,"Send queue full");return false;
+            if(string.IsNullOrEmpty(json) || json.Length>MaxFrame)return false;
+            if(link.Enqueue(json,latestKey))return true;Lost(peer,link,"Send queue full");return false;
         }
-        public void Broadcast(string json,int except=-1){foreach(var peer in links.Keys)if(peer!=except)Send(peer,json);}
+        public void Broadcast(string json,int except=-1,string latestKey=null){foreach(var peer in links.Keys)if(peer!=except)Send(peer,json,latestKey);}
         public void Drop(int peer){if(links.TryGetValue(peer,out var link))Lost(peer,link,"Disconnected");}
         public static byte[] Frame(byte[] payload)
         {
@@ -90,14 +97,32 @@ namespace AshenCoast
         sealed class Link:IDisposable
         {
             readonly LanTransportV49 owner;readonly TcpClient client;readonly int peer;
-            readonly BlockingCollection<byte[]> outgoing=new BlockingCollection<byte[]>(256);volatile bool closed;
+            readonly LanSendQueueV57 outgoing=new LanSendQueueV57();volatile bool closed;
+            public int Pending=>outgoing.Count;
             public Link(LanTransportV49 parent,TcpClient socket,int id){owner=parent;client=socket;peer=id;}
             public void Start()
             {new Thread(Read){IsBackground=true,Name="Ashen LAN receive"}.Start();new Thread(Write){IsBackground=true,Name="Ashen LAN send"}.Start();}
-            public bool Enqueue(byte[] data){try{return !closed && outgoing.TryAdd(data);}catch(InvalidOperationException){return false;}}
+            public bool Enqueue(string json,string key)=>!closed && outgoing.Enqueue(json,key);
             void Read(){try{var stream=client.GetStream();while(!closed){var data=Expand(ReadFrame(stream));owner.inbox.Enqueue(new LanReceivedV49{peer=peer,json=Encoding.UTF8.GetString(data)});}}catch(Exception e){if(!closed)owner.Lost(peer,this,e.Message);}}
-            void Write(){try{var stream=client.GetStream();foreach(var data in outgoing.GetConsumingEnumerable()){var frame=Frame(data);stream.Write(frame,0,frame.Length);}}catch(Exception e){if(!closed)owner.Lost(peer,this,e.Message);}}
-            public void Dispose(){if(closed)return;closed=true;outgoing.CompleteAdding();client.Close();}
+            void Write()
+            {
+                try
+                {
+                    var stream=client.GetStream();
+                    while(outgoing.Take(out var json))
+                    {
+                        if(owner.ArtificialSendDelayV57>0)Thread.Sleep(owner.ArtificialSendDelayV57);
+                        var bytes=Encoding.UTF8.GetBytes(json);if(bytes.Length>MaxFrame)throw new InvalidDataException("Expanded LAN packet is too large");
+                        var timer=Stopwatch.StartNew();var compressed=Compress(bytes);timer.Stop();
+                        owner.CompressionThreadV57=Thread.CurrentThread.ManagedThreadId;owner.CompressionMillisecondsV57+=timer.Elapsed.TotalMilliseconds;
+                        Interlocked.Increment(ref owner.compressedFramesV57);
+                        var frame=Frame(compressed);stream.Write(frame,0,frame.Length);Interlocked.Add(ref owner.sentBytesV57,frame.Length);
+                    }
+                }
+                catch(Exception e){if(!closed)owner.Lost(peer,this,e.Message);}
+            }
+
+            public void Dispose(){if(closed)return;closed=true;outgoing.Dispose();client.Close();}
         }
     }
 }

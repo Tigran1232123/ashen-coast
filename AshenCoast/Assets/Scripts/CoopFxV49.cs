@@ -20,7 +20,7 @@ namespace AshenCoast
     {
         readonly CoopSessionV49 session;readonly Dictionary<string,Renderer> replicas=new Dictionary<string,Renderer>();
         readonly Dictionary<string,Sprite> sprites=new Dictionary<string,Sprite>();readonly Dictionary<int,Renderer[]> sources=new Dictionary<int,Renderer[]>();
-        float nextScan,nextSend;Renderer[] active=Array.Empty<Renderer>();readonly HashSet<Renderer> tracked=new HashSet<Renderer>();
+        bool hadEffectsV57;float nextScan,nextSend;Renderer[] active=Array.Empty<Renderer>();readonly HashSet<Renderer> tracked=new HashSet<Renderer>();
         public void Track(Renderer renderer){if(renderer)tracked.Add(renderer);}
         readonly Dictionary<Renderer,int> ids=new Dictionary<Renderer,int>();int nextId;
         static readonly string[] names={"Animated Spectrum","Rolling waterfall","Dithered rainbow reflected","Rainbow falling","Rainbow landing","Spectrum comet","Rainbow departure","White-blue celestial","Curse outgoing","Brown tentacle","Broken earth beneath","Sixty-second black abyss","Spinning battle yo-yo","Yo-yo taut","Concentrated Last Prism","Converging Last Prism","Turbulent lamp","Pixel shockwave","Arc of golden blast","Wide dragon invocation","Dragon downward fire","Rising pixel ash","Temporary scorched","Golden Sting / stun","Silken web","Bandit arrow","Fort arrow","Fired arrow","Sparring spark"};
@@ -46,6 +46,7 @@ namespace AshenCoast
                     if(!session.CanSimulate && (r.name.StartsWith("White-blue") || r.name.StartsWith("Curse outgoing") || r.name.StartsWith("Golden Sting") || r.name.StartsWith("Brown tentacle") || r.name.StartsWith("Broken earth beneath")))continue;
                     var effect=Capture(r);if(effect!=null)list.Add(effect);if(list.Count==240)break;
                 }
+                if(list.Count==0 && !hadEffectsV57)return;hadEffectsV57=list.Count>0;
                 session.Send(new LanPacketV49{kind="fx",region=session.Region,body=JsonUtility.ToJson(new LanFxFrameV49{effects=list.ToArray()})});
             }
         }

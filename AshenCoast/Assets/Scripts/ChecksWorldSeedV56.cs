@@ -56,7 +56,7 @@ namespace AshenCoast
             game.snails.SetupOpen=false;game.paused=false;game.SetAutoPickup(false);Time.timeScale=1;
             Application.runInBackground=true;QualitySettings.vSyncCount=0;Application.targetFrameRate=30;AudioListener.volume=0;
             Check(!game.testMode,"normal random-world initialization path is used, without the old shared test seed");
-            Check(Application.version=="56.0" && LanProtocolV49.Build==56 && new LanHelloV49().build==56 && new LanPacketV49().version==56,"application and handshake identify V56");
+            Check(Application.version==LanProtocolV49.Build.ToString()+".0" && LanProtocolV49.Build==57 && new LanHelloV49().build==LanProtocolV49.Build && new LanPacketV49().version==LanProtocolV49.Build,"application and handshake identify V56");
             yield return null;
             var run=role=="guest"?Guest():Host();
             while(true){bool more;object current=null;try{more=run.MoveNext();if(more)current=run.Current;}catch(Exception e){Check(false,e.ToString());break;}if(!more)break;yield return current;}

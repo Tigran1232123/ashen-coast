@@ -17,7 +17,7 @@ namespace AshenCoast
         public bool peacefulV53;public PixelGait walkingGaitV53;public void PeaceV53(){peacefulV53=true;Escaped=false;attackTime=cooldown=0;if(blade)blade.enabled=false;}
         public bool Flee=>actor.row==1 || actor.row==6;public bool Armored=>actor.row==5;
         public bool Alive=>health>0;public Vector2 Position=>actor.sprite.transform.position;public SpriteRenderer Renderer=>actor.sprite;
-        public TavernResident(JourneyWorld owner,TavernActor person){world=owner;game=owner.game;actor=person;walkingGaitV53=PixelGait.ForHumanoidV53(game.art,Renderer,.43f,game.newArt.motion[actor.row,0]);}
+        public TavernResident(JourneyWorld owner,TavernActor person){world=owner;game=owner.game;actor=person;walkingGaitV53=PixelGait.ForHumanoidV53(game.art,Renderer,.43f,game.newArt.motion[actor.row,0]);walkingGaitV53.Lower.name="Resident walking legs";}
         public float Hurt(float amount)
         {if(!Alive)return 0;peacefulV53=false;float hit=Mathf.Min(health,amount*(game.spellcraft?.DamageFactor(Renderer)??1)*(Armored?.5f:1));health-=hit;game.ShowDamage(hit,Position+Vector2.up*1.6f,Renderer);world.AlarmTavern();if(!Alive){Renderer.enabled=false;if(feet)feet.enabled=false;if(blade)blade.enabled=false;}return hit;}
         public void Stand()
@@ -26,8 +26,9 @@ namespace AshenCoast
             if(actor.gait!=null)actor.gait.Lower.enabled=false;var block=new MaterialPropertyBlock();Renderer.GetPropertyBlock(block);block.SetFloat("_BodyFloor",0);block.SetFloat("_SeatedLegs",0);Renderer.SetPropertyBlock(block);
             Renderer.transform.localScale=Vector3.one;var start=Position;
             for(float r=.2f;r<=2;r+=.2f){bool found=false;for(int i=0;i<16;i++){var p=world.Clamp(start+new Vector2(Mathf.Cos(i*Mathf.PI/8),Mathf.Sin(i*Mathf.PI/8))*r);if(!Physics2D.OverlapCircle(p+Vector2.up*.12f,.23f)){Renderer.transform.position=p;found=true;break;}}if(found)break;}
-            feet=Renderer.gameObject.AddComponent<CircleCollider2D>();feet.radius=.23f;feet.offset=Vector2.up*.12f;
-            if(!Flee){blade=game.art.Renderer(Armored?"Angry knight sword":"Tavern knife",game.art.icons[Armored?4:5],Position,Renderer.sortingOrder+2);blade.transform.SetParent(Renderer.transform,true);blade.transform.localScale=Vector3.one*((Armored?1.65f:.72f)/blade.sprite.bounds.size.x);}
+            if(!feet)feet=Renderer.gameObject.AddComponent<CircleCollider2D>();feet.radius=.23f;feet.offset=Vector2.up*.12f;feet.enabled=true;
+            if(!Flee && !blade){blade=game.art.Renderer(Armored?"Angry knight sword":"Tavern knife",game.art.icons[Armored?4:5],Position,Renderer.sortingOrder+2);blade.transform.SetParent(Renderer.transform,true);blade.transform.localScale=Vector3.one*((Armored?1.65f:.72f)/blade.sprite.bounds.size.x);}
+            if(blade)blade.enabled=true;
         }
         public void Tick(float dt)
         {

@@ -6,7 +6,7 @@ namespace AshenCoast
 {
     public static class LanProtocolV49
     {
-        public const int Build=56;
+        public const int Build=57;
     }
 
     public static class SeededExteriorV56

@@ -7,6 +7,9 @@ namespace AshenCoast
     {
         readonly CoopSessionV49 session;readonly SpriteRenderer shadow,weapon;PixelGait gait;
         public int Peer{get;}public LanPlayerV49 State{get;private set;}public SpriteRenderer Renderer{get;}public Rigidbody2D Body{get;}public Survivor Mirror{get;}=new Survivor();
+        string equipmentFingerprintV57;readonly MaterialPropertyBlock weaponPropsV57=new MaterialPropertyBlock();
+        Vector2 velocityV57;float receivedV57;
+        public SpriteRenderer LowerV57=>gait.Lower;
         public Vector2 Position=>Renderer.transform.position;public bool Alive=>State!=null && State.health>0;Vector2 target;
         public RemotePlayerV49(CoopSessionV49 owner,LanPlayerV49 state)
         {
@@ -19,20 +22,23 @@ namespace AshenCoast
         public void Receive(LanPlayerV49 state)
         {
             if(State!=null && State.character!=state.character){if(gait.Lower)UnityEngine.Object.Destroy(gait.Lower.gameObject);gait=new PixelGait(session.game.art,Renderer,session.game.HeroFramesV51((CharacterV51)state.character),.43f);}
-            bool changed=State==null || State.region!=state.region || Vector2.Distance(target,new Vector2(state.x,state.y))>6;State=state;target=new Vector2(state.x,state.y);if(changed)Renderer.transform.position=target;
+            float now=Time.unscaledTime;var next=new Vector2(state.x,state.y);
+            bool changed=State==null || State.region!=state.region || Vector2.Distance(target,next)>6;
+            velocityV57=!changed && state.moving && now>receivedV57+.005f?Vector2.ClampMagnitude((next-target)/(now-receivedV57),24):Vector2.zero;receivedV57=now;State=state;target=new Vector2(state.x,state.y);if(changed)Renderer.transform.position=target;
             Mirror.character=(CharacterV51)state.character;Mirror.health=state.health;Mirror.hunger=state.hunger;Mirror.mana=state.mana;Mirror.immunity=state.immunity;
             // Keep the correct race pose even while the proxy is in another location.
             // Corpse presentation may need that last pose before it becomes visible here.
             Renderer.sprite=session.game.HeroFramesV51((CharacterV51)state.character)[Mathf.Clamp(state.facing,0,7),Mathf.Clamp(state.frame,0,7)];session.game.art.PixelStyle(Renderer);float raceScale=state.character==1?.6f:1;shadow.transform.localScale=new Vector3(.62f*raceScale,.24f*raceScale,1);
-            if(state.equipment!=null && state.equipment.Length==Mirror.equipment.Length)for(int i=0;i<Mirror.equipment.Length;i++)Mirror.equipment[i]=state.equipment[i]?.Restore();
+            if(state.equipment!=null && state.equipment.Length==Mirror.equipment.Length){var signature=EquipmentSignatureV57(state.equipment);if(signature!=equipmentFingerprintV57){for(int i=0;i<Mirror.equipment.Length;i++)Mirror.equipment[i]=state.equipment[i]?.Restore();equipmentFingerprintV57=signature;}}
         }
         public void Tick(float dt)
         {
             bool visible=State!=null && State.region==session.Region;Renderer.gameObject.SetActive(visible);if(!visible)return;
-            var g=session.game;var point=Vector2.Lerp(Position,target,1-Mathf.Exp(-dt*23));Renderer.transform.position=point;Body.position=point;
+            var g=session.game;float age=Mathf.Clamp(Time.unscaledTime-receivedV57,0,.10f);
+            var point=Vector2.Lerp(Position,target+velocityV57*age,1-Mathf.Exp(-dt*23));Renderer.transform.position=point;Body.position=point;
             Renderer.enabled=Alive;Renderer.sprite=g.HeroFramesV51((CharacterV51)State.character)[Mathf.Clamp(State.facing,0,7),Mathf.Clamp(State.frame,0,7)];Renderer.flipX=State.character==1?CoastGame.FrogFrameMirroredV52(State.facing,State.frame):State.facing>=5;
             Renderer.sortingOrder=CoastGame.Depth(point.y);Renderer.transform.localScale=Vector3.one*Mathf.Clamp(State.scale,.8f,1.2f);g.art.PixelStyle(Renderer);
-            gait.Pose(State.facing,State.walk,State.moving,Vector2.zero);if(!Alive && gait.Lower)gait.Lower.enabled=false;shadow.enabled=Alive;shadow.transform.position=point;shadow.sortingOrder=Mathf.Min(-2000,Renderer.sortingOrder-1600);
+            gait.Pose(State.facing,State.walk+(State.moving?age*velocityV57.magnitude/1.65f:0),State.moving,velocityV57);if(!Alive && gait.Lower)gait.Lower.enabled=false;shadow.enabled=Alive;shadow.transform.position=point;shadow.sortingOrder=Mathf.Min(-2000,Renderer.sortingOrder-1600);
             bool held=State.weapon>=0 && Enum.IsDefined(typeof(ItemKind),State.weapon);var kind=held?(ItemKind)State.weapon:ItemKind.Dagger;
             weapon.enabled=Alive && held && (State.attacking || kind==ItemKind.Orb || kind==ItemKind.Lamp || kind==ItemKind.LastPrism || kind==ItemKind.Spectrum);
             if(weapon.enabled)
@@ -40,8 +46,21 @@ namespace AshenCoast
                 var definition=ItemDefinition.All[kind];weapon.sprite=g.art.icons[definition.icon];bool vertical=Combat.VerticalV44(kind);float length=kind==ItemKind.Bow?1.5f:Combat.WeaponLengthV44(kind);
                 float size=length/((vertical?weapon.sprite.rect.height:weapon.sprite.rect.width)/weapon.sprite.pixelsPerUnit);weapon.transform.localScale=Vector3.one*size;
                 weapon.transform.localScale=Vector3.one*State.weaponScale;weapon.transform.position=new Vector2(State.weaponX,State.weaponY)+(point-target);weapon.transform.rotation=Quaternion.Euler(0,0,State.angle);weapon.sortingOrder=Renderer.sortingOrder+2;g.art.PixelStyle(weapon);
-                var props=new MaterialPropertyBlock();weapon.GetPropertyBlock(props);props.SetFloat("_Spectrum",kind==ItemKind.Spectrum?1:0);props.SetFloat("_Prism",kind==ItemKind.LastPrism?1:0);weapon.SetPropertyBlock(props);
+                var props=weaponPropsV57;weapon.GetPropertyBlock(props);props.SetFloat("_Spectrum",kind==ItemKind.Spectrum?1:0);props.SetFloat("_Prism",kind==ItemKind.LastPrism?1:0);weapon.SetPropertyBlock(props);
             }
+        }
+        static string EquipmentSignatureV57(LanItemV49[] items)
+        {
+            var text=new System.Text.StringBuilder();
+            foreach(var item in items)AppendEquipmentV57(text,item);
+            return text.ToString();
+        }
+        static void AppendEquipmentV57(System.Text.StringBuilder text,LanItemV49 item)
+        {
+            if(item==null){text.Append("null;");return;}
+            text.Append(item.id).Append('/').Append(item.kind).Append('/').Append(item.count).Append('/').Append(item.opened).Append('/').Append(item.durability).Append(';');
+            // Remote combat only uses equipped item identity and slots; private bag contents arrive through private-inventory messages.
+            if(item.spells!=null)foreach(var spell in item.spells){text.Append(spell.kind).Append('/').Append(spell.locked);AppendEquipmentV57(text,spell.scroll);}
         }
         public float Hurt(float amount)
         {
@@ -53,9 +72,16 @@ namespace AshenCoast
     }
     public sealed partial class CoopSessionV49
     {
+        static LanItemV49 CaptureEquipmentV57(Item item)
+        {
+            if(item==null)return new LanItemV49{kind=-1};
+            return new LanItemV49{capturedAt=LanItemV49.SnapshotClock(),id=item.id,kind=(int)item.kind,x=item.x,y=item.y,count=item.count,opened=item.opened,
+                durability=item.durability,fuel=item.fuel,freshness=item.freshness,shelfLife=item.shelfLife,water=item.water,
+                spells=item.spells?.Select(slot=>new LanSpellV49{kind=(int)slot.kind,locked=slot.locked,remaining=slot.Remaining(LanItemV49.Clock()),scroll=LanItemV49.Capture(slot.scroll)}).ToArray()};
+        }
         public LanPlayerV49 CapturePlayer()
         {
-            var g=game;return new LanPlayerV49{peer=Peer,name=PlayerName,character=(int)g.survivor.character,region=Region,x=g.body.position.x,y=g.body.position.y,health=g.survivor.health,hunger=g.survivor.hunger,mana=g.survivor.mana,immunity=g.survivor.immunity,facing=g.facing,frame=g.walkFrame,moving=g.walking,walk=g.walkTime,weapon=(int?)g.survivor.equipment[0]?.kind??-1,attacking=g.combat.Attacking,invulnerable=g.combat.ZenInvulnerable || g.spectrum.Riding || g.spellcraft.Teleporting,elapsed=g.combat.elapsed,angle=g.combat.weapon.transform.eulerAngles.z,scale=g.hero.transform.localScale.x,weaponX=g.combat.weapon.transform.position.x,weaponY=g.combat.weapon.transform.position.y,weaponScale=g.combat.weapon.transform.lossyScale.x,equipment=g.survivor.equipment.Select(i=>LanItemV49.Capture(i)).ToArray()};
+            var g=game;return new LanPlayerV49{peer=Peer,name=PlayerName,character=(int)g.survivor.character,region=Region,x=g.body.position.x,y=g.body.position.y,health=g.survivor.health,hunger=g.survivor.hunger,mana=g.survivor.mana,immunity=g.survivor.immunity,facing=g.facing,frame=g.walkFrame,moving=g.walking,walk=g.walkTime,weapon=(int?)g.survivor.equipment[0]?.kind??-1,attacking=g.combat.Attacking,invulnerable=g.combat.ZenInvulnerable || g.spectrum.Riding || g.spellcraft.Teleporting,elapsed=g.combat.elapsed,angle=g.combat.weapon.transform.eulerAngles.z,scale=g.hero.transform.localScale.x,weaponX=g.combat.weapon.transform.position.x,weaponY=g.combat.weapon.transform.position.y,weaponScale=g.combat.weapon.transform.lossyScale.x,equipment=g.survivor.equipment.Select(CaptureEquipmentV57).ToArray()};
         }
         public void ForNearest(Vector2 point,Action action,int? preferred=null)
         {

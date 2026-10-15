@@ -1,0 +1,16 @@
+{
+  "full_capture_ms": 3.610633333333334,
+  "full_capture_allocated_bytes": null,
+  "motion_capture_ms": 0.3427875,
+  "motion_capture_allocated_bytes": null,
+  "full_json_bytes": 124619,
+  "nearby_motion_json_bytes": 13531,
+  "former_full_snapshot_bytes_per_second": 1038491.6666666667,
+  "new_full_and_motion_bytes_per_second": 384548,
+  "new_to_former_payload_ratio": 0.37029473836252896,
+  "sent_bytes": 812370,
+  "compressed_frames": 852,
+  "full_frames": 49,
+  "motion_frames": 241,
+  "allocation_counter_available": false
+}

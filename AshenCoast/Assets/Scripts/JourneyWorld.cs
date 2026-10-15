@@ -147,6 +147,7 @@ namespace AshenCoast
         {
             if(row>=2 && row<=6)point+=Vector2.up*.20f;
             var actor=new TavernActor{row=row,position=point,sprite=Prop("Tavern actor "+row,art.people[row,0],point,art.people[row,0].bounds.size.x*(row>=2 && row<=6?.88f:1),tavernRoot.transform)};
+            if(row==0)actor.gait=new PixelGait(game.art,actor.sprite,art.gestures,.43f);
             actors.Add(actor);return actor;
         }
         void CreateCart()

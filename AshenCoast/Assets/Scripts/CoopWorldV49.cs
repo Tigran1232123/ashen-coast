@@ -8,25 +8,25 @@ namespace AshenCoast
     [Serializable] public sealed class LanFieldV49 {public string name;public int type;public float value,y;public Vector2[] points;}
     [Serializable] public sealed class LanRenderV49
     {
-        public string texture;public float rx,ry,rw,rh,px,py,ppu,x,y,z,sx,sy,angle,r,g,b,a,floor;public bool enabled,flipX,flipY;public int order;
+        public string texture,part;public float cloth=1,seated;public float rx,ry,rw,rh,px,py,ppu,x,y,z,sx,sy,angle,r,g,b,a,floor;public bool enabled,flipX,flipY;public int order;
         public static LanRenderV49 Capture(SpriteRenderer r)
-        {var s=r.sprite;var block=new MaterialPropertyBlock();r.GetPropertyBlock(block);return new LanRenderV49{floor=block.GetFloat("_BodyFloor"),texture=s.texture.name,rx=s.rect.x,ry=s.rect.y,rw=s.rect.width,rh=s.rect.height,px=s.pivot.x/s.rect.width,py=s.pivot.y/s.rect.height,ppu=s.pixelsPerUnit,x=r.transform.position.x,y=r.transform.position.y,z=r.transform.position.z,sx=r.transform.lossyScale.x,sy=r.transform.lossyScale.y,angle=r.transform.eulerAngles.z,r=r.color.r,g=r.color.g,b=r.color.b,a=r.color.a,enabled=r.enabled,flipX=r.flipX,flipY=r.flipY,order=r.sortingOrder};}
+        {var s=r.sprite;var block=new MaterialPropertyBlock();r.GetPropertyBlock(block);return new LanRenderV49{floor=block.GetFloat("_BodyFloor"),cloth=block.HasFloat("_ClothTone")?block.GetFloat("_ClothTone"):1,seated=block.GetFloat("_SeatedLegs"),texture=s.texture.name,rx=s.rect.x,ry=s.rect.y,rw=s.rect.width,rh=s.rect.height,px=s.pivot.x/s.rect.width,py=s.pivot.y/s.rect.height,ppu=s.pixelsPerUnit,x=r.transform.position.x,y=r.transform.position.y,z=r.transform.position.z,sx=r.transform.lossyScale.x,sy=r.transform.lossyScale.y,angle=r.transform.eulerAngles.z,r=r.color.r,g=r.color.g,b=r.color.b,a=r.color.a,enabled=r.enabled,flipX=r.flipX,flipY=r.flipY,order=r.sortingOrder};}
     }
     [Serializable] public sealed class LanActorV49 {public string key,type,region;public float health,bound,curse,stun,anchorX,anchorY;public int owner=-1;public bool hired;public LanRenderV49[] renders;public LanFieldV49[] fields;}
     [Serializable] public sealed class LanLootV49 {public LanItemV49 item;public string key,region;public float x,y,fromX,fromY,age,duration;public bool collected;}
     [Serializable] public sealed class LanStationV49 {public string key,region;public int kind,x,y;public bool upright;public float temperature,ready;}
     [Serializable] public sealed class LanFireV49 {public string key;public float x,y,phase;public bool exploded;}
     [Serializable] public sealed class LanWormV49 {public string[] parts;public LanFieldV49[] fields;}
-    [Serializable] public sealed class LanRegionV49 {public string key;public LanActorV49[] actors;public LanLootV49[] loot;public LanStationV49[] stations;public LanFireV49[] fires;public LanWormV49[] worms;public string[] flowers;public float dummyHealth;public LanWebV49[] webs;public LanFogV49[] fogs;public LanTentacleV49[] tentacles;public LanInvocationV49[] invocations;}
+    [Serializable] public sealed class LanRegionV49 {public string key;public LanActorV49[] actors;public LanLootV49[] loot;public LanStationV49[] stations;public LanFireV49[] fires;public LanWormV49[] worms;public bool tavernAlarm;public string[] flowers;public float dummyHealth;public LanWebV49[] webs;public LanFogV49[] fogs;public LanTentacleV49[] tentacles;public LanInvocationV49[] invocations;}
     public sealed class CoopBindingV49
-    {public string key,kind,region;public object driver;public ICombatTarget target;public SpriteRenderer[] renders;public Func<float> health;public Action<float> setHealth;public LanActorV49 received;}
+    {public string key,kind,region;public object driver;public ICombatTarget target;public SpriteRenderer[] renders;public Func<float> health;public Action<float> setHealth;public LanActorV49 received;public readonly Dictionary<string,SpriteRenderer> partsV57=new Dictionary<string,SpriteRenderer>();}
     public sealed partial class CoopWorldV49
     {
         readonly CoopSessionV49 session;CoastGame G=>session.game;
         public CoopWorldV49(CoopSessionV49 owner){session=owner;}
         readonly Dictionary<string,CoopBindingV49> entities=new Dictionary<string,CoopBindingV49>();
         readonly Dictionary<SpriteRenderer,string> identities=new Dictionary<SpriteRenderer,string>();
-        readonly Dictionary<string,Sprite> sprites=new Dictionary<string,Sprite>();
+        readonly Dictionary<SpriteKeyV57,Sprite> sprites=new Dictionary<SpriteKeyV57,Sprite>();
         readonly Dictionary<string,Transform> privateRootsV49=new Dictionary<string,Transform>();
         public readonly Dictionary<string,int> allyOwners=new Dictionary<string,int>();
         public readonly Dictionary<string,string> allyRegions=new Dictionary<string,string>();
@@ -63,10 +63,8 @@ namespace AshenCoast
         }
         void Add(string key,string kind,string region,object driver,ICombatTarget target,SpriteRenderer renderer,Func<float> hp,Action<float> set)
         {
-            var list=new List<SpriteRenderer>{renderer};
-            if(driver!=G)foreach(var f in driver.GetType().GetFields(Fields))if(f.FieldType==typeof(SpriteRenderer) && f.GetValue(driver) is SpriteRenderer r && r && !list.Contains(r))list.Add(r);
-            foreach(var child in renderer.GetComponentsInChildren<SpriteRenderer>(true))if(child && !list.Contains(child))list.Add(child);
-            var binding=new CoopBindingV49{key=key,kind=kind,region=region,driver=driver,target=target,renders=list.ToArray(),health=hp,setHealth=set};entities[key]=binding;identities[renderer]=key;
+            var binding=new CoopBindingV49{key=key,kind=kind,region=region,driver=driver,target=target,renders=new[]{renderer},health=hp,setHealth=set};
+            RefreshPartsV57(binding);entities[key]=binding;identities[renderer]=key;
         }
         void Refresh()
         {
@@ -78,22 +76,13 @@ namespace AshenCoast
         }
         public LanRegionV49 Capture(string region)
         {
-            UpdateAlliesV49();Refresh();return new LanRegionV49{key=region,dummyHealth=G.dummyHealth,webs=CaptureWebsV49(region),fogs=CaptureFogsV49(region),tentacles=CaptureTentaclesV49(region),invocations=CaptureInvocationsV49(region),actors=entities.Values.Where(b=>b.region==region && !G.snails.Resting(b.renders[0]) && !G.snails.Returning(b.renders[0])).Select(b=>new LanActorV49{key=b.key,type=b.kind,region=b.region,health=b.health(),bound=StatusV49(b.renders[0],false),curse=StatusV49(b.renders[0],true),stun=G.v44.RemainingV49(b.renders[0]),anchorX=b.renders[0].transform.position.x,anchorY=b.renders[0].transform.position.y,owner=allyOwners.TryGetValue(b.key,out var owner)?owner:-1,hired=b.driver is VillageActorV46 v?v.Hired:b.driver is CompanionMage m && m.Hired,renders=b.renders.Where(r=>r && r.sprite).Select(LanRenderV49.Capture).ToArray(),fields=b.driver==G?Array.Empty<LanFieldV49>():CaptureFields(b.driver)}).ToArray(),loot=G.loot.Where(l=>!l.collected && l.renderer && RegionOf(l.renderer.transform)==region).Select(l=>new LanLootV49{key=l.netIdV49,region=region,item=LanItemV49.Capture(l.item),x=l.position.x,y=l.position.y,fromX=l.thrownFrom.x,fromY=l.thrownFrom.y,age=l.flightAge,duration=l.flightDuration,collected=l.collected}).ToArray(),stations=G.buildings.stations.Where(s=>s.world && RegionOf(s.world)==region).Select(s=>new LanStationV49{key=session.inventory.Key(s.inventory),region=region,kind=(int)s.kind,x=s.cell.x,y=s.cell.y,upright=s.size.y>s.size.x,temperature=s.temperature,ready=s.ready}).ToArray(),fires=G.arcane.campfires.Where(f=>f.logs && RegionOf(f.logs.transform)==region).Select(f=>new LanFireV49{key=FireKey(f),x=f.position.x,y=f.position.y,phase=f.phase,exploded=f.exploded}).ToArray(),worms=region=="area/4"?G.cave.worms.Select(w=>new LanWormV49{parts=w.parts.Select(p=>Key(p.sprite)).ToArray(),fields=CaptureFields(w)}).ToArray():Array.Empty<LanWormV49>(),flowers=region=="area/0"?picked.Concat(G.flowers.Where(f=>f.picked).Select(FlowerKey)).Distinct().ToArray():Array.Empty<string>()};
+            UpdateAlliesV49();Refresh();return new LanRegionV49{key=region,tavernAlarm=G.journey.TavernAlarm,dummyHealth=G.dummyHealth,webs=CaptureWebsV49(region),fogs=CaptureFogsV49(region),tentacles=CaptureTentaclesV49(region),invocations=CaptureInvocationsV49(region),actors=entities.Values.Where(b=>b.region==region && !G.snails.Resting(b.renders[0]) && !G.snails.Returning(b.renders[0])).Select(b=>CaptureActorV57(b,true)).ToArray(),loot=G.loot.Where(l=>!l.collected && l.renderer && RegionOf(l.renderer.transform)==region).Select(l=>new LanLootV49{key=l.netIdV49,region=region,item=LanItemV49.Capture(l.item),x=l.position.x,y=l.position.y,fromX=l.thrownFrom.x,fromY=l.thrownFrom.y,age=l.flightAge,duration=l.flightDuration,collected=l.collected}).ToArray(),stations=G.buildings.stations.Where(s=>s.world && RegionOf(s.world)==region).Select(s=>new LanStationV49{key=session.inventory.Key(s.inventory),region=region,kind=(int)s.kind,x=s.cell.x,y=s.cell.y,upright=s.size.y>s.size.x,temperature=s.temperature,ready=s.ready}).ToArray(),fires=G.arcane.campfires.Where(f=>f.logs && RegionOf(f.logs.transform)==region).Select(f=>new LanFireV49{key=FireKey(f),x=f.position.x,y=f.position.y,phase=f.phase,exploded=f.exploded}).ToArray(),worms=region=="area/4"?G.cave.worms.Select(w=>new LanWormV49{parts=w.parts.Select(p=>Key(p.sprite)).ToArray(),fields=CaptureFields(w)}).ToArray():Array.Empty<LanWormV49>(),flowers=region=="area/0"?picked.Concat(G.flowers.Where(f=>f.picked).Select(FlowerKey)).Distinct().ToArray():Array.Empty<string>()};
         }
         public void Apply(LanRegionV49 state,bool takeover)
         {
             if(state==null || !ValidRegion(state.key) || state.actors==null || state.actors.Length>1000 || state.loot?.Length>10000)throw new InvalidOperationException("Invalid world snapshot");
-            foreach(var data in state.actors)
-            {
-                var b=Find(data.key);if(b==null && (data.type=="plain-bow" || data.type=="plain-sword")){var pose=data.renders[0];var m=G.amazons.plains.Spawn(new Vector2(pose.x,pose.y),data.type=="plain-bow");Add(data.key,data.type,state.key,m,m,m.Renderer,()=>m.health,v=>m.health=v);b=Find(data.key);}
-                if(b==null && data.type=="dragon" && data.renders.Length>0){var pose=data.renders[0];var dragon=new RoosterDragon(G.dragons,new Vector2(pose.x,pose.y),Root(state.key));G.dragons.bosses.Add(dragon);Add(data.key,"dragon",state.key,dragon,dragon,dragon.Renderer,()=>dragon.health,v=>dragon.health=v);b=Find(data.key);}
-                if(b==null || b.kind!=data.type)continue;
-                float previous=b.health();b.region=state.key;b.setHealth(Mathf.Clamp(data.health,0,100000));if(previous>data.health && b.target!=null)G.feedback.Hit(b.renders[0],previous-data.health);
-                if(data.owner>=0){allyOwners[b.key]=data.owner;if(!allyRegions.ContainsKey(b.key))allyRegions[b.key]=state.key;if(b.driver is VillageActorV46 woman){woman.Hired=true;woman.Captive=false;if(woman.cage)woman.cage.enabled=false;}b.renders[0].transform.SetParent(Root(state.key),true);}else if(!data.hired){allyOwners.Remove(b.key);allyRegions.Remove(b.key);}
-                ApplyFields(b.driver,data.fields);ApplyStatusV49(b,data,takeover);b.received=data;
-                for(int i=0;i<Math.Min(b.renders.Length,data.renders.Length);i++)ApplyRender(b.renders[i],data.renders[i],takeover || Vector2.Distance(b.renders[i].transform.position,new Vector2(data.renders[i].x,data.renders[i].y))>6);
-                foreach(var collider in b.renders[0].GetComponents<Collider2D>())collider.enabled=data.health>0 || b.kind=="tree" || b.kind=="target";
-            }
+            if(state.key=="area/2")G.journey.ApplyAlarmV57(state.tavernAlarm);
+            ApplyActorsV57(state.actors,state.key,takeover);
             ApplyTentaclesV49(state.tentacles,state.key,takeover);ApplyInvocationsV49(state.invocations,state.key,takeover);
             if(state.key=="area/4")ApplyWebsV49(state.webs);ApplyFogsV49(state.fogs,state.key,takeover);
             if(state.worms!=null && state.key=="area/4")
@@ -110,14 +99,14 @@ namespace AshenCoast
         {
             foreach(var b in entities.Values)if(b.region==session.Region && b.received!=null)
             {
-                for(int i=0;i<Math.Min(b.renders.Length,b.received.renders.Length);i++)
-                {var r=b.renders[i];if(!r)continue;var data=b.received.renders[i];r.transform.position=Vector3.Lerp(r.transform.position,new Vector3(data.x,data.y,data.z),1-Mathf.Exp(-dt*22));r.transform.rotation=Quaternion.Euler(0,0,Mathf.LerpAngle(r.transform.eulerAngles.z,data.angle,1-Mathf.Exp(-dt*25)));}
+                var body=b.received.renders.FirstOrDefault(r=>r.part=="body");
+                if(body!=null)PoseAssemblyV57(b,body,1-Mathf.Exp(-dt*22));
                 if(b.driver is BeachGull gull)gull.point=b.renders[0].transform.position;
             }
         }
         Sprite ResolveSprite(LanRenderV49 d)
         {
-            string key=d.texture+"/"+d.rx+"/"+d.ry+"/"+d.rw+"/"+d.rh+"/"+d.px+"/"+d.py+"/"+d.ppu;
+            var key=new SpriteKeyV57(d);
             if(sprites.TryGetValue(key,out var found))return found;var texture=Resources.Load<Texture2D>("Art/"+d.texture);if(!texture && (d.texture.Contains("White") || d.texture.Contains("white")))texture=Texture2D.whiteTexture;if(!texture)return null;
             if(d.rw<=0 || d.rh<=0 || d.rx<0 || d.ry<0 || d.rx+d.rw>texture.width+.1f || d.ry+d.rh>texture.height+.1f || d.ppu<=0)throw new InvalidOperationException("Invalid sprite bounds");
             var sprite=Sprite.Create(texture,new Rect(d.rx,d.ry,d.rw,d.rh),new Vector2(d.px,d.py),d.ppu,0,SpriteMeshType.FullRect);sprites[key]=sprite;return sprite;
@@ -126,19 +115,19 @@ namespace AshenCoast
         {
             var sprite=ResolveSprite(d);if(sprite)r.sprite=sprite;r.enabled=d.enabled;r.flipX=d.flipX;r.flipY=d.flipY;r.sortingOrder=d.order;r.color=new Color(d.r,d.g,d.b,d.a);
             if(position){r.transform.position=new Vector3(d.x,d.y,d.z);r.transform.rotation=Quaternion.Euler(0,0,d.angle);}
-            var parent=r.transform.parent?r.transform.parent.lossyScale:Vector3.one;r.transform.localScale=new Vector3(d.sx/Mathf.Max(.0001f,parent.x),d.sy/Mathf.Max(.0001f,parent.y),1);G.art.PixelStyle(r);var block=new MaterialPropertyBlock();r.GetPropertyBlock(block);block.SetFloat("_BodyFloor",d.floor);r.SetPropertyBlock(block);
+            var parent=r.transform.parent?r.transform.parent.lossyScale:Vector3.one;r.transform.localScale=new Vector3(d.sx/Mathf.Max(.0001f,parent.x),d.sy/Mathf.Max(.0001f,parent.y),1);G.art.PixelStyle(r);var block=new MaterialPropertyBlock();r.GetPropertyBlock(block);block.SetFloat("_BodyFloor",d.floor);block.SetFloat("_ClothTone",d.cloth);block.SetFloat("_SeatedLegs",d.seated);r.SetPropertyBlock(block);
         }
-        public static LanFieldV49[] CaptureFields(object obj)
+        public static LanFieldV49[] CaptureFields(object obj,bool includePaths=true)
         {
-            var values=new List<LanFieldV49>();foreach(var f in obj.GetType().GetFields(Fields))
-            {if(f.IsInitOnly || f.IsLiteral)continue;object value=f.GetValue(obj);var dto=new LanFieldV49{name=f.Name};if(f.FieldType==typeof(float)){dto.type=0;dto.value=(float)value;}else if(f.FieldType==typeof(int) || f.FieldType.IsEnum){dto.type=1;dto.value=Convert.ToInt32(value);}else if(f.FieldType==typeof(bool)){dto.type=2;dto.value=(bool)value?1:0;}else if(f.FieldType==typeof(Vector2)){dto.type=3;dto.value=((Vector2)value).x;dto.y=((Vector2)value).y;}else if(value is List<Vector2> list && list.Count<=1000){dto.type=4;dto.points=list.ToArray();}else continue;if(LanItemV49.Finite(dto.value) && LanItemV49.Finite(dto.y))values.Add(dto);}var vitals=obj.GetType().GetField("vitals",Fields)?.GetValue(obj);if(vitals!=null)foreach(var d in CaptureFields(vitals)){d.name="vitals::"+d.name;values.Add(d);}return values.ToArray();
+            var values=new List<LanFieldV49>();foreach(var f in NetworkFieldsV57(obj.GetType()))
+            {if(f.IsInitOnly || f.IsLiteral)continue;object value=f.GetValue(obj);var dto=new LanFieldV49{name=f.Name};if(f.FieldType==typeof(float)){dto.type=0;dto.value=(float)value;}else if(f.FieldType==typeof(int) || f.FieldType.IsEnum){dto.type=1;dto.value=Convert.ToInt32(value);}else if(f.FieldType==typeof(bool)){dto.type=2;dto.value=(bool)value?1:0;}else if(f.FieldType==typeof(Vector2)){dto.type=3;dto.value=((Vector2)value).x;dto.y=((Vector2)value).y;}else if(includePaths && value is List<Vector2> list && list.Count<=1000){dto.type=4;dto.points=list.ToArray();}else continue;if(LanItemV49.Finite(dto.value) && LanItemV49.Finite(dto.y))values.Add(dto);}var vitals=NetworkFieldV57(obj.GetType(),"vitals")?.GetValue(obj);if(vitals!=null)foreach(var d in CaptureFields(vitals,includePaths)){d.name="vitals::"+d.name;values.Add(d);}return values.ToArray();
         }
         static void ApplyFields(object obj,LanFieldV49[] data)
         {
             if(obj==null || data==null)return;foreach(var d in data)
             {
-                if(d.name.StartsWith("vitals::")){var vitals=obj.GetType().GetField("vitals",Fields)?.GetValue(obj);if(vitals!=null)ApplyFields(vitals,new[]{new LanFieldV49{name=d.name.Substring(8),type=d.type,value=d.value,y=d.y,points=d.points}});continue;}
-                var f=obj.GetType().GetField(d.name,Fields);if(f==null || f.IsInitOnly || f.IsLiteral || !LanItemV49.Finite(d.value) || !LanItemV49.Finite(d.y))continue;
+                if(d.name.StartsWith("vitals::")){var vitals=NetworkFieldV57(obj.GetType(),"vitals")?.GetValue(obj);if(vitals!=null)ApplyFields(vitals,new[]{new LanFieldV49{name=d.name.Substring(8),type=d.type,value=d.value,y=d.y,points=d.points}});continue;}
+                var f=NetworkFieldV57(obj.GetType(),d.name);if(f==null || f.IsInitOnly || f.IsLiteral || !LanItemV49.Finite(d.value) || !LanItemV49.Finite(d.y))continue;
                 if(f.FieldType==typeof(float))f.SetValue(obj,d.value);else if(f.FieldType==typeof(int))f.SetValue(obj,(int)d.value);else if(f.FieldType.IsEnum)f.SetValue(obj,Enum.ToObject(f.FieldType,(int)d.value));else if(f.FieldType==typeof(bool))f.SetValue(obj,d.value!=0);else if(f.FieldType==typeof(Vector2))f.SetValue(obj,new Vector2(d.value,d.y));else if(f.FieldType==typeof(List<Vector2>) && d.points?.Length<=1000)f.SetValue(obj,d.points.ToList());
             }
         }
