@@ -135,12 +135,13 @@ namespace AshenCoast
             if(Interior){if(exit.bounds.Contains(point) && Vector2.Distance(game.body.position,exit.transform.position)<3.5f){LeaveHouse();return true;}return false;}
             if(!game.journey.IsCoast || game.magic.InPocket)return false;
             foreach(var p in people.Where(p=>p.Alive && p.Renderer.enabled))if(PixelAt(p.Renderer,point) && Vector2.Distance(game.body.position,p.Position)<3.5f)
-            {if(p.Hired && p.IsSlave)game.ui.OpenAllyWeaponV46(p);else if(!p.Hostile && !p.Hired && (p.Hunter || p.Slaver || p.WeaponMerchantV48))Offer=p;else return false;return true;}
+            {if(p.Hired)game.snails.AllyOffer=game.snails.Key(p.Renderer);else if(!p.Hostile && !p.Hired && (p.Hunter || p.Slaver || p.WeaponMerchantV48))Offer=p;else return false;return true;}
             foreach(var h in houses)if(h.sprite.bounds.Contains(point) && Vector2.Distance(game.body.position,h.entrance)<3.4f && doorWait<=0){EnterHouse(h);return true;}
             return false;
         }
         public bool Hire(VillageActorV46 person)
         {
+            if(game.snails.SelectHire(game.snails.Key(person.Renderer),()=>{if(!Hire(person))game.ui.Notice("Недостаточно монет");}))return true;
             if(game.CoopOnline && !game.coop.ApplyingNetwork)return game.coop.RequestHireV49(game.coop.world.Key(person.Renderer));
             if(person.Hired || !person.Alive || person.Hostile || !(person.Hunter || person.Captive) || !game.survivor.SpendCoins(1))return false;
             person.Hired=true;person.Captive=false;person.hostile=false;if(person.cage)person.cage.enabled=false;
@@ -152,6 +153,7 @@ namespace AshenCoast
         {if((game.CoopOnline?!game.coop.IsPlayer(source):source!=game.hero) || hit.Hired)return;EndTrainingV48();foreach(var p in people)if(!p.Hired && !p.IsSlave && p.Alive && Vector2.Distance(p.Position,hit.Position)<18){p.hostile=true;p.Aggressor=game.hero;}Offer=null;game.ui.CloseContainers();}
         public bool Enemy(ICombatTarget actor)
         {
+            if(actor is SnailHouseV50)return false;
             if(actor is VillageActorV46 villager)return villager.Hostile && !villager.Hired;
             if(actor is HeroCombatActor || actor is MageCombatActor || actor is PracticeTargetV46 || actor is BeachGull || actor is TavernResident resident && !game.journey.TavernAlarm)return false;
             if(actor is FrogActor)return game.arcane.frogs.Any(f=>f.renderer==actor.Renderer && f.Hostile);
@@ -159,7 +161,7 @@ namespace AshenCoast
         }
         public static bool Armored(ICombatTarget actor)=>actor is TavernResident resident && resident.Armored || actor is PlainBanditV48 plain && !plain.Archer || actor is FortBandit bandit && bandit.role==BanditRole.Warrior || actor is WoodlouseActor || actor is WormPart || actor is VillageActorV46 woman && !woman.IsSlave;
         public static float WeaponDamage(Item weapon,ICombatTarget target)=>weapon.Definition.damage*(weapon.kind==ItemKind.Axe && Armored(target)?1.2f:1);
-        public void WarpParty(Vector2 at){int i=0;foreach(var a in people.Where(a=>a.Hired && a.Alive && (!game.CoopOnline || game.coop.world.OwnAlly(a.Renderer)))){a.HoldPosition=false;a.Renderer.transform.SetParent(game.arcane.WorldRoot,true);a.Warp(at+new Vector2(-1.1f-i++*.5f,-.4f));}}
+        public void WarpParty(Vector2 at){int i=0;foreach(var a in people.Where(a=>a.Hired && a.Alive && !game.snails.Resting(a.Renderer) && !game.snails.Returning(a.Renderer) && (!game.CoopOnline || game.coop.world.OwnAlly(a.Renderer)))){a.HoldPosition=false;a.Renderer.transform.SetParent(game.arcane.WorldRoot,true);a.Warp(at+new Vector2(-1.1f-i++*.5f,-.4f));}}
         public void AreaChanged(){if(roomRoot)roomRoot.SetActive(Interior);if(Interior)game.cameraView.backgroundColor=new Color(.025f,.021f,.015f);WarpParty(game.body.position);}
     }
 }

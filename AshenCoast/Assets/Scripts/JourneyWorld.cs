@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace AshenCoast
 {
-    public enum WorldArea { Coast,GoldenField,Tavern,Fort,Catacombs,AmazonHouse }
+    public enum WorldArea { Coast,GoldenField,Tavern,Fort,Catacombs,AmazonHouse,SnailHouse }
     public static class WorldGrid
     {
         public const float CellSize=1;
@@ -27,7 +27,7 @@ namespace AshenCoast
         public bool Interior=>Area==WorldArea.Tavern;
         public bool InCatacombs=>Area==WorldArea.Catacombs;
         public bool InFort=>Area==WorldArea.Fort;
-        public Transform ActiveRoot=>Area==WorldArea.AmazonHouse?game.amazons.roomRoot.transform:InCatacombs?game.cave.root.transform:InFort?game.fort.root.transform:Interior?tavernRoot.transform:IsCoast?game.coastRoot.transform:fieldRoot.transform;
+        public Transform ActiveRoot=>Area==WorldArea.SnailHouse && game.snails.Inside>=0?game.snails.houses[game.snails.Inside].room.transform:Area==WorldArea.AmazonHouse?game.amazons.roomRoot.transform:InCatacombs?game.cave.root.transform:InFort?game.fort.root.transform:Interior?tavernRoot.transform:IsCoast?game.coastRoot.transform:fieldRoot.transform;
         public bool Cutscene=>ridePhase!=0;
         public int RidePhase=>ridePhase;
         public float BlackFade {get;private set;}
@@ -164,18 +164,19 @@ namespace AshenCoast
         void CreateGulls()
         {for(int i=0;i<4;i++){var p=new Vector2(10+i*1.4f,-3.7f+(i%2)*.4f);var s=Prop("Four winged beach gull",art.gulls[0,0],p,.9f,game.coastRoot.transform);s.enabled=false;gulls.Add(new BeachGull{sprite=s,home=p,point=p,phase=i*1.8f,state=4,age=18});}}
         public void SetVisibility(bool pocket)
-        {hidden=pocket;game.coastRoot.SetActive(!pocket && IsCoast);fieldRoot.SetActive(!pocket && Area==WorldArea.GoldenField);tavernRoot.SetActive(!pocket && Interior);if(game.fort!=null)game.fort.root.SetActive(!pocket && InFort);if(game.cave!=null)game.cave.root.SetActive(!pocket && InCatacombs);if(game.amazons!=null)game.amazons.roomRoot.SetActive(!pocket && Area==WorldArea.AmazonHouse);if(companion!=null)companion.sprite.gameObject.SetActive(companion.Hired);}
+        {hidden=pocket;game.snails?.Visibility(pocket);game.coastRoot.SetActive(!pocket && IsCoast);fieldRoot.SetActive(!pocket && Area==WorldArea.GoldenField);tavernRoot.SetActive(!pocket && Interior);if(game.fort!=null)game.fort.root.SetActive(!pocket && InFort);if(game.cave!=null)game.cave.root.SetActive(!pocket && InCatacombs);if(game.amazons!=null)game.amazons.roomRoot.SetActive(!pocket && Area==WorldArea.AmazonHouse);if(companion!=null)companion.sprite.gameObject.SetActive(companion.Hired);}
         public void SetArea(WorldArea area,Vector2 at)
         {
             if(game.CoopOnline)game.coop.PublishWorldV49();
+            if(area!=WorldArea.SnailHouse && game.snails!=null)game.snails.Inside=-1;
             Area=area;game.ui.CloseContainers();game.arcane.CancelHeldSkills();game.arcane.CancelPlacement();game.magic.CancelStroke();
             game.cameraView.backgroundColor=InFort || InCatacombs?new Color(.025f,.032f,.04f):Interior?new Color(.035f,.025f,.018f):new Color(.10f,.20f,.22f);
             SetVisibility(false);game.body.linearVelocity=Vector2.zero;game.body.position=at;game.hero.transform.position=at;doorCooldown=.8f;game.numbers.Clear();
             if(!Cutscene){game.cameraView.orthographicSize=Interior?6.25f:8;game.ResetCamera(new Vector3(at.x,Interior?.2f:at.y+2.2f,-20));}
-            if(companion!=null && companion.Hired && (!game.CoopOnline || game.coop.world.OwnAlly(companion.sprite))){if(companion.remoteArea.HasValue){companion.sprite.gameObject.SetActive(companion.remoteArea.Value==(MapRegion)(int)area);if(companion.remoteArea.Value==(MapRegion)(int)area){companion.remoteArea=null;companion.suppressCatchUp=false;}}else companion.Warp(at+new Vector2(-.8f,-.5f));}game.amazons?.AreaChanged();Physics2D.SyncTransforms();game.UpdateEnvironment(0);
+            if(companion!=null && companion.Hired && !game.snails.Resting(companion.sprite) && !game.snails.Returning(companion.sprite) && (!game.CoopOnline || game.coop.world.OwnAlly(companion.sprite))){if(companion.remoteArea.HasValue){companion.sprite.gameObject.SetActive(companion.remoteArea.Value==(MapRegion)(int)area);if(companion.remoteArea.Value==(MapRegion)(int)area){companion.remoteArea=null;companion.suppressCatchUp=false;}}else companion.Warp(at+new Vector2(-.8f,-.5f));}game.amazons?.AreaChanged();Physics2D.SyncTransforms();game.UpdateEnvironment(0);
         }
         public Vector2 Clamp(Vector2 p)
-        {if(Area==WorldArea.AmazonHouse)return game.amazons.ClampRoom(p);if(InCatacombs)return game.cave.Clamp(p);if(InFort)return game.fort.Clamp(p);if(Interior)return new Vector2(Mathf.Clamp(p.x,-6.65f,7.65f),Mathf.Clamp(p.y,-4.75f,4.75f));if(!IsCoast)return new Vector2(Mathf.Clamp(p.x,-28,28),Mathf.Clamp(p.y,-17,27));return p;}
+        {if(Area==WorldArea.SnailHouse)return game.snails.Clamp(p);if(Area==WorldArea.AmazonHouse)return game.amazons.ClampRoom(p);if(InCatacombs)return game.cave.Clamp(p);if(InFort)return game.fort.Clamp(p);if(Interior)return new Vector2(Mathf.Clamp(p.x,-6.65f,7.65f),Mathf.Clamp(p.y,-4.75f,4.75f));if(!IsCoast)return new Vector2(Mathf.Clamp(p.x,-28,28),Mathf.Clamp(p.y,-17,27));return p;}
         public bool CanInteractAt(Vector2 point)
         {
             if(hidden || Cutscene)return false;
@@ -205,7 +206,7 @@ namespace AshenCoast
             if(Hit(exitDoor,point)){SetArea(WorldArea.GoldenField,InnEntrance+Vector2.down*.8f);return true;}return false;
         }
         public bool HireMage()
-        {if(game.CoopOnline && !game.coop.ApplyingNetwork)return game.coop.RequestHireV49("mage");if(companion.Hired || !Interior || Vector2.Distance(game.body.position,drinker.position)>3 || !game.survivor.SpendCoins(4))return false;HireOffer=false;drinker.sprite.enabled=false;companion.Hire(drinker.position);game.PlayPickup();return true;}
+        {if(game.snails.SelectHire("mage",()=>{if(!HireMage())game.ui.Notice("Недостаточно монет");}))return true;if(game.CoopOnline && !game.coop.ApplyingNetwork)return game.coop.RequestHireV49("mage");if(companion.Hired || !Interior || Vector2.Distance(game.body.position,drinker.position)>3 || !game.survivor.SpendCoins(4))return false;HireOffer=false;drinker.sprite.enabled=false;companion.Hire(drinker.position);game.PlayPickup();return true;}
         public bool BeginRide()
         {
             if(Cutscene || hidden || Interior || !NearCart() || !CaravanReady)return false;
@@ -313,7 +314,7 @@ namespace AshenCoast
         void OnGUI()
         {if(BlackFade<=0)return;GUI.depth=-100;GUI.color=new Color(0,0,0,BlackFade);GUI.DrawTexture(new Rect(0,0,Screen.width,Screen.height),Texture2D.whiteTexture);GUI.color=Color.white;}
     }
-    public sealed class CompanionMage
+    public sealed partial class CompanionMage
     {
         public readonly SpriteRenderer sprite;
         public bool Hired {get;private set;}
@@ -345,7 +346,7 @@ namespace AshenCoast
         public void Engage(SpriteRenderer enemy){if(enemy && enemy.gameObject.activeInHierarchy){target=enemy;targetUntil=clock+12;}}
         public void Tick(float dt)
         {
-            if(!Hired || !Alive || world.Cutscene || game.spectrum!=null && game.spectrum.Riding || remoteArea.HasValue && remoteArea.Value!=game.map.CurrentRegion)return;clock+=dt;
+            if(game.snails!=null && (game.snails.Resting(sprite) || game.snails.Returning(sprite)))return;if(!Hired || !Alive || world.Cutscene || game.spectrum!=null && game.spectrum.Riding || remoteArea.HasValue && remoteArea.Value!=game.map.CurrentRegion)return;clock+=dt;
             if(target && (!target.enabled || !target.gameObject.activeInHierarchy || clock>targetUntil))target=null;
             if(!target && world.Interior && world.TavernAlarm)target=world.residents.Where(r=>r.Alive && !r.Flee && !r.Escaped).Select(r=>r.Renderer).FirstOrDefault();
             if(!target && world.InCatacombs)target=game.cave.Targets.Where(t=>t.Alive && Vector2.Distance(t.Position,Position)<8).Select(t=>t.Renderer).FirstOrDefault();

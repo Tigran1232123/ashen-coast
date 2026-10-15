@@ -32,7 +32,7 @@ namespace AshenCoast
         {
             foreach(var pair in allyOwners.ToArray())
             {
-                var b=Find(pair.Key);if(b==null)continue;if(!session.players.TryGetValue(pair.Value,out var player)){b.renders[0].gameObject.SetActive(b.region==session.Region);continue;}
+                var b=Find(pair.Key);if(b==null)continue;if(G.snails.Resting(b.renders[0]) || G.snails.Returning(b.renders[0]))continue;if(!session.players.TryGetValue(pair.Value,out var player)){b.renders[0].gameObject.SetActive(b.region==session.Region);continue;}
                 bool moved=!allyRegions.TryGetValue(pair.Key,out var previous) || previous!=player.region;
                 allyRegions[pair.Key]=b.region=player.region;
                 if(moved)

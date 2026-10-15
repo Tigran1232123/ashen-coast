@@ -160,10 +160,10 @@ namespace AshenCoast
         public bool CanLand(MapRegion region,Vector2 p)
         {
             if(region==MapRegion.Pocket && region!=game.map.CurrentRegion)return false;
-            bool walkable=region==MapRegion.AmazonHouse?game.amazons.RoomBounds.Contains(p):region==MapRegion.Coast?MeadowLayout.Walkable(p):region==MapRegion.Catacombs?CatacombLayout.Floor(p):region==MapRegion.Pocket?Mathf.Abs(p.x)<3.7f && Mathf.Abs(p.y)<3.7f:region==MapRegion.Fort?Vector2.Distance(p,game.fort.Clamp(p))<.01f:region==MapRegion.Tavern?p.x>-6.65f && p.x<7.65f && p.y>-4.75f && p.y<4.75f:p.x>-28 && p.x<28 && p.y>-17 && p.y<27;
+            bool walkable=region==MapRegion.SnailHouse?Vector2.Distance(p,game.snails.Clamp(p))<.01f:region==MapRegion.AmazonHouse?game.amazons.RoomBounds.Contains(p):region==MapRegion.Coast?MeadowLayout.Walkable(p):region==MapRegion.Catacombs?CatacombLayout.Floor(p):region==MapRegion.Pocket?Mathf.Abs(p.x)<3.7f && Mathf.Abs(p.y)<3.7f:region==MapRegion.Fort?Vector2.Distance(p,game.fort.Clamp(p))<.01f:region==MapRegion.Tavern?p.x>-6.65f && p.x<7.65f && p.y>-4.75f && p.y<4.75f:p.x>-28 && p.x<28 && p.y>-17 && p.y<27;
             if(!walkable)return false;
             if(region==game.map.CurrentRegion)return !Physics2D.OverlapCircleAll(p,.28f).Any(c=>!c.isTrigger && c.gameObject!=game.hero.gameObject);
-            var world=region==MapRegion.AmazonHouse?game.amazons.roomRoot.transform:region==MapRegion.Coast?game.coastRoot.transform:region==MapRegion.GoldenField?game.journey.fieldRoot.transform:region==MapRegion.Tavern?game.journey.tavernRoot.transform:region==MapRegion.Fort?game.fort.root.transform:game.cave.root.transform;
+            var world=region==MapRegion.SnailHouse && game.snails.Inside>=0?game.snails.houses[game.snails.Inside].room.transform:region==MapRegion.AmazonHouse?game.amazons.roomRoot.transform:region==MapRegion.Coast?game.coastRoot.transform:region==MapRegion.GoldenField?game.journey.fieldRoot.transform:region==MapRegion.Tavern?game.journey.tavernRoot.transform:region==MapRegion.Fort?game.fort.root.transform:game.cave.root.transform;
             foreach(var box in world.GetComponentsInChildren<BoxCollider2D>(true))if(!box.isTrigger && box.enabled){var q=(Vector2)box.transform.InverseTransformPoint(p)-box.offset;if(Mathf.Abs(q.x)<box.size.x*.5f+.28f && Mathf.Abs(q.y)<box.size.y*.5f+.28f)return false;}
             return true;
         }
@@ -173,7 +173,7 @@ namespace AshenCoast
         {
             var mage=game.journey.companion;var previousMage=mage.Position;var previousRegion=game.map.CurrentRegion;
             var previousParty=game.amazons!=null?game.amazons.Allies.Select(a=>new System.Collections.Generic.KeyValuePair<VillageActorV46,Vector2>(a,a.Position)).ToArray():new System.Collections.Generic.KeyValuePair<VillageActorV46,Vector2>[0];var previousRoot=game.arcane.WorldRoot;
-            if(region.HasValue && region.Value!=previousRegion){if(game.magic.InPocket)game.magic.ExitThroughDoor();game.journey.SetArea(region.Value==MapRegion.AmazonHouse?WorldArea.AmazonHouse:(WorldArea)(int)region.Value,point);if(!allies && mage.Hired){mage.remoteArea=previousRegion;mage.Warp(previousMage);mage.sprite.gameObject.SetActive(false);}}
+            if(region.HasValue && region.Value!=previousRegion){if(game.magic.InPocket)game.magic.ExitThroughDoor();game.journey.SetArea(region.Value==MapRegion.SnailHouse?WorldArea.SnailHouse:region.Value==MapRegion.AmazonHouse?WorldArea.AmazonHouse:(WorldArea)(int)region.Value,point);if(!allies && mage.Hired){mage.remoteArea=previousRegion;mage.Warp(previousMage);mage.sprite.gameObject.SetActive(false);}}
             game.ui.CloseContainers();game.arcane.CancelHeldSkills();game.body.linearVelocity=Vector2.zero;game.movement=Vector2.zero;game.body.position=point;game.hero.transform.position=point;game.rollers.Reset();
             if(game.journey.IsCoast)game.meadow.Refresh(point,true);
             if(allies){game.journey.companion.remoteArea=null;game.journey.companion.sprite.gameObject.SetActive(game.journey.companion.Hired);}

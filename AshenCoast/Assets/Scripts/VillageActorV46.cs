@@ -46,7 +46,7 @@ namespace AshenCoast
         }
         public void Tick(float dt)
         {
-            if(!Alive || !Renderer.gameObject.activeInHierarchy || Captive)return;
+            if(village.game.snails!=null && (village.game.snails.Resting(Renderer) || village.game.snails.Returning(Renderer)))return;if(!Alive || !Renderer.gameObject.activeInHierarchy || Captive)return;
             var game=village.game;clock+=dt;ready=Mathf.Max(0,ready-dt);
             if(game.spellcraft.ImmobilizedV44(Renderer)){attackAge=-1;Pose(false);return;}
             if(Hired && HoldPosition){if(Vector2.Distance(Position,game.body.position)>12)return;HoldPosition=false;}
@@ -81,7 +81,7 @@ namespace AshenCoast
             if(Weapon==null)return null;
             if(Hostile)
             {
-                var fighters=new List<ICombatTarget>{new HeroCombatActor(game)};fighters.AddRange(village.Allies);if(game.journey.companion.Hired && game.journey.companion.Alive)fighters.Add(new MageCombatActor(game.journey.companion));
+                var fighters=new List<ICombatTarget>{new HeroCombatActor(game)};fighters.AddRange(village.Allies);if(game.journey.IsCoast)fighters.AddRange(game.snails.houses.Where(h=>!h.Hidden));if(game.journey.companion.Hired && game.journey.companion.Alive)fighters.Add(new MageCombatActor(game.journey.companion));
                 return fighters.Where(f=>f.Alive && Vector2.Distance(f.Position,Position)<16).OrderBy(f=>Vector2.SqrMagnitude(f.Position-Position)).FirstOrDefault();
             }
             if(Hired || !IsSlave && !Slaver && !Hunter && !WeaponMerchantV48)return game.WorldCreatures.Where(f=>f.Alive && f.Renderer!=Renderer && (village.Enemy(f) && (Hired || !(f is VillageActorV46)) || HuntingV48 && f is WoodlouseActor && Vector2.Distance(f.Position,home)<24) && Vector2.Distance(f.Position,Position)<(HuntingV48?16:9)).OrderBy(f=>Vector2.SqrMagnitude(f.Position-Position)).FirstOrDefault();
@@ -153,9 +153,9 @@ namespace AshenCoast
                     if(!target.Alive || target.Renderer==a.source || target is PracticeTargetV46)continue;
                     bool hunts=a.source && people.Any(p=>p.Renderer==a.source && !p.Hostile && !p.Hired);
                     if(!a.practice && hunts && !(target is PlainBanditV48 || target is WoodlouseActor || Enemy(target) && !(target is VillageActorV46)))continue;
-                    if(!a.practice && !hunts && a.player && (target is HeroCombatActor || target is MageCombatActor || target is VillageActorV46 ally && ally.Hired))continue;
-                    if(!a.practice && !hunts && !a.player && !(target is HeroCombatActor || target is MageCombatActor || target is VillageActorV46 friendly && (friendly.Hired || a.source && plains.bandits.Any(b=>b.Renderer==a.source))))continue;
-                    var centre=(Vector2)target.Renderer.bounds.center;var segment=next-a.point;float t=segment.sqrMagnitude>0?Mathf.Clamp01(Vector2.Dot(centre-a.point,segment)/segment.sqrMagnitude):0;
+                    if(!a.practice && !hunts && a.player && (target is HeroCombatActor || target is MageCombatActor || target is SnailHouseV50 || target is VillageActorV46 ally && ally.Hired))continue;
+                    if(!a.practice && !hunts && !a.player && !(target is HeroCombatActor || target is MageCombatActor || target is SnailHouseV50 || target is VillageActorV46 friendly && (friendly.Hired || a.source && plains.bandits.Any(b=>b.Renderer==a.source))))continue;
+                    var centre=target is SnailHouseV50?target.Position+Vector2.up*.9f:(Vector2)target.Renderer.bounds.center;var segment=next-a.point;float t=segment.sqrMagnitude>0?Mathf.Clamp01(Vector2.Dot(centre-a.point,segment)/segment.sqrMagnitude):0;
                     if(Vector2.Distance(centre,a.point+segment*t)>.36f)continue;
                     if(a.practice)TrainingImpactV48(centre);else game.HurtTarget(target,20,a.source);remove=true;break;
                 }

@@ -1,4 +1,20 @@
-﻿# Контекст для продолжения «Берега обломков»
+﻿## V50: актуальное состояние — 15 октября 2026
+
+Готовая Windows-сборка: Windows-V50. Исходники: outputs/AshenCoast. Сетевой протокол и build greeting теперь 50. V49 и V50 в одной сессии несовместимы.
+
+Добавлены SnailHomesV50, SnailUIV50, SnailActorsV50, GroundItemsV50. Четыре живые улитки-дома выше начальной повозки; уютные комнаты и казармы. В начале выбирается плановое число игроков 1–4. Владение: 1 -> все четыре; 2 -> по две; 3 -> одна каждому и общая; 4 -> одна каждому. Казарма 10 мест, mage 3, amazon 2, captive 1; personal solo snail 0 capacity, co-op personal snail 10 capacity. Stable seats peers[4] назначаются при приветствии; общий дом допускает воинов разных владельцев, команды остаются личными. При найме сначала выбирается дом; хост атомарно проверяет доступ и остаток вместимости перед оплатой. Hire packet carries key|home, receive не меняет исходный packet перед broadcast.
+
+Snail state синхронизируется отдельным хостовым channel caravanState на всех областях: 1000 HP, regen 2/s, retraction 250 loss/5 seconds, hide 15 seconds. Occupied house защищён от retract и не умирает при находящемся внутри игроке. Глобальная колонна может двигаться даже когда ведущий в комнате; speed WalkSpeed*1.5. Карта command: LMB pan, RMB destination; all snails reveal map radius11. Z -> whistle lure2screens + global stop15s. Rooms persistent roots snail/0..3, WorldArea.SnailHouse, MapRegion.SnailHouse. При внешнем переходе из комнаты Inside очищается. Old enum casts adjusted for map spells. Дверь улитки -> вход, остальное тело -> карта. Кнопка призыва войск находится внутри комнаты.
+
+TroopState holds home/seat/resting/returning. Garrison authority host regardless occupied region, heals 8HP/s + mage10mana/s; these actors excluded from regional snapshots during rest/return. Returning follows persistent village routes to leave fences; moving replica pose comes from global state. Resting/returning allies bypass auto-follow/area warp. Host accepts remote world snapshots for health of actors in other regions. Mage portrait LMB routes explosion to owner-region simulator; snail portrait sends following troops home. Captive weapon editor retained through new ally offer.
+
+GroundItemsV50 centralizes final ground pivot/rotation/anchor and shadow size. All definitions inspected in a contact-sheet; special planted Spectrum and Zen preserved. Ground books retain designed aspect ratios. PNG atlas Furniture uses explicit rects because equal grid boundaries cut neighboring sprites.
+
+Validation: work/Verification-V50-polish 76 passed/0 failed; includes focused snail ownership/capacity/heal/retract/occupancy/move/whistle and every ground ItemKind. Visual PNGs of barracks, personal room, all ground items inspected. work/Verification-V50-LAN verified four stable seats, hire ownership/payment once, independent rooms, guest movement and whistle; its first rest test timed out because it moved a replica while the authoritative ally remained hundreds of units away. Separate targeted garrison test (all four processes passed) places the authoritative ally correctly and covers forbidden foreign commands, return/healing/recall; final folder Verification-V50-garrison-final verifies changed return logic. These checks are V50-only; unchanged prior tests were not rerun. Native Radmin two-PC connection still not tested. Do not close user games: no saves.
+
+BuildCurrent logs work/unity-build-v50-publish.log. No Prepare/full ModelChecks. Source and archive publishing: Tigran1232123/ashen-coast. Prior release v49 preserved. Work source repo is work/GitHub-Ashen-Coast, never the unrelated inherited home Git repo. See AGENTS.md for ongoing publication authorization.
+
+# Контекст для продолжения «Берега обломков»
 
 Состояние сохранено 15 октября 2026 года после выпуска V49. Это рабочая сводка предыдущего чата. Следующие сообщения пользователя определяют новые изменения и имеют приоритет над этой сводкой.
 

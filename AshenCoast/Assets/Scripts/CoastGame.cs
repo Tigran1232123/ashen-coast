@@ -132,7 +132,7 @@ namespace AshenCoast
         void Awake()
         {
             hoverBlock=new MaterialPropertyBlock();AutoPickup=PlayerPrefs.GetInt("AutoPickup",0)==1;
-            testMode=Environment.GetCommandLineArgs().Contains("-coast-test") || Environment.GetCommandLineArgs().Contains("-lan-native-check");
+            testMode=Environment.GetCommandLineArgs().Contains("-coast-test") || Environment.GetCommandLineArgs().Contains("-snail-check") || Environment.GetCommandLineArgs().Contains("-lan-native-check");
             Application.targetFrameRate = 60;
             QualitySettings.vSyncCount = 1;
             art=new ArtBank();newArt=new CoastArtV34(art);v43Art=new CoastArtV43(art); survivor=new Survivor(); shipStorage=CoastTime.CreateShipStorage();
@@ -166,8 +166,8 @@ namespace AshenCoast
             buildings=gameObject.AddComponent<BuildingSystem>();buildings.Initialize(this);
             meditation=new Meditation(this);
             v37Art=new CoastArtV37(art);v38Art=new CoastArtV38(art);CoastArtV43.ApplyBooks(art);v44Art=new CoastArtV44(art);v44=gameObject.AddComponent<CombatStatusV44>();v44.Initialize(this);spellcraft=gameObject.AddComponent<Spellcraft>();spellcraft.Initialize(this);spectrum=gameObject.AddComponent<SpectrumWeapon>();spectrum.Initialize(this);amazons=gameObject.AddComponent<AmazonSettlementV46>();amazons.Initialize(this);
-            coop=gameObject.AddComponent<CoopSessionV49>();coop.Initialize(this);
-            if(Environment.GetCommandLineArgs().Contains("-lan-native-check"))gameObject.AddComponent<LanNativeChecksV49>().game=this;else if(testMode)gameObject.AddComponent<RuntimeChecks>().game=this;
+            snails=gameObject.AddComponent<SnailHomesV50>();snails.Initialize(this);coop=gameObject.AddComponent<CoopSessionV49>();coop.Initialize(this);
+            if(Environment.GetCommandLineArgs().Contains("-snail-check"))gameObject.AddComponent<SnailChecksV50>().game=this;else if(Environment.GetCommandLineArgs().Contains("-lan-native-check"))gameObject.AddComponent<LanNativeChecksV49>().game=this;else if(testMode)gameObject.AddComponent<RuntimeChecks>().game=this;
         }
 
 
@@ -312,7 +312,7 @@ namespace AshenCoast
         }
         public bool CanCollectAt(Vector2 p)=>FlowerAt(p,true)!=null || loot.Any(l=>!l.collected && !l.InFlight && l.renderer.gameObject.activeInHierarchy && Vector2.Distance(hero.transform.position,l.position)<=1.85f && GroundPixelV45(l,p));
         public bool UseWorldRightClick(Vector2 point)
-        {var selected=interactions.At(point,out _);bool done=(amazons!=null && amazons.Interact(point)) || buildings.Interact(point) || OpenGroundVesselV43(point) || TryCollectLootAt(point) || TryCollectAt(point) || arcane.TryExplodeFire(point) || fort.Interact(point) || cave.Interact(point) || journey.Interact(point) || TryOpenShipAt(point);if(done){RightClickConsumedFrame=Time.frameCount;interactions.Pulse(selected);}return done;}
+        {var selected=interactions.At(point,out _);bool done=(snails!=null && snails.Interact(point)) || (snails!=null && snails.InteractAlly(point)) || (amazons!=null && amazons.Interact(point)) || buildings.Interact(point) || OpenGroundVesselV43(point) || TryCollectLootAt(point) || TryCollectAt(point) || arcane.TryExplodeFire(point) || fort.Interact(point) || cave.Interact(point) || journey.Interact(point) || TryOpenShipAt(point);if(done){RightClickConsumedFrame=Time.frameCount;interactions.Pulse(selected);}return done;}
         public void HighlightAt(Vector2? point)
         {
             string label=null;var target=point.HasValue?interactions.At(point.Value,out label):null;
@@ -369,7 +369,7 @@ namespace AshenCoast
                 drop.renderer.transform.position=at+Vector2.up*.045f;
                 var properties=new MaterialPropertyBlock();drop.renderer.GetPropertyBlock(properties);properties.SetFloat("_GroundCoin",1);drop.renderer.SetPropertyBlock(properties);
             }
-            drop.shadow=Shadow("Thrown item ground shadow",at,coin?new Vector2(.29f,.11f):new Vector2(.55f,.17f),coin?.18f:.27f);drop.shadow.transform.SetParent(arcane.WorldRoot,true);loot.Add(drop);
+            drop.shadow=Shadow("Thrown item ground shadow",at,coin?new Vector2(.29f,.11f):new Vector2(.55f,.17f),coin?.18f:.27f);drop.shadow.transform.SetParent(arcane.WorldRoot,true);loot.Add(drop);if(!thrown)PoseGroundItemV50(drop);
             if(CoopOnline && !coop.ApplyingNetwork)coop.inventory.Action(new LanWorldActionV49{kind="drop",key=drop.netIdV49,region=coop.Region,item=LanItemV49.Capture(item),x=at.x,y=at.y});if(thrown)TickLoot(0);return drop;
         }
         public GroundLoot ThrowItem(Item item,Vector2 target)
@@ -409,7 +409,7 @@ namespace AshenCoast
                 l.shadow.transform.position=Vector2.Lerp(l.thrownFrom-new Vector2(0,.8f),l.position,t);l.shadow.color=new Color(.04f,.04f,.03f,.10f+.17f*t);
             }
             if(spectrum!=null)foreach(var l in loot)spectrum.PoseGroundLoot(l,dt);
-            foreach(var l in loot)PoseGroundZenV44(l);
+            foreach(var l in loot){PoseGroundItemV50(l);PoseGroundZenV44(l);}
             foreach(var l in loot)if(l.cloth){l.cloth.enabled=!l.collected && !l.InFlight;if(!l.InFlight){l.renderer.sortingOrder=Depth(l.renderer.bounds.min.y);l.cloth.sortingOrder=l.renderer.sortingOrder-1;}}
         }
         public bool CollectLoot(GroundLoot drop)

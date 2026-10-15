@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace AshenCoast
 {
-    public enum MapRegion { Coast, GoldenField, Tavern, Fort, Catacombs, Pocket, AmazonHouse }
+    public enum MapRegion { Coast, GoldenField, Tavern, Fort, Catacombs, Pocket, AmazonHouse, SnailHouse }
 
     public sealed class ExploredRegion
     {
@@ -88,7 +88,7 @@ namespace AshenCoast
         public CoastGame game;
         public bool Open {get;private set;}
         public MapRegion Region {get;private set;}
-        public readonly ExploredRegion[] regions=new ExploredRegion[7];
+        public readonly ExploredRegion[] regions=new ExploredRegion[8];
         public Vector2 Centre {get;private set;}
         public float Zoom {get;private set;}=12;
         public Rect Panel {get;private set;}
@@ -100,7 +100,7 @@ namespace AshenCoast
         GUIStyle text,small,title,centered;
         Font font;
         readonly Color ink=new Color(.86f,.81f,.65f),gold=new Color(.57f,.48f,.29f);
-        public MapRegion CurrentRegion => game.magic.InPocket?MapRegion.Pocket:game.journey.Area==WorldArea.AmazonHouse?MapRegion.AmazonHouse:(MapRegion)((int)game.journey.Area);
+        public MapRegion CurrentRegion => game.snails!=null && game.journey.Area==WorldArea.SnailHouse && game.snails.Inside>=0 && !game.magic.InPocket?MapRegion.SnailHouse: game.magic.InPocket?MapRegion.Pocket:game.journey.Area==WorldArea.AmazonHouse?MapRegion.AmazonHouse:(MapRegion)((int)game.journey.Area);
         public void Initialize(CoastGame owner)
         {
             game=owner;int seed=game.meadow.Seed;
@@ -111,7 +111,7 @@ namespace AshenCoast
             regions[4]=new ExploredRegion(MapRegion.Catacombs,CatacombLayout.Bounds,.5f,seed);
             regions[5]=new ExploredRegion(MapRegion.Pocket,new Rect(-4.5f,-4.5f,9,11),.25f,seed);
             regions[6]=new ExploredRegion(MapRegion.AmazonHouse,new Rect(-9,-7,18,14),.25f,seed);
-            RecordVisit();
+            regions[7]=new ExploredRegion(MapRegion.SnailHouse,new Rect(-4.5f,-4.5f,9,9),.25f,seed);RecordVisit();
         }
         public void RecordVisit()
         {
@@ -131,7 +131,7 @@ namespace AshenCoast
                 RecordVisit();game.ui.CloseContainers();game.journey.HireOffer=false;game.magic.CancelStroke();game.arcane.CancelPlacement();game.arcane.CancelHeldSkills();game.HighlightAt(null);
                 Region=CurrentRegion;Centre=game.body.position;Zoom=Region==MapRegion.Coast?12:Region==MapRegion.GoldenField?12:38;
             }
-            if(!value)TravelSelection=false;
+            if(!value){TravelSelection=false;SnailCommandV50=false;}
             Open=value;game.paused=value && !game.CoopOnline;Time.timeScale=value && !game.CoopOnline?0:1;panning=false;
             game.body.linearVelocity=Vector2.zero;game.movement=Vector2.zero;Cursor.visible=true;
             return true;
@@ -166,7 +166,7 @@ namespace AshenCoast
             if(Event.current.type!=EventType.MouseDown || Event.current.button!=0 || !r.Contains(mouse))return false;
             Event.current.Use();return true;
         }
-        string RegionName(MapRegion area)=>area==MapRegion.AmazonHouse?"Дома Крылатого стана":area==MapRegion.Coast?"Цветочный берег":area==MapRegion.GoldenField?"Золотое поле":area==MapRegion.Tavern?"Таверна":area==MapRegion.Fort?"Разрушенный форт":area==MapRegion.Catacombs?"Катакомбы":"Карманное измерение";
+        string RegionName(MapRegion area)=>area==MapRegion.SnailHouse?"Улитка "+(game.snails.Inside+1):area==MapRegion.AmazonHouse?"Дома Крылатого стана":area==MapRegion.Coast?"Цветочный берег":area==MapRegion.GoldenField?"Золотое поле":area==MapRegion.Tavern?"Таверна":area==MapRegion.Fort?"Разрушенный форт":area==MapRegion.Catacombs?"Катакомбы":"Карманное измерение";
         public Vector2 MapPoint(Vector2 world)=>new Vector2(Plot.width/2+(world.x-Centre.x)*Zoom,Plot.height/2-(world.y-Centre.y)*Zoom);
         void Landmark(Vector2 at,string glyph,string name,Color color,bool always=false)
         {
@@ -229,7 +229,7 @@ namespace AshenCoast
                 if(p.x>0 && p.x<Plot.width && p.y>0 && p.y<Plot.height)
                 {Fill(new Rect(p.x-7,p.y-7,14,14),new Color(.16f,.20f,.19f));Border(new Rect(p.x-7,p.y-7,14,14),ink);Fill(new Rect(p.x-3,p.y-3,6,6),new Color(.92f,.76f,.37f));}
             }
-            DrawTravelRadius();
+            DrawSnailMapV50();DrawTravelRadius();
             GUI.EndGroup();
             float bottom=Plot.yMax+14;
             if(Button(new Rect(Plot.x,bottom,42,34),"−"))ChangeZoom(1/1.35f,Vector2.zero);

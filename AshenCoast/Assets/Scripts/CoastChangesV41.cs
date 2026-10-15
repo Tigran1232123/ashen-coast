@@ -79,6 +79,7 @@ namespace AshenCoast
             {
                 if(e.type==EventType.ScrollWheel){ChangeZoom(Mathf.Pow(1.18f,-e.delta.y),e.mousePosition-Plot.center);e.Use();}
                 if(e.type==EventType.MouseDown && e.button==0){panning=true;e.Use();}
+                if(e.type==EventType.MouseDown && e.button==1 && SnailCommandV50){SelectSnailV50(e.mousePosition);game.RightClickConsumedFrame=Time.frameCount;e.Use();}
                 if(e.type==EventType.MouseDown && e.button==1 && TravelSelection){SelectTravel(e.mousePosition);game.RightClickConsumedFrame=Time.frameCount;e.Use();}
             }
             if(e.type==EventType.MouseDrag && e.button==0 && panning){Pan(e.delta);e.Use();}

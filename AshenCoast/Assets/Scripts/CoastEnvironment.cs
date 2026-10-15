@@ -37,7 +37,7 @@ namespace AshenCoast
                 }
             }
             ambient=Color.Lerp(ambient,new Color(1.7f,1.8f,2),game.flash*.65f);
-            if(game.journey!=null && (game.journey.Interior || game.journey.Area==WorldArea.AmazonHouse))ambient=new Color(.72f,.65f,.52f);
+            if(game.journey!=null && (game.journey.Interior || game.journey.Area==WorldArea.AmazonHouse || game.journey.Area==WorldArea.SnailHouse))ambient=new Color(.72f,.65f,.52f);
             if(game.journey.InCatacombs)ambient=new Color(.42f,.42f,.48f);
             if(game.journey.InFort)ambient=new Color(.36f,.39f,.43f);
             Shader.SetGlobalColor("_CoastAmbient",ambient); Shader.SetGlobalFloat("_CoastClock",game.seconds);

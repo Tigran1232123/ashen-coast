@@ -57,7 +57,7 @@ namespace AshenCoast
             var candidates=new List<ICombatTarget>{new HeroCombatActor(town.game)};
             candidates.AddRange(town.people.Where(p=>p.Alive && !p.Captive && p.Renderer.gameObject.activeInHierarchy && (!p.IsSlave || p.Hired)));
             if(town.game.journey.companion.Hired && town.game.journey.companion.Alive)candidates.Add(new MageCombatActor(town.game.journey.companion));
-            victim=candidates.Where(t=>t.Alive && Vector2.Distance(Position,t.Position)<18).OrderBy(t=>(t.Position-Position).sqrMagnitude).FirstOrDefault();
+            candidates.AddRange(town.game.snails.houses.Where(h=>!h.Hidden));victim=candidates.Where(t=>t.Alive && Vector2.Distance(Position,t.Position)<18).OrderBy(t=>(t.Position-Position).sqrMagnitude).FirstOrDefault();
             var destination=home+new Vector2(Mathf.Sin(clock*.08f)*3,Mathf.Cos(clock*.10f)*2);
             if(victim!=null)
             {var delta=victim.Position-Position;aim=delta.normalized;float reach=Archer?8:1.8f;if(delta.magnitude<=reach && ready<=0 && !town.game.WorldBlocked(Position,victim.Position,.05f)){attack=0;delivered=false;ready=Archer?1.3f:1.05f;town.game.PlaySwish();}else if(delta.magnitude>reach*.85f)destination=victim.Position-aim*reach*.7f;else destination=Position;}

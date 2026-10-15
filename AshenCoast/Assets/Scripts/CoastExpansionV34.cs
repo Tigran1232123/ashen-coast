@@ -56,7 +56,7 @@ namespace AshenCoast
             {
                 yield return new HeroCombatActor(this);if(CoopOnline){if(coop.Context!=null)yield return new HeroCombatActor(this,true);foreach(var peer in coop.remote.Values)if(peer.Alive && peer.State.region==coop.Region && peer!=coop.Context)yield return peer;}if(amazons!=null)foreach(var ally in amazons.Allies)yield return ally;if(journey.companion.Hired && journey.companion.Alive)yield return new MageCombatActor(journey.companion);
                 foreach(var actor in AdditionalTargets.ToArray())if(actor.Alive && actor.Renderer.enabled && actor.Renderer.gameObject.activeInHierarchy)yield return actor;
-                if(journey.IsCoast && !magic.InPocket){foreach(var m in woodlice)if(m.vitals.Alive)yield return new WoodlouseActor(m);foreach(var f in arcane.frogs)if(f.Alive)yield return new FrogActor(f);}
+                if(journey.IsCoast && !magic.InPocket){if(snails!=null)foreach(var h in snails.houses.Where(s=>!s.Hidden))yield return h;foreach(var m in woodlice)if(m.vitals.Alive)yield return new WoodlouseActor(m);foreach(var f in arcane.frogs)if(f.Alive)yield return new FrogActor(f);}
             }
         }
         public int RoosterImpactSounds {get;private set;}

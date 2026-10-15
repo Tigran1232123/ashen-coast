@@ -41,6 +41,7 @@ namespace AshenCoast
         {
             var item=drop.item;var r=drop.renderer;var kind=item.kind;
             if(kind==ItemKind.Spectrum)return;
+            if(item.Definition.Book){CoastArtV41.SizeGroundBook(drop);return;}
             if(kind==ItemKind.Zen){r.sprite=v44Art.zenPlanted;r.sharedMaterial=v44Art.zenMaterial;r.transform.localScale=Vector3.one*(Combat.WeaponLengthV44(kind)/r.sprite.bounds.size.y);PoseGroundZenV44(drop);return;}
             if(kind==ItemKind.Lamp || kind==ItemKind.LastPrism){float width=kind==ItemKind.Lamp?.58f:.46f*ArtBank.PrismVisualScale;r.transform.localScale=Vector3.one*(width/r.sprite.bounds.size.x);return;}
             float size=item.Definition.Melee?Combat.WeaponLengthV44(kind):NaturalGroundSizeV44(item);
@@ -71,7 +72,7 @@ namespace AshenCoast
                 case ItemKind.CraftingTable:return 1.8f;
                 case ItemKind.Anvil:return 1.05f;
                 case ItemKind.Campfire:return 1.1f;
-                default:return 0;
+                default:return MissingGroundSizeV50(item);
             }
         }
         public void PoseGroundZenV44(GroundLoot drop)

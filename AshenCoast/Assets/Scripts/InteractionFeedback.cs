@@ -28,6 +28,7 @@ namespace AshenCoast
         public Renderer At(Vector2 point,out string name)
         {
             name=null;
+            if(game.snails!=null){var snail=game.snails.Interaction(point,out name);if(snail)return snail;}
             if(game.amazons!=null){var village=game.amazons.InteractionAt(point,out name);if(village)return village;}
             var station=game.buildings?.At(point);if(station!=null){name=station.inventory.name+"";return station.renderer;}
             foreach(var drop in game.loot)if(!drop.collected && !drop.InFlight && drop.renderer.gameObject.activeInHierarchy && game.GroundPixelV45(drop,point)){name=drop.item.Definition.name;return drop.renderer;}

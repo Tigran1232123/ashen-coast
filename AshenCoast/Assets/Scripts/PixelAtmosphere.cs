@@ -45,7 +45,7 @@ namespace AshenCoast
             bool outdoors=!pocket && (game==null || game.journey==null || game.journey.IsCoast || game.journey.Area==WorldArea.GoldenField);
             atmosphere.SetFloat("_Fog",outdoors?CoastTime.Fog(t):0); atmosphere.SetFloat("_Rain",coast?CoastTime.Rain(t):0);
             atmosphere.SetFloat("_Flash",game ? game.flash : 0); atmosphere.SetFloat("_Clock",t);
-            atmosphere.SetFloat("_Night",pocket || (game && game.journey && (game.journey.Interior || game.journey.InFort || game.journey.InCatacombs || game.journey.Area==WorldArea.AmazonHouse))?0:1-CoastTime.Daylight(game?game.DaySeconds:t));
+            atmosphere.SetFloat("_Night",pocket || (game && game.journey && (game.journey.Interior || game.journey.InFort || game.journey.InCatacombs || game.journey.Area==WorldArea.AmazonHouse || game.journey.Area==WorldArea.SnailHouse))?0:1-CoastTime.Daylight(game?game.DaySeconds:t));
             atmosphere.SetFloat("_Meditation",(game?.meditation?.Blend??0)*.16f);
             atmosphere.SetFloat("_BattleHeat",battleHeat*.15f);atmosphere.SetFloat("_EffectClock",Time.time);
             int zenCount=game?game.GroundZenWellsV45(zenWellsV45,view.transform.position):0;

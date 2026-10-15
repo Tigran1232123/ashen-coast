@@ -42,7 +42,7 @@ namespace AshenCoast
         public float WorldFraction=>!open?1:vendorOpen?1f/3:Mathf.Clamp((stationOpen!=null?StationPanel.x:shipOpen?ShipPanel.x:bagOpen?BagPanel.x:skatesOpen?SkatesPanel.x:PanelX)/CanvasWidth,.20f,1);
         public bool Dragging => dragItem!=null;
         public Item DraggedItem=>dragItem;
-        public bool IsPointerOver => (game.coop!=null && (game.coop.MenuOpen || game.coop.LocalPaused)) || (game.amazons!=null && game.amazons.Offer!=null) || (open && AllyPanelOpenV46 && AllyPanelV46.Contains(Pointer)) ||  (game.survivor.Books.Any(b=>b.opened) && SpellBar.Contains(Pointer)) || (open && bookSelected!=null && BookPanel.Contains(Pointer)) || (game.map!=null && game.map.Open) || (game.journey!=null && (game.journey.HireOffer || (game.journey.companion.Hired && MageHUD.Contains(Pointer)))) || open && (Pointer.x>=PanelX || (skatesOpen && SkatesPanel.Contains(Pointer)) || (stationOpen!=null && StationPanel.Contains(Pointer)) || (vendorOpen && VendorPanel.Contains(Pointer)) || (bagOpen && BagPanel.Contains(Pointer)) || (shipOpen && ShipPanel.Contains(Pointer)));
+        public bool IsPointerOver => OverSnailV50 ||  (game.coop!=null && (game.coop.MenuOpen || game.coop.LocalPaused)) || (game.amazons!=null && game.amazons.Offer!=null) || (open && AllyPanelOpenV46 && AllyPanelV46.Contains(Pointer)) ||  (game.survivor.Books.Any(b=>b.opened) && SpellBar.Contains(Pointer)) || (open && bookSelected!=null && BookPanel.Contains(Pointer)) || (game.map!=null && game.map.Open) || (game.journey!=null && (game.journey.HireOffer || (game.snails==null && game.journey.companion.Hired && MageHUD.Contains(Pointer)))) || open && (Pointer.x>=PanelX || (skatesOpen && SkatesPanel.Contains(Pointer)) || (stationOpen!=null && StationPanel.Contains(Pointer)) || (vendorOpen && VendorPanel.Contains(Pointer)) || (bagOpen && BagPanel.Contains(Pointer)) || (shipOpen && ShipPanel.Contains(Pointer)));
         public readonly List<GridView> grids = new List<GridView>();
         public readonly List<Rect> actorLabelBounds=new List<Rect>();
         readonly Rect[] gearRects=new Rect[8];
@@ -138,12 +138,11 @@ namespace AshenCoast
             if(stationOpen!=null && (!stationOpen.world || !stationOpen.world.gameObject.activeInHierarchy || Vector2.Distance(game.body.position,stationOpen.Position)>3.5f)){CloseStation();Cancel();}
             if(vendorOpen && !VendorReachableV46){vendorOpen=false;Cancel();}
             hoverItem=null;
-            DrawHUD(); DrawWorldLabels();
-            DrawMageHUD();
+            if(game.snails.SetupOpen){DrawSnailsV50();GUI.matrix=original;return;}DrawHUD(); DrawWorldLabels();
             if(open) DrawPanel();
             else grids.Clear();
             DrawBooks();DrawAmazonUIV46();
-            if((open || Dragging || SpellBar.Contains(Pointer)) && !game.paused)
+            if((open || Dragging || SpellBar.Contains(Pointer)) && !game.paused && !game.snails.Choosing && game.snails.AllyOffer==null)
             {
                 if(queuedEvent!=null && Event.current.type==EventType.Repaint){ProcessInteractions(queuedEvent);queuedEvent=null;}
                 else ProcessInteractions(Event.current);
@@ -158,7 +157,7 @@ namespace AshenCoast
             if(game.Dead && !game.paused)DrawDeath();
             if(game.LocalMenuPausedV49) DrawPause();
             else if(game.journey.HireOffer)DrawHireOffer();
-            DrawCoopUIV49();
+            DrawCoopUIV49();DrawSnailsV50();
             GUI.matrix=original;
         }
         void DrawHUD()

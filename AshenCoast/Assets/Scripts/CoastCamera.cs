@@ -17,7 +17,7 @@ namespace AshenCoast
             float visible=game.ui.WorldFraction;
             if(game.magic.InPocket)
                 game.cameraView.orthographicSize=Mathf.Max(7.8f,6.4f/(game.cameraView.aspect*visible));
-            else if(game.journey.Interior)game.cameraView.orthographicSize=6.25f;else if(!game.journey.IsCoast)game.cameraView.orthographicSize=8;
+            else if(game.journey.Area==WorldArea.SnailHouse)game.cameraView.orthographicSize=5.25f;else if(game.journey.Interior)game.cameraView.orthographicSize=6.25f;else if(!game.journey.IsCoast)game.cameraView.orthographicSize=8;
             if(game.hunter!=null && game.hunter.Active && game.hunter.HeldBack && Vector2.Distance(game.hunter.Position,game.body.position)<12)game.cameraView.orthographicSize=9;
             if(game.testMode && game.checkCameraSize.HasValue)game.cameraView.orthographicSize=game.checkCameraSize.Value;
             bool fortView=game.journey.InFort && !game.magic.InPocket && !(game.testMode && (game.checkCameraSize.HasValue || game.checkCameraPosition.HasValue));
@@ -26,7 +26,7 @@ namespace AshenCoast
             float width=game.cameraView.orthographicSize*2*game.cameraView.aspect;
             float startBias=game.magic.InPocket?0:-.4f*Mathf.Clamp01(1-Vector2.Distance(game.hero.transform.position,new Vector2(-1.5f,-1.65f))/10);
             float offset=game.ui.vendorOpen?0:width*(1-visible)/2;
-            var target=game.magic.InPocket?new Vector3(offset,.65f,-20):game.journey.Interior?new Vector3(.5f+offset,.35f,-20):game.hero.transform.position+new Vector3(game.ui.open?offset:startBias,2.2f,-20);
+            var target=game.journey.Area==WorldArea.SnailHouse && !game.magic.InPocket?new Vector3(offset,.4f,-20):game.magic.InPocket?new Vector3(offset,.65f,-20):game.journey.Interior?new Vector3(.5f+offset,.35f,-20):game.hero.transform.position+new Vector3(game.ui.open?offset:startBias,2.2f,-20);
             if(game.hunter!=null && game.hunter.Active && game.hunter.HeldBack && Vector2.Distance(game.hunter.Position,game.body.position)<12)target+=(Vector3)(game.hunter.Position-game.body.position)*.6f;
             if(game.testMode && game.checkCameraPosition.HasValue)target=game.checkCameraPosition.Value;
             target.z=-20;
