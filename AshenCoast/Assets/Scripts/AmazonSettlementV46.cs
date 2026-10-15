@@ -155,7 +155,7 @@ namespace AshenCoast
         {
             if(actor is SnailHouseV50)return false;
             if(actor is VillageActorV46 villager)return villager.Hostile && !villager.Hired;
-            if(actor is HeroCombatActor || actor is MageCombatActor || actor is PracticeTargetV46 || actor is BeachGull || actor is TavernResident resident && !game.journey.TavernAlarm)return false;
+            if(actor is HeroCombatActor || actor is MageCombatActor || actor is PracticeTargetV46 || actor is BeachGull || actor is TavernResident resident && (!game.journey.TavernAlarm || resident.peacefulV53))return false;
             if(actor is FrogActor)return game.arcane.frogs.Any(f=>f.renderer==actor.Renderer && f.Hostile);
             return actor.Alive && (game.PlayerStruck.Contains(actor.Renderer) || actor is PlainBanditV48 || actor is FortBandit || actor is CaveSpider || actor is WormPart || actor is NightHunter || actor is RoosterDragon);
         }

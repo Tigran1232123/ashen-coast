@@ -77,7 +77,7 @@ namespace AshenCoast
                 }
             }
             var frogSheet=Load("FrogMageV9");
-            for(int row=0;row<4;row++)for(int col=0;col<8;col++)frog[row,col]=RegisteredCell(frogSheet,col,row,8,4,1.35f);
+            for(int row=0;row<4;row++)for(int col=0;col<8;col++)frog[row,col]=RegisteredCell(frogSheet,col,row,8,4,1.0f);
             var newItems=Load("ItemsV8");
             int[] itemOrder={20,21,22,23,24,25,26,27};
             for(int i=0;i<8;i++)icons[itemOrder[i]]=Slice(newItems,new RectInt(i%4*newItems.width/4,i/4*newItems.height/2,newItems.width/4,newItems.height/2),Vector2.one*.5f,240);
@@ -247,6 +247,7 @@ namespace AshenCoast
 
         public Vector2 HandAnchor(Sprite sprite,bool right)
         {
+            if(sprite.texture.name.StartsWith("FrogHeroV51"))return new Vector2(right?.20f:-.20f,.48f);
             if(!hands.TryGetValue(sprite,out var pair))
             {
                 pair=new Vector2[2];var r=sprite.rect;var data=pixels[sprite.texture];

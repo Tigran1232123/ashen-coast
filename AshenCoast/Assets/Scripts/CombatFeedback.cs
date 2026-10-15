@@ -26,10 +26,11 @@ namespace AshenCoast
         public void Hit(SpriteRenderer actor,float damage,bool player=false,bool shell=false)
         {
             if(damage<=0 || !actor)return;hits[actor]=Time.unscaledTime;struck.Add(actor);
+            if(!player && (!actor.gameObject.activeInHierarchy || !actor.transform.IsChildOf(game.arcane.WorldRoot) || Vector2.Distance(game.coop.LocalBody.position,actor.transform.position)>17))return;
             var source=voices[voice];voice=(voice+1)%voices.Length;source.Stop();
             bool prism=!player && game.prism!=null && game.prism.ApplyingDamage;
             source.clip=prism?game.prism.Audio.Impact:player?PlayerImpact:shell?ShellImpact:MobImpact;source.pitch=.94f+.035f*(voice%4);
-            float distance=Vector2.Distance(game.body.position,actor.transform.position);source.volume=player?.60f:Mathf.Lerp(.46f,.10f,Mathf.Clamp01(distance/15));source.Play();
+            float distance=Vector2.Distance(game.coop.LocalBody.position,actor.transform.position);source.volume=player?.60f:Mathf.Lerp(.46f,.10f,Mathf.Clamp01(distance/15));source.Play();
             if(player)PlayerHits++;else MobHits++;
         }
         static AudioClip Make(string name,int kind)

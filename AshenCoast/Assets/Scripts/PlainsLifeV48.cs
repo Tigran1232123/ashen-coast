@@ -31,12 +31,12 @@ namespace AshenCoast
     {
         readonly AmazonSettlementV46 town;readonly Vector2 home;readonly SpriteRenderer shadow;
         public SpriteRenderer Renderer{get;}public Vector2 Position=>(Vector2)Renderer.transform.position;public float health=100;public bool Alive=>health>0;public readonly bool Archer;
-        float clock,step,ready,attack=-1;bool delivered;Vector2 aim=Vector2.left,velocity;ICombatTarget victim;
+        public PixelGait gaitV53;float clock,step,ready,attack=-1;bool delivered;Vector2 aim=Vector2.left,velocity;ICombatTarget victim;
         public bool Attacking=>attack>=0;
         public PlainBanditV48(AmazonSettlementV46 village,Vector2 at,bool archer)
         {
             town=village;home=at;Archer=archer;Renderer=town.game.art.Renderer(archer?"Разбойник-лучник":"Разбойник-мечник",town.game.fort.art.bandits[archer?1:0,0],at,CoastGame.Depth(at.y));Renderer.transform.SetParent(town.game.coastRoot.transform,true);
-            shadow=town.game.Shadow("Plains bandit shadow",at,new Vector2(.68f,.22f),.27f);shadow.transform.SetParent(Renderer.transform,true);Pose(false);
+            shadow=town.game.Shadow("Plains bandit shadow",at,new Vector2(.68f,.22f),.27f);shadow.transform.SetParent(Renderer.transform,true);gaitV53=PixelGait.ForHumanoidV53(town.game.art,Renderer,.42f);Pose(false);
         }
         public float Hurt(float amount)
         {
@@ -60,14 +60,14 @@ namespace AshenCoast
             candidates.AddRange(town.game.snails.houses.Where(h=>!h.Hidden));victim=candidates.Where(t=>t.Alive && Vector2.Distance(Position,t.Position)<18).OrderBy(t=>(t.Position-Position).sqrMagnitude).FirstOrDefault();
             var destination=home+new Vector2(Mathf.Sin(clock*.08f)*3,Mathf.Cos(clock*.10f)*2);
             if(victim!=null)
-            {var delta=victim.Position-Position;aim=delta.normalized;float reach=Archer?8:1.8f;if(delta.magnitude<=reach && ready<=0 && !town.game.WorldBlocked(Position,victim.Position,.05f)){attack=0;delivered=false;ready=Archer?1.3f:1.05f;town.game.PlaySwish();}else if(delta.magnitude>reach*.85f)destination=victim.Position-aim*reach*.7f;else destination=Position;}
+            {var delta=victim.Position-Position;aim=delta.normalized;float reach=Archer?8:1.8f;if(delta.magnitude<=reach && ready<=0 && !town.game.WorldBlocked(Position,victim.Position,.05f)){attack=0;delivered=false;ready=Archer?1.3f:1.05f;town.game.WorldSwishV53(Renderer);}else if(delta.magnitude>reach*.85f)destination=victim.Position-aim*reach*.7f;else destination=Position;}
             var direction=destination-Position;velocity=Vector2.MoveTowards(velocity,direction.magnitude>.2f?direction.normalized*(victim!=null?3:1.6f):Vector2.zero,dt*12);
             var move=Vector2.ClampMagnitude(velocity*dt,direction.magnitude);if(town.game.WorldBlocked(Position,Position+move,.25f))move=Vector2.zero;Renderer.transform.position+=(Vector3)move;step+=move.magnitude;if(move.sqrMagnitude>.000001f && victim==null)aim=move.normalized;Pose(move.sqrMagnitude>.000001f);
         }
         void Pose(bool walking)
         {
             int role=Archer?1:0;Renderer.sprite=attack>=0?town.game.fort.art.attacks[role,Mathf.Min(7,(int)(attack/.4f*8))]:town.game.fort.art.bandits[role,walking?(int)(step*4)%8:0];
-            if(Mathf.Abs(aim.x)>.25f)Renderer.flipX=aim.x<0;Renderer.sortingOrder=CoastGame.Depth(Position.y);town.game.art.PixelStyle(Renderer);shadow.transform.position=Position;
+            if(Mathf.Abs(aim.x)>.25f)Renderer.flipX=aim.x<0;Renderer.sortingOrder=CoastGame.Depth(Position.y);town.game.art.PixelStyle(Renderer);shadow.transform.position=Position;gaitV53.PoseSideV53(step/1.5f,walking,aim);
         }
     }
 }

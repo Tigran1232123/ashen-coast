@@ -60,7 +60,7 @@ namespace AshenCoast
             if(!Alive)world.game.DropMeat(Position);return applied;
         }
     }
-    public sealed class CaravanDriver : ICombatTarget
+    public sealed partial class CaravanDriver : ICombatTarget
     {
         public const float MaximumHealth=100;
         public float health=MaximumHealth;
@@ -76,7 +76,7 @@ namespace AshenCoast
         int view,frame;
         public CaravanDriver(JourneyWorld owner,SpriteRenderer sprite)
         {
-            world=owner;Renderer=sprite;feet=sprite.gameObject.AddComponent<CircleCollider2D>();feet.radius=.22f;feet.offset=Vector2.up*.13f;feet.enabled=false;
+            world=owner;Renderer=sprite;gaitV53=PixelGait.ForHumanoidV53(world.game.art,Renderer,.43f,world.art.driverRun[0,0]);feet=sprite.gameObject.AddComponent<CircleCollider2D>();feet.radius=.22f;feet.offset=Vector2.up*.13f;feet.enabled=false;
             shadow=world.game.Shadow("Fleeing driver shadow",Position,new Vector2(.5f,.18f),.3f);shadow.transform.SetParent(world.cartRoot.transform,true);shadow.enabled=false;
         }
         public void Frighten(){if(!Alive || Fleeing)return;Fleeing=true;start=Position;fleeAge=0;feet.enabled=true;}
@@ -103,7 +103,7 @@ namespace AshenCoast
             if(!Alive){Renderer.enabled=feet.enabled=shadow.enabled=false;return;}
             if(!Fleeing){Renderer.sprite=world.art.people[7,Mathf.FloorToInt(world.clock*4)%8];Renderer.transform.localPosition=new Vector3(.85f,1.1f+bob,0);Renderer.sortingOrder=world.wagon.sortingOrder-1;}
             else{Renderer.sprite=world.art.driverRun[view,frame];Renderer.transform.localScale=Vector3.one;Renderer.sortingOrder=CoastGame.Depth(Position.y);shadow.enabled=true;shadow.transform.position=Position+Vector2.up*.08f;}
-            Renderer.color=Color.Lerp(Color.white,new Color(1,.57f,.43f),flash);world.game.art.PixelStyle(Renderer);
+            Renderer.color=Color.Lerp(Color.white,new Color(1,.57f,.43f),flash);world.game.art.PixelStyle(Renderer);if(Fleeing)gaitV53.Pose(view,distance/1.75f,true,axis);else gaitV53.Lower.enabled=false;
         }
         public float Hurt(float damage)
         {

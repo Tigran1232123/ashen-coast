@@ -78,7 +78,7 @@ namespace AshenCoast
         {get{if(dragons!=null)foreach(var dragon in dragons.bosses)if(dragon.Active && dragon.Alive)yield return dragon;if(magic.InPocket)yield break;if(journey!=null){foreach(var resident in journey.TavernTargets)yield return resident;foreach(var traveller in journey.CaravanTargets)yield return traveller;}if(cave!=null && cave.Inside)foreach(var t in cave.Targets)yield return t;if(fort!=null && fort.Inside)foreach(var b in fort.bandits)if(b.Alive)yield return b;if(hunter!=null && hunter.Active && hunter.Alive)yield return hunter;if(amazons!=null){foreach(var actor in amazons.Targets)yield return actor;if(journey.IsCoast && amazons.plains!=null)foreach(var actor in amazons.plains.Targets)yield return actor;}}}
         public void HurtPlayer(float damage)
         {if(CoopOnline && coop.RedirectPlayerHurt(damage))return;if(Dead || combat!=null && combat.ZenInvulnerable || spectrum!=null && spectrum.Riding || spellcraft!=null && spellcraft.Teleporting)return;float applied=Mathf.Min(survivor.health,damage);survivor.health=Mathf.Max(0,survivor.health-damage);if(survivor.health<20)meditation?.Stop();survivor.equipment[(int)GearSlot.Body]?.Wear(.18f);ShowDamage(applied,body.position+Vector2.up*1.5f,hero,true);if(Dead){body.linearVelocity=Vector2.zero;movement=Vector2.zero;ui.CloseContainers();combat.ResetForCheck();magic.CancelStroke();arcane.CancelHeldSkills();arcane.CancelPlacement();}}
-        public GroundLoot CreateFortLoot(Vector2 at)=>CreateLoot(new Item(ItemKind.Coin){count=UnityEngine.Random.Range(1,4)},at,false);
+        public GroundLoot CreateFortLoot(Vector2 at)=>ScatterLoot(new Item(ItemKind.Coin){count=UnityEngine.Random.Range(1,4)},at,at);
         public GameObject coastRoot;
         public SpriteRenderer hero, ship, dummy, heroShadow;
         public Rigidbody2D body;
@@ -132,7 +132,7 @@ namespace AshenCoast
         void Awake()
         {
             hoverBlock=new MaterialPropertyBlock();AutoPickup=PlayerPrefs.GetInt("AutoPickup",0)==1;
-            testMode=Environment.GetCommandLineArgs().Contains("-frog-check") || Environment.GetCommandLineArgs().Contains("-v51-check") || Environment.GetCommandLineArgs().Contains("-coast-test") || Environment.GetCommandLineArgs().Contains("-snail-check") || Environment.GetCommandLineArgs().Contains("-lan-native-check");
+            testMode=Environment.GetCommandLineArgs().Contains("-polish-check") || Environment.GetCommandLineArgs().Contains("-frog-check") || Environment.GetCommandLineArgs().Contains("-v51-check") || Environment.GetCommandLineArgs().Contains("-coast-test") || Environment.GetCommandLineArgs().Contains("-snail-check") || Environment.GetCommandLineArgs().Contains("-lan-native-check");
             Application.targetFrameRate = 60;
             QualitySettings.vSyncCount = 1;
             art=new ArtBank();newArt=new CoastArtV34(art);v43Art=new CoastArtV43(art); survivor=new Survivor(); shipStorage=CoastTime.CreateShipStorage();
@@ -167,7 +167,7 @@ namespace AshenCoast
             meditation=new Meditation(this);
             v37Art=new CoastArtV37(art);v38Art=new CoastArtV38(art);CoastArtV43.ApplyBooks(art);v44Art=new CoastArtV44(art);v44=gameObject.AddComponent<CombatStatusV44>();v44.Initialize(this);spellcraft=gameObject.AddComponent<Spellcraft>();spellcraft.Initialize(this);spectrum=gameObject.AddComponent<SpectrumWeapon>();spectrum.Initialize(this);amazons=gameObject.AddComponent<AmazonSettlementV46>();amazons.Initialize(this);
             v51Art=new CharacterArtV51(art);snails=gameObject.AddComponent<SnailHomesV50>();snails.Initialize(this);coop=gameObject.AddComponent<CoopSessionV49>();coop.Initialize(this);corpses=gameObject.AddComponent<CorpseWorldV51>();corpses.Initialize(this);if(snails.SetupOpen){paused=true;Time.timeScale=0;}
-            if(Environment.GetCommandLineArgs().Contains("-frog-check"))gameObject.AddComponent<FrogChecksV52>().game=this;else if(Environment.GetCommandLineArgs().Contains("-v51-check"))gameObject.AddComponent<ChecksV51>().game=this;else if(Environment.GetCommandLineArgs().Contains("-snail-check"))gameObject.AddComponent<SnailChecksV50>().game=this;else if(Environment.GetCommandLineArgs().Contains("-lan-native-check"))gameObject.AddComponent<LanNativeChecksV49>().game=this;else if(testMode)gameObject.AddComponent<RuntimeChecks>().game=this;
+            if(Environment.GetCommandLineArgs().Contains("-polish-check"))gameObject.AddComponent<PolishChecksV53>().game=this;else if(Environment.GetCommandLineArgs().Contains("-frog-check"))gameObject.AddComponent<FrogChecksV52>().game=this;else if(Environment.GetCommandLineArgs().Contains("-v51-check"))gameObject.AddComponent<ChecksV51>().game=this;else if(Environment.GetCommandLineArgs().Contains("-snail-check"))gameObject.AddComponent<SnailChecksV50>().game=this;else if(Environment.GetCommandLineArgs().Contains("-lan-native-check"))gameObject.AddComponent<LanNativeChecksV49>().game=this;else if(testMode)gameObject.AddComponent<RuntimeChecks>().game=this;
         }
 
 
@@ -348,20 +348,20 @@ namespace AshenCoast
         {if(damage<=0)return;numbers.Add(new DamageNumber{damage=damage,position=position});if(actor)feedback.Hit(actor,damage,player,shell);else sounds.PlayOneShot(impact,.35f);}
         public GroundLoot DropMeat(Vector2 at)
         {
-            return CreateLoot(new Item(ItemKind.BeetleMeat),at,false);
+            return ScatterLoot(new Item(ItemKind.BeetleMeat),at,at);
         }
-        GroundLoot CreateLoot(Item item,Vector2 at,bool thrown)
+        GroundLoot CreateLoot(Item item,Vector2 at,bool thrown,Transform rootV53=null,string regionV53=null)
         {
-            if(item.Definition.Book)item.opened=false;
+            if(rootV53==null)rootV53=arcane.WorldRoot;if(item.Definition.Book)item.opened=false;
             var drop=new GroundLoot{item=item,position=at,thrownFrom=(Vector2)hero.transform.position+new Vector2(0,.8f),flightAge=thrown?0:1};
             drop.renderer=art.Renderer("Ground item / "+item.Definition.name,art.icons[item.Definition.icon],at+new Vector2(0,.12f),Depth(at.y));
             bool coin=item.kind==ItemKind.Coin;float width=coin?.26f:item.Definition.Melee?1.05f:item.Definition.width==1?.62f:.85f;
             if(item.kind==ItemKind.LastPrism)width*=ArtBank.PrismVisualScale;
             if(item.kind==ItemKind.Orb)width=.52f;
-            drop.renderer.transform.localScale=Vector3.one*(width/drop.renderer.sprite.bounds.size.x);CoastArtV41.SizeGroundBook(drop);SizeGroundItemV44(drop);art.PixelStyle(drop.renderer);drop.renderer.transform.SetParent(arcane.WorldRoot,true);
+            drop.renderer.transform.localScale=Vector3.one*(width/drop.renderer.sprite.bounds.size.x);CoastArtV41.SizeGroundBook(drop);SizeGroundItemV44(drop);art.PixelStyle(drop.renderer);drop.renderer.transform.SetParent(rootV53,true);
             if(item.kind==ItemKind.Orb)
             {
-                drop.renderer.sortingOrder=Depth(drop.renderer.bounds.min.y);drop.cloth=art.Renderer("Linen beneath the sphere",art.orbCloth,new Vector2(at.x,drop.renderer.bounds.min.y+.10f),drop.renderer.sortingOrder-1);drop.cloth.transform.localScale=Vector3.one*(1.03f/drop.cloth.sprite.bounds.size.x);drop.cloth.transform.SetParent(arcane.WorldRoot,true);art.PixelStyle(drop.cloth);drop.cloth.enabled=!drop.InFlight;
+                drop.renderer.sortingOrder=Depth(drop.renderer.bounds.min.y);drop.cloth=art.Renderer("Linen beneath the sphere",art.orbCloth,new Vector2(at.x,drop.renderer.bounds.min.y+.10f),drop.renderer.sortingOrder-1);drop.cloth.transform.localScale=Vector3.one*(1.03f/drop.cloth.sprite.bounds.size.x);drop.cloth.transform.SetParent(rootV53,true);art.PixelStyle(drop.cloth);drop.cloth.enabled=!drop.InFlight;
                 var orbBlock=new MaterialPropertyBlock();drop.renderer.GetPropertyBlock(orbBlock);orbBlock.SetFloat("_Orb",1);orbBlock.SetFloat("_Emission",.36f);drop.renderer.SetPropertyBlock(orbBlock);
             }
             if(coin)
@@ -370,8 +370,8 @@ namespace AshenCoast
                 drop.renderer.transform.position=at+Vector2.up*.045f;
                 var properties=new MaterialPropertyBlock();drop.renderer.GetPropertyBlock(properties);properties.SetFloat("_GroundCoin",1);drop.renderer.SetPropertyBlock(properties);
             }
-            drop.shadow=Shadow("Thrown item ground shadow",at,coin?new Vector2(.29f,.11f):new Vector2(.55f,.17f),coin?.18f:.27f);drop.shadow.transform.SetParent(arcane.WorldRoot,true);loot.Add(drop);if(!thrown)PoseGroundItemV50(drop);
-            if(CoopOnline && !coop.ApplyingNetwork)coop.inventory.Action(new LanWorldActionV49{kind="drop",key=drop.netIdV49,region=coop.Region,item=LanItemV49.Capture(item),x=at.x,y=at.y});if(thrown)TickLoot(0);return drop;
+            drop.shadow=Shadow("Thrown item ground shadow",at,coin?new Vector2(.29f,.11f):new Vector2(.55f,.17f),coin?.18f:.27f);drop.shadow.transform.SetParent(rootV53,true);loot.Add(drop);if(!thrown)PoseGroundItemV50(drop);
+            if(CoopOnline && !coop.ApplyingNetwork)coop.inventory.Action(new LanWorldActionV49{kind="drop",key=drop.netIdV49,region=regionV53??coop.Region,item=LanItemV49.Capture(item),x=at.x,y=at.y});if(thrown)TickLoot(0);return drop;
         }
         public GroundLoot ThrowItem(Item item,Vector2 target)
         {
@@ -382,9 +382,10 @@ namespace AshenCoast
             else target=MeadowLayout.Clamp(target);
             if(Physics2D.OverlapCircle(target,.12f))return null;return CreateLoot(item,target,true);
         }
-        public GroundLoot ScatterLoot(Item item,Vector2 destination,Vector2 from)
+        public GroundLoot ScatterLoot(Item item,Vector2 destination,Vector2 from,Transform rootV53=null,string regionV53=null)
         {
-            var drop=CreateLoot(item,destination,true);drop.thrownFrom=from;TickLoot(0);return drop;
+            if((destination-from).sqrMagnitude<.01f){destination=from+UnityEngine.Random.insideUnitCircle.normalized*UnityEngine.Random.Range(.65f,1.35f);from+=Vector2.up*.55f;}
+            var drop=CreateLoot(item,destination,true,rootV53,regionV53);drop.thrownFrom=from;TickLoot(0);return drop;
         }
         public bool EquipItem(Item item,GridInventory source,GearSlot slot)
         {

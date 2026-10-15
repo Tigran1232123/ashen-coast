@@ -6,7 +6,7 @@ namespace AshenCoast
     public sealed partial class VillageActorV46:ICombatTarget
     {
         public readonly AmazonSettlementV46 village;
-        public readonly SpriteRenderer Renderer,weaponSprite,shadow;
+        public readonly SpriteRenderer Renderer,weaponSprite,shadow;public PixelGait gaitV53;
         SpriteRenderer ICombatTarget.Renderer=>Renderer;
         public readonly GridInventory stock=new GridInventory(10,5,"Охотница"),weaponSlot=new GridInventory(2,4,"Оружие"){singleItem=true,craftingEnabled=false,acceptsItem=i=>i.Definition.Melee};
         public SpriteRenderer cage,Aggressor;
@@ -32,7 +32,7 @@ namespace AshenCoast
             weaponSprite=bank.Renderer("Amazon held weapon",bank.icons[54],at,Renderer.sortingOrder+2);weaponSprite.transform.SetParent(Renderer.transform,true);weaponSprite.enabled=!slave;
             shadow=village.game.Shadow("Amazon contact shadow",at,new Vector2(.68f,.23f),.25f);shadow.transform.SetParent(Renderer.transform,true);
             if(hunter){for(int i=0;i<6;i++)stock.Add(new Item(ItemKind.RawMeat));for(int i=0;i<10;i++)stock.Add(new Item(ItemKind.BeetleMeat));}
-            Pose(false);
+            gaitV53=PixelGait.ForHumanoidV53(bank,Renderer,.43f);Pose(false);
         }
         public void Warp(Vector2 at){Renderer.transform.position=at;victim=null;attackAge=-1;step=0;ResetRouteV48();Pose(false);}
         public float Hurt(float amount)=>HurtFrom(amount,village.game.hero);
@@ -99,10 +99,10 @@ namespace AshenCoast
             return Vector2.zero;
         }
         void BeginAttack()
-        {var d=Weapon.Definition;attackAge=0;delivered=false;duration=d.attackSeconds/(IsSlave?1:1.5f);ready=d.cooldown/(IsSlave?1:1.5f);AttackCount++;village.game.PlaySwish();}
+        {var d=Weapon.Definition;attackAge=0;delivered=false;duration=d.attackSeconds/(IsSlave?1:1.5f);ready=d.cooldown/(IsSlave?1:1.5f);AttackCount++;village.game.WorldSwishV53(Renderer);}
         void Deliver()
         {
-            if(SparringV48 && victim==SparringPartnerV48){village.TrainingImpactV48(SparringPartnerV48.Position+Vector2.up*.9f);if(Weapon?.kind==ItemKind.Bow)village.ShootPracticeV48(this,aim);return;}
+            if(SparringV48 && victim==SparringPartnerV48){if(Weapon?.kind==ItemKind.Bow)village.ShootPracticeV48(this,aim);else village.TrainingImpactV48(SparringPartnerV48.Position+Vector2.up*.9f);return;}
             if(victim==null || !victim.Alive || Weapon==null)return;
             if(Weapon.kind==ItemKind.Bow){village.Shoot(this,aim);return;}
             if(Vector2.Distance(victim.Position,Position)>Weapon.Definition.reach+.3f || village.game.WorldBlocked(Position,victim.Position,.06f))return;
@@ -113,7 +113,7 @@ namespace AshenCoast
         {
             var game=village.game;int frame=walking?(int)(step/1.4f*6)%6:0;
             Renderer.sprite=IsSlave?game.journey.art.driverRun[index%4,walking?(int)(step/1.4f*8)%8:0]:village.art.women[index%4,frame];if(Mathf.Abs(aim.x)>.25f)Renderer.flipX=aim.x<0;Renderer.sortingOrder=CoastGame.Depth(Position.y);game.art.PixelStyle(Renderer);Renderer.color=tint;
-            shadow.transform.position=Position;shadow.sortingOrder=-2000;
+            shadow.transform.position=Position;shadow.sortingOrder=-2000;gaitV53?.PoseSideV53(step/1.4f,walking,aim);
             var weapon=Weapon;weaponSprite.enabled=weapon!=null && Attacking;if(!Attacking)Renderer.transform.localScale=Vector3.one;if(!weaponSprite.enabled)return;
             weaponSprite.sprite=game.art.icons[weapon.Definition.icon];bool vertical=Combat.VerticalV44(weapon.kind) || weapon.kind==ItemKind.Bow;
             float length=weapon.kind==ItemKind.Bow?1.5f:Combat.WeaponLengthV44(weapon.kind);weaponSprite.transform.localScale=Vector3.one*(length/((vertical?weaponSprite.sprite.rect.height:weaponSprite.sprite.rect.width)/weaponSprite.sprite.pixelsPerUnit));
@@ -126,7 +126,7 @@ namespace AshenCoast
         }
     }
     public sealed class VillageArrowV46
-    {public LineRenderer line;public Vector2 point,velocity;public SpriteRenderer source;public bool player,practice;public float age;}
+    {public LineRenderer line;public Vector2 point,velocity;public SpriteRenderer source;public bool player,practice;public VillageActorV46 practiceTargetV53;public float age;}
     public sealed partial class AmazonSettlementV46
     {
         public readonly List<VillageArrowV46> arrows=new List<VillageArrowV46>();
@@ -136,19 +136,21 @@ namespace AshenCoast
             bow.Wear(.3f);game.combat.readyAt=Time.time+bow.Definition.cooldown;SpawnArrow(game.body.position+Vector2.up*.9f,direction,game.hero,true);game.PlaySwish();return true;
         }
         public void Shoot(VillageActorV46 actor,Vector2 direction)=>SpawnArrow(actor.Position+Vector2.up*.9f,direction,actor.Renderer,actor.Hired);
-        public void ShootPracticeV48(VillageActorV46 actor,Vector2 direction)=>SpawnArrow(actor.Position+Vector2.up*.9f,direction,actor.Renderer,false,true);
+        public void ShootPracticeV48(VillageActorV46 actor,Vector2 direction)=>SpawnArrow(actor.Position+Vector2.up*.9f,direction,actor.Renderer,false,true,actor.SparringPartnerV48);
         public void ShootBanditV48(PlainBanditV48 actor,Vector2 direction)=>SpawnArrow(actor.Position+Vector2.up*.9f,direction,actor.Renderer,false);
-        void SpawnArrow(Vector2 from,Vector2 direction,SpriteRenderer source,bool player,bool practice=false)
+        void SpawnArrow(Vector2 from,Vector2 direction,SpriteRenderer source,bool player,bool practice=false,VillageActorV46 practiceTargetV53=null)
         {
             var line=new GameObject("Amazon flying arrow").AddComponent<LineRenderer>();line.transform.SetParent(source.transform.parent,true);line.sharedMaterial=game.art.lit;line.positionCount=2;line.startWidth=.045f;line.endWidth=.02f;line.startColor=new Color(.51f,.35f,.16f);line.endColor=new Color(.84f,.79f,.61f);line.sortingOrder=CoastGame.Depth(from.y)+5;
-            var a=new VillageArrowV46{line=line,point=from,velocity=direction.normalized*15,source=source,player=player,practice=practice};line.SetPosition(0,from);line.SetPosition(1,from-direction.normalized*.35f);arrows.Add(a);
+            var a=new VillageArrowV46{line=line,point=from,velocity=direction.normalized*15,source=source,player=player,practice=practice,practiceTargetV53=practiceTargetV53};line.SetPosition(0,from);line.SetPosition(1,from-direction.normalized*.35f);arrows.Add(a);
         }
         void TickArrows(float dt)
         {
             for(int i=arrows.Count-1;i>=0;i--)
             {
                 var a=arrows[i];a.age+=dt;var next=a.point+a.velocity*dt;bool remove=a.age>1.2f || game.WorldBlocked(a.point-Vector2.up*.9f,next-Vector2.up*.9f,.03f);
-                if(!remove)foreach(var target in game.WorldCreatures.ToArray())
+                if(!remove && a.practice && a.practiceTargetV53!=null)
+                {var centre=(Vector2)a.practiceTargetV53.Renderer.bounds.center;var segment=next-a.point;float fraction=segment.sqrMagnitude>0?Mathf.Clamp01(Vector2.Dot(centre-a.point,segment)/segment.sqrMagnitude):0;if(Vector2.Distance(centre,a.point+segment*fraction)<.4f){TrainingImpactV48(centre);remove=true;}}
+                if(!remove && !a.practice)foreach(var target in game.WorldCreatures.ToArray())
                 {
                     if(!target.Alive || target.Renderer==a.source || target is PracticeTargetV46)continue;
                     bool hunts=a.source && people.Any(p=>p.Renderer==a.source && !p.Hostile && !p.Hired);

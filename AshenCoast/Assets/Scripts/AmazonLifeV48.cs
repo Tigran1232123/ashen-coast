@@ -94,30 +94,31 @@ namespace AshenCoast
             Vector2 Point(int id)=>origin+new Vector2(id%side,id/side)*cell;
             var start=Cell(from);var end=Cell(destination);int first=start.y*side+start.x,goal=end.y*side+end.x;
             if(!WalkableV48(Point(goal))){float best=float.MaxValue;for(int y=-3;y<=3;y++)for(int x=-3;x<=3;x++){var c=end+new Vector2Int(x,y);if(c.x<0 || c.y<0 || c.x>=side || c.y>=side)continue;int id=c.y*side+c.x;float distance=Vector2.SqrMagnitude(Point(id)-destination);if(WalkableV48(Point(id)) && distance<best){best=distance;goal=id;}}}
-            var open=new List<int>{first};var previous=new Dictionary<int,int>();var costs=new Dictionary<int,float>{{first,0}};var closed=new HashSet<int>();int found=-1;
+            var open=new MinHeapV53<int>();open.Push(first,0);var previous=new Dictionary<int,int>();var costs=new Dictionary<int,float>{{first,0}};var closed=new HashSet<int>();int found=-1;
             for(int iterations=0;open.Count>0 && iterations<4000;iterations++)
             {
-                int at=open.OrderBy(id=>costs[id]+Vector2.Distance(Point(id),Point(goal))).First();open.Remove(at);if(at==goal){found=at;break;}closed.Add(at);
+                int at=open.Pop();if(closed.Contains(at))continue;if(at==goal){found=at;break;}closed.Add(at);
                 for(int y=-1;y<=1;y++)for(int x=-1;x<=1;x++)
                 {
                     if(x==0 && y==0)continue;int xx=at%side+x,yy=at/side+y;if(xx<0 || yy<0 || xx>=side || yy>=side)continue;int next=yy*side+xx;
                     if(closed.Contains(next) || !WalkableV48(Point(next)) || Blocked(Point(at),Point(next),.28f))continue;
                     if(x!=0 && y!=0 && (!WalkableV48(Point(at)+new Vector2(x*cell,0)) || !WalkableV48(Point(at)+new Vector2(0,y*cell))))continue;
-                    float cost=costs[at]+cell*(x==0 || y==0?1:1.414f);if(costs.TryGetValue(next,out var old) && old<=cost)continue;costs[next]=cost;previous[next]=at;if(!open.Contains(next))open.Add(next);
+                    float cost=costs[at]+cell*(x==0 || y==0?1:1.414f);if(costs.TryGetValue(next,out var old) && old<=cost)continue;costs[next]=cost;previous[next]=at;open.Push(next,cost+Vector2.Distance(Point(next),Point(goal)));
                 }
             }
             if(found<0)return new List<Vector2>();var path=new List<Vector2>();for(int id=found;id!=first;id=previous[id])path.Add(Point(id));path.Reverse();if(WalkableV48(destination))path.Add(destination);return path;
         }
         public void TrainingImpactV48(Vector2 at)
         {
+            if(!root.activeInHierarchy || Vector2.Distance(game.body.position,at)>24)return;
             var obj=new GameObject("Practice impact");obj.transform.SetParent(root.transform,true);obj.transform.position=at;obj.AddComponent<PracticeSparksV48>().Initialize(game,at);
         }
     }
     public sealed class PracticeSparksV48:MonoBehaviour
     {
-        readonly List<SpriteRenderer> sparks=new List<SpriteRenderer>();Vector2 origin;float age;
+        static Sprite sharedSparkV53;readonly List<SpriteRenderer> sparks=new List<SpriteRenderer>();Vector2 origin;float age;
         public void Initialize(CoastGame game,Vector2 at)
-        {origin=at;var sprite=Sprite.Create(Texture2D.whiteTexture,new Rect(0,0,1,1),new Vector2(.5f,.5f),1);for(int i=0;i<6;i++){var r=game.art.Renderer("Sparring spark",sprite,at,CoastGame.Depth(at.y)+10);r.transform.SetParent(transform,true);r.transform.localScale=Vector3.one*.035f;sparks.Add(r);}}
+        {origin=at;if(!sharedSparkV53)sharedSparkV53=Sprite.Create(Texture2D.whiteTexture,new Rect(0,0,1,1),new Vector2(.5f,.5f),1);for(int i=0;i<6;i++){var r=game.art.Renderer("Sparring spark",sharedSparkV53,at,CoastGame.Depth(at.y)+10);r.transform.SetParent(transform,true);r.transform.localScale=Vector3.one*.035f;sparks.Add(r);}}
         void Update(){age+=Time.deltaTime;for(int i=0;i<sparks.Count;i++){float a=i*Mathf.PI/3;var p=origin+new Vector2(Mathf.Cos(a),Mathf.Sin(a))*age*1.4f;sparks[i].transform.position=p;sparks[i].color=new Color(.87f,.77f,.47f,1-age/.3f);}if(age>=.3f)Destroy(gameObject);}
     }
 }

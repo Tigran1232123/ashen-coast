@@ -123,7 +123,7 @@ namespace AshenCoast
         void Pose(float phase)
         {
             var d=active.Definition; float degrees=Mathf.Atan2(aim.y,aim.x)*Mathf.Rad2Deg;
-            Vector2 origin=(Vector2)game.hero.transform.position+new Vector2(.10f,.72f);
+            Vector2 origin=(Vector2)game.hero.transform.position+new Vector2(.10f,.72f)*game.CharacterScaleV53;
             float progress=Mathf.SmoothStep(0,1,Mathf.Clamp01((phase-.10f)/.70f));
             if(ThrustV44(active.kind))
             {
@@ -142,8 +142,8 @@ namespace AshenCoast
             if(item.kind==ItemKind.LastPrism && game.prism!=null && game.prism.Channeling)degrees=game.prism.Angle-90;
             bool right=game.facing>=4;var hand=game.art.HandAnchor(game.hero.sprite,right^game.hero.flipX);
             if(game.hero.flipX)hand.x=-hand.x;
-            hand+=new Vector2(right?.025f:-.025f,.12f);
-            if(item.kind==ItemKind.Lamp)hand=new Vector2(game.facing>=1 && game.facing<=3?-.22f:game.facing>=5?.22f:0,.94f);
+            hand+=new Vector2(right?.025f:-.025f,.12f*game.CharacterScaleV53);
+            if(item.kind==ItemKind.Lamp)hand=new Vector2(game.facing>=1 && game.facing<=3?-.22f:game.facing>=5?.22f:0,.94f*game.CharacterScaleV53);
             weapon.transform.position=game.hero.transform.position+(Vector3)hand;
             if(game.walking)weapon.transform.position+=new Vector3(0,Mathf.Sin(game.walkTime*Mathf.PI*2)*.014f,0);
             weapon.transform.rotation=Quaternion.Euler(0,0,degrees);

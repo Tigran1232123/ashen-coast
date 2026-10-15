@@ -11,12 +11,16 @@ namespace AshenCoast
         readonly Sprite[,] poses=new Sprite[4,9];
         readonly MaterialPropertyBlock block=new MaterialPropertyBlock();
         readonly float cutoff,top,clothTone;
-        readonly int directions,style;
+        readonly int directions,style;bool sideOnlyV53;
         public bool Walking {get;private set;}
         public float Phase {get;private set;}
         public Vector2 Axis {get;private set;}
         public int Frame {get;private set;}
         public SpriteRenderer Lower=>lower;
+        public static PixelGait ForHumanoidV53(ArtBank bank,SpriteRenderer torso,float floor,Sprite source=null)
+        {var frames=new Sprite[4,4];for(int d=0;d<4;d++)for(int f=0;f<4;f++)frames[d,f]=source?source:torso.sprite;var gait=new PixelGait(bank,torso,frames,floor);gait.sideOnlyV53=true;return gait;}
+        public void PoseSideV53(float cycles,bool walking,Vector2 axis)
+        {Pose(axis.x<0?3:1,cycles,walking,axis);}
         public float TorsoFloor=>(body.sprite.rect.height*cutoff-body.sprite.pivot.y)/body.sprite.pixelsPerUnit;
 
         public PixelGait(ArtBank bank,SpriteRenderer torso,Sprite[,] frames,float floor)
@@ -34,6 +38,7 @@ namespace AshenCoast
             }
             var go=new GameObject("Authored paired leg poses");go.transform.SetParent(body.transform,false);
             lower=go.AddComponent<SpriteRenderer>();lower.sharedMaterial=art.lit;
+            lower.sprite=poses[0,0];lower.enabled=false;
             lower.transform.localPosition=new Vector3(0,top,0);
         }
         public void Pose(int facing,float cycles,bool walking,Vector2 forward,bool flip=false)
@@ -43,7 +48,8 @@ namespace AshenCoast
             Phase=Mathf.Repeat(cycles,1);Walking=walking;
             if(forward.sqrMagnitude>.0001f)Axis=forward.normalized;
             int view;bool mirror;
-            if(style==1){view=3;mirror=true;}
+            if(sideOnlyV53){view=1;mirror=forward.x<0;}
+            else if(style==1){view=3;mirror=true;}
             else if(directions>=7)
             {
                 view=direction==0?0:direction==1 || direction==7?3:direction==2 || direction==6?1:2;

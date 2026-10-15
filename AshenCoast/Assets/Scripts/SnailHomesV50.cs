@@ -133,17 +133,19 @@ namespace AshenCoast
             if(key=="mage")game.journey.companion.Warp(p+Vector2.left);else Woman(key).Warp(p+Vector2.left);
             sprite.gameObject.SetActive(!game.CoopOnline || region==game.coop.Region);SyncOwners();
         }
+        readonly int[] roomOrdinalsV53=new int[4];
         void TickTroops(float dt)
         {
-            foreach(var t in troops.Values.Where(Living).ToArray())
+            Array.Clear(roomOrdinalsV53,0,4);foreach(var t in troops.Values)
             {
+                if(!Living(t))continue;
                 var sprite=Sprite(t.key);if(!sprite)continue;
                 if(t.campRestV51){TickCampTroopV51(t,dt);continue;}
                 if(t.resting)
                 {
                     if(t.key=="mage"){var m=game.journey.companion;m.health=Mathf.Min(CompanionMage.MaxHealth,m.health+dt*8);m.mana=Mathf.Min(CompanionMage.MaxMana,m.mana+dt*10);}
                     else{var woman=Woman(t.key);woman.health=Mathf.Min(woman.MaxHealth,woman.health+dt*8);}
-                    sprite.transform.SetParent(houses[t.home].room.transform,true);sprite.transform.position=new Vector2(-2.1f+(troops.Values.ToList().IndexOf(t)%4)*1.1f,-1.8f);sprite.gameObject.SetActive(Inside==t.home);continue;
+                    sprite.transform.SetParent(houses[t.home].room.transform,true);int ordinal=roomOrdinalsV53[t.home]++;var restingPoint=new Vector2(-.6f+(ordinal%4)*.6f,-1.35f-(ordinal/4)*.5f);if(t.key=="mage")game.journey.companion.Warp(restingPoint);else Woman(t.key).Warp(restingPoint);sprite.gameObject.SetActive(Inside==t.home);continue;
                 }
                 if(t.returning)
                 {
@@ -178,25 +180,24 @@ namespace AshenCoast
         void Reveal(){if(game.map==null)return;foreach(var h in houses)game.map.regions[0].Reveal(h.position,11);}
         void Move(float dt)
         {
-            float speed=CoastGame.WalkSpeed*1.5f;var leader=houses[0];Vector2 target=routeAt<route.Count?route[routeAt]:destination;
-            if(!leader.Hidden){Step(leader,target,speed,dt);if(Vector2.Distance(leader.position,target)<.3f && routeAt<route.Count)routeAt++;}
-            for(int i=1;i<4;i++){var h=houses[i];var previous=houses[i-1];if(h.Hidden || previous.Hidden){h.moving=false;continue;}var delta=previous.position-h.position;Step(h,delta.magnitude>8?previous.position-delta.normalized*8:h.position,speed,dt);}
-            if(Vector2.Distance(leader.position,destination)<.3f && houses.Skip(1).All(h=>!h.moving))ordered=false;
+            travelTimeV53+=dt;float speed=CoastGame.WalkSpeed*1.5f;var leader=houses[0];Vector2 target=routeAt<route.Count?route[routeAt]:destination;
+            if(!leader.Hidden){TravelV53(leader,destination,speed,dt);if(Vector2.Distance(leader.position,target)<.3f && routeAt<route.Count)routeAt++;}
+            for(int i=1;i<4;i++){var h=houses[i];var previous=houses[i-1];if(h.Hidden || previous.Hidden){h.moving=false;continue;}var delta=previous.position-h.position;if(travelTimeV53>=i*1.4f)TravelV53(h,destination,speed,dt);else h.moving=false;}
+            // Arrival is completed only after all four homes have reached their camp slots.
         }
         void Step(SnailHouseV50 h,Vector2 target,float speed,float dt)
-        {var from=h.position;var next=Vector2.MoveTowards(from,target,speed*dt);if(Land(next) && !game.WorldBlocked(from,next,.35f)){h.position=next;h.moving=(next-from).sqrMagnitude>.000001f;if(Mathf.Abs(next.x-from.x)>.001f)h.Renderer.flipX=next.x<from.x;}else h.moving=false;}
+        {var from=h.position;var next=Vector2.MoveTowards(from,target,speed*dt);if(Land(next) && !game.amazons.CoastBlockedV53(from,next,.35f)){h.position=next;h.moving=(next-from).sqrMagnitude>.000001f;if(Mathf.Abs(next.x-from.x)>.001f)h.Renderer.flipX=next.x<from.x;}else h.moving=false;}
         public static bool Land(Vector2 point)=>MeadowLayout.MapBounds.Contains(point) && WorldShape.Distance(point)>1.5f;
         public static Vector2 FindLand(Vector2 point)
         {if(Land(point))return point;for(float r=2;r<100;r+=2)for(int i=0;i<24;i++){var p=point+new Vector2(Mathf.Cos(i*Mathf.PI/12),Mathf.Sin(i*Mathf.PI/12))*r;if(Land(p))return p;}return point;}
         public bool Order(Vector2 point)
         {
             if(!Land(point)){game.ui.Notice("Недоступное место");return false;}
-            // A sparse land route prevents the travelling houses from cutting through the sea.
-            var start=Vector2Int.RoundToInt(houses[0].position/4);var end=Vector2Int.RoundToInt(point/4);var open=new List<Vector2Int>{start};var costs=new Dictionary<Vector2Int,float>{{start,0}};var prev=new Dictionary<Vector2Int,Vector2Int>();var seen=new HashSet<Vector2Int>();bool found=false;
-            for(int n=0;open.Count>0 && n<12000;n++)
-            {var at=open.OrderBy(p=>costs[p]+Vector2.Distance(p,end)).First();open.Remove(at);if(at==end){found=true;route.Clear();while(at!=start){route.Add((Vector2)at*4);at=prev[at];}route.Reverse();break;}seen.Add(at);for(int y=-1;y<=1;y++)for(int x=-1;x<=1;x++){if(x==0 && y==0)continue;var next=at+new Vector2Int(x,y);if(seen.Contains(next) || !Land((Vector2)next*4) || !Land((Vector2)(next+at)*2) || game.WorldBlocked((Vector2)at*4,(Vector2)next*4,.4f))continue;float cost=costs[at]+Mathf.Sqrt(x*x+y*y);if(costs.TryGetValue(next,out var old) && old<=cost)continue;costs[next]=cost;prev[next]=at;if(!open.Contains(next))open.Add(next);}}
-            if(!found){game.ui.Notice("Недоступное место");return false;}destination=point;ordered=true;routeAt=0;BeginGatherV51();return true;
+            var planned=CoastPathV53(houses[0].position,point);
+            if(planned==null){game.ui.Notice("Недоступное место");return false;}
+            route.Clear();route.AddRange(planned);destination=point;ordered=true;routeAt=0;PrepareRoutesV53(point);BeginGatherV51();return true;
         }
+
         public void Command(CaravanCommandV50 command)
         {if(command.kind=="order"){command.known=game.map.IsVisited(MapRegion.Coast,new Vector2(command.x,command.y));if(!command.known){game.ui.Notice("Недоступное место");return;}}if(game.CoopOnline)game.coop.Send(new LanPacketV49{kind="caravanCommand",region=game.coop.Region,body=JsonUtility.ToJson(command)});else ApplyCommand(command,0,null);}
         public void ApplyCommand(CaravanCommandV50 command,int peer,string region)
@@ -253,12 +254,13 @@ namespace AshenCoast
         public void PlayWhistle()=>game.sounds.PlayOneShot(whistle,.8f);
         public void Enter(int home)
         {
-            if(home<0 || home>=4 || houses[home].Hidden || doorWait>0)return;Inside=home;game.journey.SetArea(WorldArea.SnailHouse,RoomDoorV51(home)+Vector2.down*1.3f);doorWait=1;game.cameraView.orthographicSize=5.25f;game.ResetCamera(new Vector3(0,-.6f,-20));Visibility(false);
+            if(home<0 || home>=4 || houses[home].Hidden || doorWait>0)return;Inside=home;game.journey.SetArea(WorldArea.SnailHouse,RoomDoorV51(home)+Vector2.down*1.3f);doorWait=1;game.cameraView.orthographicSize=4.8f;game.ResetCamera(new Vector3(.4f,-.25f,-20));Visibility(false);
         }
         public void Leave()
         {if(Inside<0)return;var h=houses[Inside];Inside=-1;game.journey.SetArea(WorldArea.Coast,h.Door+Vector2.down*1.4f);Visibility(false);doorWait=1;}
         public void Visibility(bool pocket){foreach(var h in houses)h.room.SetActive(!pocket && game.journey.Area==WorldArea.SnailHouse && Inside==h.index);}
-        public Vector2 Clamp(Vector2 point)=>new Vector2(Mathf.Clamp(point.x,-3.6f,3.8f),Mathf.Clamp(point.y,-3.1f,-.45f));
+        public Vector2 Clamp(Vector2 point)
+        {var door=RoomDoorV51(Mathf.Clamp(Inside,0,3));if(Mathf.Abs(point.x-door.x)<.6f && point.y>-.8f)return new Vector2(Mathf.Clamp(point.x,door.x-.5f,door.x+.5f),Mathf.Clamp(point.y,-.85f,.15f));var centre=new Vector2(.6f,-1.95f);var p=point-centre;float x=p.x/3.65f,y=p.y/1.4f;float length=Mathf.Sqrt(x*x+y*y);if(length>1)p/=length;return centre+p;}
         public readonly List<SpriteRenderer> exit=new List<SpriteRenderer>();
         SpriteRenderer Prop(SnailHouseV50 h,string name,Sprite sprite,Vector2 at,float width,int depth=-999)
         {var r=game.art.Renderer(name,sprite,at,depth==-999?CoastGame.Depth(at.y):depth);r.transform.SetParent(h.room.transform,true);r.transform.localScale=Vector3.one*(width/sprite.bounds.size.x);return r;}

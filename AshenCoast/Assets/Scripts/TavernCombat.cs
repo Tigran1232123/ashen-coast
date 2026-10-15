@@ -11,14 +11,15 @@ namespace AshenCoast
         {if(TavernAlarm)return;TavernAlarm=true;HireOffer=false;game.ui.CloseContainers();foreach(var r in residents)r.Stand();}
         public IEnumerable<ICombatTarget> TavernTargets=>Interior?residents.Where(r=>r.Alive && !r.Escaped && !(r.actor==drinker && companion.Hired)).Cast<ICombatTarget>().Concat(gulls.Where(g=>g.Alive && g.sprite.enabled).Cast<ICombatTarget>()):gulls.Where(g=>g.Alive && g.sprite.enabled && IsCoast).Cast<ICombatTarget>();
     }
-    public sealed class TavernResident:ICombatTarget
+    public sealed partial class TavernResident:ICombatTarget
     {
         readonly JourneyWorld world;readonly CoastGame game;public readonly TavernActor actor;public float health=100,walkDistance,attackTime,cooldown;public bool Escaped;public SpriteRenderer blade;public CircleCollider2D feet;
+        public bool peacefulV53;public PixelGait walkingGaitV53;public void PeaceV53(){peacefulV53=true;Escaped=false;attackTime=cooldown=0;if(blade)blade.enabled=false;}
         public bool Flee=>actor.row==1 || actor.row==6;public bool Armored=>actor.row==5;
         public bool Alive=>health>0;public Vector2 Position=>actor.sprite.transform.position;public SpriteRenderer Renderer=>actor.sprite;
-        public TavernResident(JourneyWorld owner,TavernActor person){world=owner;game=owner.game;actor=person;}
+        public TavernResident(JourneyWorld owner,TavernActor person){world=owner;game=owner.game;actor=person;walkingGaitV53=PixelGait.ForHumanoidV53(game.art,Renderer,.43f,game.newArt.motion[actor.row,0]);}
         public float Hurt(float amount)
-        {if(!Alive)return 0;float hit=Mathf.Min(health,amount*(game.spellcraft?.DamageFactor(Renderer)??1)*(Armored?.5f:1));health-=hit;game.ShowDamage(hit,Position+Vector2.up*1.6f,Renderer);world.AlarmTavern();if(!Alive){Renderer.enabled=false;if(feet)feet.enabled=false;if(blade)blade.enabled=false;}return hit;}
+        {if(!Alive)return 0;peacefulV53=false;float hit=Mathf.Min(health,amount*(game.spellcraft?.DamageFactor(Renderer)??1)*(Armored?.5f:1));health-=hit;game.ShowDamage(hit,Position+Vector2.up*1.6f,Renderer);world.AlarmTavern();if(!Alive){Renderer.enabled=false;if(feet)feet.enabled=false;if(blade)blade.enabled=false;}return hit;}
         public void Stand()
         {
             if(!Alive || actor==world.drinker && world.companion.Hired)return;
@@ -30,7 +31,8 @@ namespace AshenCoast
         }
         public void Tick(float dt)
         {
-            if(!Alive || game.spellcraft!=null && game.spellcraft.ImmobilizedV44(Renderer) || Escaped || actor==world.drinker && world.companion.Hired)return;
+            if(peacefulV53)return;if(!Alive || game.spellcraft!=null && game.spellcraft.ImmobilizedV44(Renderer) || Escaped || actor==world.drinker && world.companion.Hired)return;
+            if(walkingGaitV53==null)walkingGaitV53=PixelGait.ForHumanoidV53(game.art,Renderer,.43f);var beforeV53=Position;
             cooldown=Mathf.Max(0,cooldown-dt);var delta=game.body.position-Position;var seek=Flee?-delta.normalized:delta.normalized;
             if(Flee || delta.magnitude>1.15f)
             {
@@ -38,9 +40,9 @@ namespace AshenCoast
                 Renderer.transform.position+=(Vector3)move;walkDistance+=move.magnitude;
                 if(Flee && Vector2.Distance(Position,world.TavernExit)<.55f){Escaped=true;Renderer.enabled=false;feet.enabled=false;return;}
             }
-            int frame=(int)(walkDistance/1.45f*8)%8;Renderer.sprite=game.newArt.motion[actor.row,frame];Renderer.flipX=seek.x>0;Renderer.sortingOrder=CoastGame.Depth(Position.y);game.art.PixelStyle(Renderer);
+            int frame=(int)(walkDistance/1.45f*8)%8;Renderer.sprite=game.newArt.motion[actor.row,frame];Renderer.flipX=seek.x>0;Renderer.sortingOrder=CoastGame.Depth(Position.y);game.art.PixelStyle(Renderer);walkingGaitV53.PoseSideV53(walkDistance/1.45f,(Position-beforeV53).sqrMagnitude>.000001f,seek);
             if(Flee)return;
-            if(attackTime>0){attackTime+=dt;if(attackTime>=.25f && attackTime-dt<.25f && delta.magnitude<1.8f && !game.WorldBlocked(Position,game.body.position,.10f)){game.HurtPlayer(Armored?24:20);game.PlaySwish();}if(attackTime>=.5f){attackTime=0;cooldown=.55f;}}
+            if(attackTime>0){attackTime+=dt;if(attackTime>=.25f && attackTime-dt<.25f && delta.magnitude<1.8f && !game.WorldBlocked(Position,game.body.position,.10f)){game.HurtPlayer(Armored?24:20);game.WorldSwishV53(Renderer);}if(attackTime>=.5f){attackTime=0;cooldown=.55f;}}
             else if(delta.magnitude<1.5f && cooldown<=0 && !game.Dead)attackTime=.001f;
             float aim=Mathf.Atan2(delta.y,delta.x)*Mathf.Rad2Deg;float sweep=attackTime>0?Mathf.Lerp(-55,55,attackTime/.5f):0;
             blade.transform.position=Position+Vector2.up*.8f+delta.normalized*.2f;blade.transform.rotation=Quaternion.Euler(0,0,aim+sweep);blade.sortingOrder=Renderer.sortingOrder+2;

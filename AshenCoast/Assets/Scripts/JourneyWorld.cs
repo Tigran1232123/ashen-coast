@@ -348,7 +348,7 @@ namespace AshenCoast
         {
             if(game.snails!=null && (game.snails.Resting(sprite) || game.snails.Returning(sprite)))return;if(!Hired || !Alive || world.Cutscene || game.spectrum!=null && game.spectrum.Riding || remoteArea.HasValue && remoteArea.Value!=game.map.CurrentRegion)return;clock+=dt;
             if(target && (!target.enabled || !target.gameObject.activeInHierarchy || clock>targetUntil))target=null;
-            if(!target && world.Interior && world.TavernAlarm)target=world.residents.Where(r=>r.Alive && !r.Flee && !r.Escaped).Select(r=>r.Renderer).FirstOrDefault();
+            if(!target && world.Interior && world.TavernAlarm)target=world.residents.Where(r=>r.Alive && !r.Flee && !r.Escaped && !r.peacefulV53).Select(r=>r.Renderer).FirstOrDefault();
             if(!target && world.InCatacombs)target=game.cave.Targets.Where(t=>t.Alive && Vector2.Distance(t.Position,Position)<8).Select(t=>t.Renderer).FirstOrDefault();
             if(!target && world.InFort)target=game.fort.bandits.Where(b=>b.Alive && b.Alert && Vector2.Distance(b.Position,Position)<8).Select(b=>b.sprite).FirstOrDefault();
             if(!target && world.IsCoast && !game.magic.InPocket)target=game.arcane.frogs.Where(f=>f.Alive && f.Hostile && Vector2.Distance(f.Position,Position)<7).Select(f=>f.renderer).FirstOrDefault();

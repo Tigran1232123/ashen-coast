@@ -51,9 +51,10 @@ namespace AshenCoast
         bool yoHeld;
         float lampBurst,emitRemainder;
         public readonly Material fireMaterial=new Material(Shader.Find("AshenCoast/WorldSprite"));
+        readonly MaterialPropertyBlock hearthBlockV53=new MaterialPropertyBlock();
         readonly Dictionary<object,float> lastHit=new Dictionary<object,float>();
         public Transform WorldRoot=>game.magic!=null && game.magic.InPocket?game.magic.pocket.transform:game.journey!=null?game.journey.ActiveRoot:game.coastRoot.transform;
-        public Vector2 PlayerHand=>(Vector2)game.hero.transform.position+new Vector2(game.facing>=1 && game.facing<=3?-.22f:game.facing>=5?.22f:0,.94f);
+        public Vector2 PlayerHand=>(Vector2)game.hero.transform.position+new Vector2(game.facing>=1 && game.facing<=3?-.22f:game.facing>=5?.22f:0,.94f*game.CharacterScaleV53);
         public bool LampReady=>game.survivor.equipment[0]?.kind==ItemKind.Lamp && game.survivor.equipment[0].Usable && game.survivor.equipment[0].fuel>0 && game.survivor.mana>0;
         public bool UseLamp(float dt)
         {
@@ -128,7 +129,7 @@ namespace AshenCoast
                     sprite.transform.position=fire.position+Vector2.up*.14f;
                     float phase=Mathf.Repeat(fire.phase*30,40);int a=Mathf.FloorToInt(phase),b=(a+1)%40;var texture=sprite.sprite.texture;
                     Vector4 UV(Sprite s){var r=s.rect;return new Vector4(r.x/texture.width,r.y/texture.height,r.width/texture.width,r.height/texture.height);}
-                    var block=new MaterialPropertyBlock();sprite.GetPropertyBlock(block);block.SetVector("_FrameA",UV(game.newArt.campfire[a]));block.SetVector("_FrameB",UV(game.newArt.campfire[b]));block.SetVector("_ShiftA",Vector4.zero);block.SetVector("_ShiftB",Vector4.zero);
+                    var block=hearthBlockV53;sprite.GetPropertyBlock(block);block.SetVector("_FrameA",UV(game.newArt.campfire[a]));block.SetVector("_FrameB",UV(game.newArt.campfire[b]));block.SetVector("_ShiftA",Vector4.zero);block.SetVector("_ShiftB",Vector4.zero);
                     block.SetVector("_Pixels",new Vector4(sprite.sprite.bounds.size.x*scale*40,.82f*40,0,0));block.SetFloat("_Blend",Mathf.SmoothStep(0,1,phase-a));block.SetFloat("_HearthClock",fire.phase*5);sprite.SetPropertyBlock(block);
                     var vessel=game.buildings.stations.FirstOrDefault(p=>p.Heated && p.fire==fire);block.SetFloat("_UnderVessel",vessel!=null?1:0);block.SetFloat("_VesselCeiling",fire.position.y+.31f);sprite.SetPropertyBlock(block);
                 }
@@ -297,7 +298,7 @@ namespace AshenCoast
         public bool Hostile {get;private set;}
         public bool Alive=>health>0;
         public Vector2 Position=>(Vector2)renderer.transform.position;
-        public Vector2 LampOrigin=>Position+new Vector2(direction==1?-.30f:.30f,.378f);
+        public Vector2 LampOrigin=>Position+new Vector2(direction==1?-.222f:.222f,.280f);
         public int frame,direction;
         public bool Firing=>Hostile && attackClock>=.6f && attackClock<1.85f;
         readonly ArcaneCombat owner;
@@ -334,7 +335,7 @@ namespace AshenCoast
                 if(delta.magnitude>.08f && Vector2.Distance(Position,game.body.position)>1.4f){velocity=delta.normalized*.65f;direction=Direction(delta);}
             }
             var move=velocity*dt;renderer.transform.position+=(Vector3)move;walkDistance+=move.magnitude;
-            frame=velocity.sqrMagnitude>.01f?Mathf.FloorToInt(walkDistance/.055f)%8:2;Pose();
+            frame=velocity.sqrMagnitude>.01f?Mathf.FloorToInt(walkDistance/.58f*8)%8:2;Pose();
         }
         static int Direction(Vector2 d)=>Mathf.Abs(d.x)>Mathf.Abs(d.y)?d.x<0?1:3:d.y>0?2:0;
         void Pose()
@@ -349,7 +350,7 @@ namespace AshenCoast
         public float HurtFrom(float damage,SpriteRenderer source)
         {
             if(game.CoopOnline && game.coop.world.RedirectDamage(new FrogActor(this),damage,source))return 0;
-            if(!Alive || damage<=0)return 0;RememberFrogAttacker(source);damage*=game.spellcraft?.DamageFactor(renderer)??1;float applied=Mathf.Min(health,damage);health-=applied;hitFlash=1;game.ShowDamage(applied,Position+Vector2.up*2.4f,renderer);
+            if(!Alive || damage<=0)return 0;RememberFrogAttacker(source);damage*=game.spellcraft?.DamageFactor(renderer)??1;float applied=Mathf.Min(health,damage);health-=applied;hitFlash=1;game.ShowDamage(applied,Position+Vector2.up*1.1f,renderer);
             if(!Alive){renderer.enabled=lampFlame.enabled=shadow.enabled=feet.enabled=false;}else Pose();return applied;
         }
         public void Warp(Vector2 point){renderer.transform.position=point;Pose();}

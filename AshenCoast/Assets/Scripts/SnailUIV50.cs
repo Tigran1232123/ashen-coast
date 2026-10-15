@@ -12,7 +12,7 @@ namespace AshenCoast
             var caravan=game.snails;if(caravan==null)return;SnailHUDRectsV50.Clear();
             if(caravan.SetupOpen)
             {
-                Fill(new Rect(0,0,CanvasWidth,CanvasHeight),new Color(.025f,.025f,.018f,.86f));var r=SnailPanelV50;Window(r,"Берег обломков · V52");
+                Fill(new Rect(0,0,CanvasWidth,CanvasHeight),new Color(.025f,.025f,.018f,.86f));var r=SnailPanelV50;Window(r,"Берег обломков · V53");
                 GUI.Label(new Rect(r.x+20,r.y+65,r.width-40,34),"Сколько игроков будет в мире?",centered);
                 for(int i=1;i<=4;i++)if(Button(new Rect(r.x+45+(i-1)*125,r.y+125,110,56),i==1?"Один":i+" игрока",caravan.PlayerCount==i))caravan.Configure(i);
                 GUI.Label(new Rect(r.x+24,r.y+280,r.width-48,44),caravan.PlayerCount==1?"Личная комната и три казармы":"Личная комната и войска у каждого игрока",centered);

@@ -56,7 +56,7 @@ namespace AshenCoast
                     if(incoming.connected){lastSeen[incoming.peer]=Time.unscaledTime;if(!IsHost)Send(new LanPacketV49{kind="hello",body=JsonUtility.ToJson(new LanHelloV49{name=CleanName(PlayerName)})});continue;}
                     if(incoming.disconnected){if(IsHost){players.Remove(incoming.peer);game.snails.Left(incoming.peer);lastSeen.Remove(incoming.peer);Reassign();BroadcastRoster();}else{Disconnect(false);Status="Связь с ведущим потеряна";}continue;}
                     if(incoming.json==null){Status="Не удалось подключиться";if(!IsHost)Disconnect(false);continue;}
-                    var packet=JsonUtility.FromJson<LanPacketV49>(incoming.json);if(packet==null || packet.version!=52)throw new InvalidOperationException("Protocol mismatch");
+                    var packet=JsonUtility.FromJson<LanPacketV49>(incoming.json);if(packet==null || packet.version!=53)throw new InvalidOperationException("Protocol mismatch");
                     if(IsHost){packet.peer=incoming.peer;lastSeen[incoming.peer]=Time.unscaledTime;HandleHost(packet);}else Handle(packet);
                 }
                 catch(Exception e){Debug.LogWarning("LAN packet rejected: "+e.Message);if(IsHost)transport?.Drop(incoming.peer);else{Disconnect(false);Status="Не удалось синхронизировать игру";}}
@@ -84,7 +84,7 @@ namespace AshenCoast
         {
             if(packet.kind=="hello")
             {
-                var hello=JsonUtility.FromJson<LanHelloV49>(packet.body);if(hello.build!=52 || players.Count>=game.snails.PlayerCount || game.snails.JoinSeat(packet.peer)<0){transport.Drop(packet.peer);return;}
+                var hello=JsonUtility.FromJson<LanHelloV49>(packet.body);if(hello.build!=53 || players.Count>=game.snails.PlayerCount || game.snails.JoinSeat(packet.peer)<0){transport.Drop(packet.peer);return;}
                 players[packet.peer]=new LanPlayerV49{peer=packet.peer,name=CleanName(hello.name),region="area/0",x=-1.5f-packet.peer*.7f,y=-1.65f};
                 transport.Send(packet.peer,JsonUtility.ToJson(new LanPacketV49{kind="welcome",peer=0,body=JsonUtility.ToJson(new LanWelcomeV49{peer=packet.peer,seed=WorldShape.Seed,seconds=game.DaySeconds,name=hello.name,x=-1.5f-packet.peer*.7f,y=-1.65f,networkTime=Time.realtimeSinceStartup})}));
                 foreach(var entry in snapshots)transport.Send(packet.peer,JsonUtility.ToJson(new LanPacketV49{kind="world",peer=owners.TryGetValue(entry.Key,out var own)?own:0,region=entry.Key,body=entry.Value}));
@@ -125,6 +125,7 @@ namespace AshenCoast
                 case "world":snapshots[packet.region]=packet.body;if(Online && (packet.region==Region || IsHost) && packet.peer!=Peer)ApplyWorld(packet.region,packet.body,false);break;
                 case "time":var clock=JsonUtility.FromJson<LanClockV49>(packet.body);worldSeconds=clock.seconds;receivedTime=Time.unscaledTime;networkBase=clock.networkTime;networkReceived=Time.realtimeSinceStartup;break;
                 case "corpses":game.corpses.Receive(packet.body);break;
+                case "corpseDrop":if(packet.region==Region && CanSimulate)game.corpses.DropBodyLootV53(JsonUtility.FromJson<CorpseDataV51>(packet.body));break;
                 case "raisePlayer":game.corpses.RaiseLocalPlayer(JsonUtility.FromJson<CorpseDataV51>(packet.body));break;
                 case "raiseActor":game.corpses.RaiseActor(JsonUtility.FromJson<CorpseDataV51>(packet.body));break;
                 case "raiseResult":game.corpses.RaiseResult(JsonUtility.FromJson<RaiseResultV51>(packet.body));break;

@@ -210,7 +210,7 @@ namespace AshenCoast
             bowSound=AudioClip.Create("Taut bow string release",bow.Length,1,rate,false);bowSound.SetData(bow,0);
         }
     }
-    public sealed class FortBandit : ICombatTarget
+    public sealed partial class FortBandit : ICombatTarget
     {
         public readonly FortWorld world;
         public readonly BanditRole role;
@@ -239,7 +239,7 @@ namespace AshenCoast
             world=owner;role=type;home=at;index=id;sprite=world.game.art.Renderer("Fort "+Name,world.art.bandits[(int)role,0],at,CoastGame.Depth(at.y));sprite.transform.SetParent(world.root.transform,true);
             feet=sprite.gameObject.AddComponent<CircleCollider2D>();feet.radius=.22f;feet.offset=Vector2.up*.13f;
             var marker=new GameObject("Bandit visible attack preparation");marker.transform.SetParent(world.root.transform,false);warning=marker.AddComponent<LineRenderer>();warning.sharedMaterial=new Material(Shader.Find("Sprites/Default"));warning.startWidth=warning.endWidth=.035f;warning.startColor=warning.endColor=new Color(1,.43f,.17f,.7f);warning.positionCount=0;
-            cooldown=.7f+id*.05f;dashCooldown=1+id*.08f;Pose(false);
+            gaitV53=PixelGait.ForHumanoidV53(world.game.art,sprite,.42f);cooldown=.7f+id*.05f;dashCooldown=1+id*.08f;Pose(false);
         }
         public void ClearAggro(){Alert=false;attackTime=0;Dashing=false;warning.positionCount=0;}
         public void Warp(Vector2 p){sprite.transform.position=p;Pose(false);Physics2D.SyncTransforms();}
@@ -323,7 +323,7 @@ namespace AshenCoast
         void Pose(bool moving)
         {
             frame=attackTime>0?Mathf.Min(7,Mathf.FloorToInt(attackTime/(attackKind==3?1.38f:.95f)*8)):moving?Mathf.FloorToInt(distance/1.5f*8)%8:0;
-            sprite.sprite=attackTime>0?world.art.attacks[(int)role,frame]:world.art.bandits[(int)role,frame];sprite.flipX=aim.x>.15f;sprite.sortingOrder=CoastGame.Depth(Position.y);world.game.art.PixelStyle(sprite);sprite.color=Color.Lerp(Color.white,new Color(1,.46f,.33f),hitFlash);
+            sprite.sprite=attackTime>0?world.art.attacks[(int)role,frame]:world.art.bandits[(int)role,frame];sprite.flipX=aim.x>.15f;sprite.sortingOrder=CoastGame.Depth(Position.y);world.game.art.PixelStyle(sprite);sprite.color=Color.Lerp(Color.white,new Color(1,.46f,.33f),hitFlash);gaitV53.PoseSideV53(distance/1.5f,moving,aim);
         }
         public float Hurt(float amount)
         {

@@ -21,6 +21,9 @@ namespace AshenCoast
             if(State!=null && State.character!=state.character){if(gait.Lower)UnityEngine.Object.Destroy(gait.Lower.gameObject);gait=new PixelGait(session.game.art,Renderer,session.game.HeroFramesV51((CharacterV51)state.character),.43f);}
             bool changed=State==null || State.region!=state.region || Vector2.Distance(target,new Vector2(state.x,state.y))>6;State=state;target=new Vector2(state.x,state.y);if(changed)Renderer.transform.position=target;
             Mirror.character=(CharacterV51)state.character;Mirror.health=state.health;Mirror.hunger=state.hunger;Mirror.mana=state.mana;Mirror.immunity=state.immunity;
+            // Keep the correct race pose even while the proxy is in another location.
+            // Corpse presentation may need that last pose before it becomes visible here.
+            Renderer.sprite=session.game.HeroFramesV51((CharacterV51)state.character)[Mathf.Clamp(state.facing,0,7),Mathf.Clamp(state.frame,0,7)];session.game.art.PixelStyle(Renderer);float raceScale=state.character==1?.6f:1;shadow.transform.localScale=new Vector3(.62f*raceScale,.24f*raceScale,1);
             if(state.equipment!=null && state.equipment.Length==Mirror.equipment.Length)for(int i=0;i<Mirror.equipment.Length;i++)Mirror.equipment[i]=state.equipment[i]?.Restore();
         }
         public void Tick(float dt)

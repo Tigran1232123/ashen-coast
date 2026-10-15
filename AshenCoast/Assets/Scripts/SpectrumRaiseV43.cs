@@ -14,10 +14,13 @@ namespace AshenCoast
             var block=new MaterialPropertyBlock();game.hero.GetPropertyBlock(block);
             if(!raising){block.SetFloat("_RaisedArm",0);game.hero.SetPropertyBlock(block);if(raisedArmV43)raisedArmV43.enabled=false;return;}
             game.facing=0;game.hero.flipX=false;game.hero.sprite=game.HeroFramesV51(game.survivor.character)[0,3];game.art.PixelStyle(game.hero);
+            if(raisedArmV43 && raisedArmV43.sprite.texture!=game.hero.sprite.texture){Object.Destroy(raisedArmV43.gameObject);raisedArmV43=null;}
             if(!raisedArmV43)
             {
-                var source=game.HeroFramesV51(game.survivor.character)[0,3];float ppu=source.pixelsPerUnit;var r=source.rect;
-                float left=r.x+source.pivot.x-.44f*ppu,bottom=r.y+source.pivot.y+.60f*ppu,width=.32f*ppu,height=.68f*ppu;
+                var source=game.HeroFramesV51(game.survivor.character)[0,3];float k=game.CharacterScaleV53;shoulderV43=new Vector2(-.24f,1.14f)*k;float ppu=source.pixelsPerUnit;var r=source.rect;
+                float left=r.x+source.pivot.x-.44f*k*ppu,bottom=r.y+source.pivot.y+.60f*k*ppu,width=.32f*k*ppu,height=.68f*k*ppu;
+                if(game.survivor.character==CharacterV51.Frog)
+                {shoulderV43=new Vector2(-.13f,.74f);left=r.x+source.pivot.x-.26f*ppu;bottom=r.y+source.pivot.y+.415f*ppu;width=.135f*ppu;height=.36f*ppu;}
                 var crop=new Rect(left,bottom,width,height);var pivot=new Vector2((source.pivot.x+r.x+shoulderV43.x*ppu-left)/width,(source.pivot.y+r.y+shoulderV43.y*ppu-bottom)/height);
                 var arm=Sprite.Create(source.texture,crop,pivot,ppu,0,SpriteMeshType.FullRect);
                 raisedArmV43=game.art.Renderer("Castaway raises Spectrum with his arm",arm,game.hero.transform.position,game.hero.sortingOrder+3);

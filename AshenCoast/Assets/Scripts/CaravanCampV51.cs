@@ -11,7 +11,7 @@ namespace AshenCoast
         public Vector2[] MapRouteV51=Array.Empty<Vector2>();public readonly List<SpriteRenderer> logSeatsV51=new List<SpriteRenderer>();
         Sprite[,] seatedV51;Sprite logSpriteV51;CampfireObject campFireV51;AudioSource fluteSourceV51;AudioClip fluteV51;
         readonly float[] seatReadyV51=new float[4];
-        public Vector2 CampSlotV51(int i)=>FindLand(campCentreV51+new Vector2(Mathf.Cos((45+i*90)*Mathf.Deg2Rad)*9.5f,Mathf.Sin((45+i*90)*Mathf.Deg2Rad)*7.4f));
+        public Vector2 CampSlotV51(int i)=>CampSlotV53(i);
         Vector2 LogPointV51(int i)=>campCentreV51+(CampSlotV51(i)-campCentreV51).normalized*2.8f;
         public void InitializeCampV51()
         {
@@ -39,10 +39,10 @@ namespace AshenCoast
             }
             if(stopped>0 || houses.Any(h=>h.Hidden || h.WithdrawalV51>.02f)){foreach(var h in houses)h.moving=false;return true;}
             if(campPhaseV51==2)
-            {foreach(var t in troops.Values.Where(Living)){t.returning=false;t.resting=true;}if(Vector2.Distance(houses[0].position,destination)<.35f){campCentreV51=destination;campPhaseV51=3;}return campPhaseV51!=2;}
+            {foreach(var t in troops.Values.Where(Living)){t.returning=false;t.resting=true;}if(houses.All(h=>Vector2.Distance(h.position,destination)<.35f)){campCentreV51=destination;campPhaseV51=3;PrepareRoutesV53(destination,true);}return campPhaseV51!=2;}
             if(campPhaseV51==3)
             {
-                bool ready=true;for(int i=0;i<4;i++){var h=houses[i];Step(h,CampSlotV51(i),CoastGame.WalkSpeed*1.5f,dt);if(Vector2.Distance(h.position,CampSlotV51(i))>.25f)ready=false;}
+                bool ready=true;for(int i=0;i<4;i++){var h=houses[i];TravelV53(h,CampSlotV51(i),CoastGame.WalkSpeed*1.5f,dt);if(Vector2.Distance(h.position,CampSlotV51(i))>.25f)ready=false;}
                 if(ready){campPhaseV51=4;ordered=false;nextRestV51=clock+4;for(int i=0;i<4;i++)houses[i].Renderer.flipX=houses[i].position.x>campCentreV51.x;}
                 return true;
             }
@@ -90,7 +90,7 @@ namespace AshenCoast
         {
             var sprite=Sprite(t.key);if(!sprite)return;int row=t.key=="mage"?3:Woman(t.key)?.IsSlave==true?t.fluteV51?0:1:2;int frame=(int)(clock*(t.fluteV51?5:2)+t.home)%4;
             sprite.sprite=seatedV51[row,frame];sprite.transform.localScale=Vector3.one*(1.3f/sprite.sprite.bounds.size.y);sprite.transform.position=LogPointV51(t.home);sprite.flipX=t.home==1 || t.home==2;sprite.sortingOrder=CoastGame.Depth(sprite.transform.position.y)+3;game.art.PixelStyle(sprite);
-            if(t.key=="mage"){game.journey.companion.gait.Lower.enabled=false;}else if(Woman(t.key)!=null)Woman(t.key).weaponSprite.enabled=false;
+            if(t.key=="mage"){game.journey.companion.gait.Lower.enabled=false;}else if(Woman(t.key)!=null){Woman(t.key).weaponSprite.enabled=false;Woman(t.key).gaitV53.Lower.enabled=false;var block=new MaterialPropertyBlock();sprite.GetPropertyBlock(block);block.SetFloat("_BodyFloor",0);sprite.SetPropertyBlock(block);}
         }
         public void CampVisualsV51()
         {

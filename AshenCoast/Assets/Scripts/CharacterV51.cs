@@ -15,7 +15,7 @@ namespace AshenCoast
             {
                 // The authored columns have different gaps; a uniform grid cuts through bodies.
                 var columns=bank.ColumnBands(texture,rows[d],rows[d+1]);if(columns.Count!=4)throw new InvalidOperationException("Frog row "+d+" needs four complete poses");
-                for(int f=0;f<8;f++){var column=columns[f%4];int left=Mathf.Max(0,column.x-2),right=Mathf.Min(texture.width,column.y+3);var source=bank.Slice(texture,new RectInt(left,rows[d],right-left,rows[d+1]-rows[d]),new Vector2(.5f,0),100);var r=source.rect;frog[d,f]=Sprite.Create(texture,r,new Vector2(.5f,0),r.height/1.78f,0,SpriteMeshType.FullRect);}
+                for(int f=0;f<8;f++){var column=columns[f%4];int left=Mathf.Max(0,column.x-2),right=Mathf.Min(texture.width,column.y+3);var source=bank.Slice(texture,new RectInt(left,rows[d],right-left,rows[d+1]-rows[d]),new Vector2(.5f,0),100);var r=source.rect;frog[d,f]=Sprite.Create(texture,r,new Vector2(.5f,0),r.height/1.068f,0,SpriteMeshType.FullRect);}
             }
             var dead=bank.Load("CorpsesV51");for(int i=0;i<9;i++)corpses[i]=bank.Slice(dead,new RectInt(i%3*dead.width/3,i/3*dead.height/3,dead.width/3,dead.height/3),new Vector2(.5f,.5f),200);
             var room=bank.Load("ShellInteriorsV51");for(int i=0;i<4;i++)rooms[i]=bank.Slice(room,new RectInt(i%2*room.width/2,i/2*room.height/2,room.width/2,room.height/2),new Vector2(.5f,0),200);
@@ -30,7 +30,8 @@ namespace AshenCoast
         public void ChooseCharacterV51(CharacterV51 kind)
         {
             if(CoopOnline || !snails.SetupOpen)return;survivor.character=kind;survivor.health=survivor.MaxHealth;survivor.mana=Mathf.Min(survivor.mana,survivor.MaxMana);
-            if(gait?.Lower)Destroy(gait.Lower.gameObject);gait=new PixelGait(art,hero,HeroFramesV51(kind),.43f);hero.sprite=HeroFramesV51(kind)[0,3];hero.flipX=false;art.PixelStyle(hero);
+            if(spectrum?.raisedArmV43){Destroy(spectrum.raisedArmV43.gameObject);spectrum.raisedArmV43=null;}var poseBlock=new MaterialPropertyBlock();hero.GetPropertyBlock(poseBlock);poseBlock.SetFloat("_RaisedArm",0);hero.SetPropertyBlock(poseBlock);
+            if(gait?.Lower)Destroy(gait.Lower.gameObject);gait=new PixelGait(art,hero,HeroFramesV51(kind),.43f);hero.sprite=HeroFramesV51(kind)[0,3];hero.flipX=false;art.PixelStyle(hero);heroShadow.transform.localScale=new Vector3(.62f*CharacterScaleV53,.24f*CharacterScaleV53,1);var feet=hero.GetComponent<CircleCollider2D>();feet.radius=.22f*CharacterScaleV53;feet.offset=new Vector2(0,.13f*CharacterScaleV53);
         }
     }
     public sealed partial class InventoryUI
@@ -40,7 +41,7 @@ namespace AshenCoast
             var c=game.survivor.character;
             for(int i=0;i<2;i++)
             {
-                var kind=(CharacterV51)i;var box=new Rect(r.x+70+i*225,r.y+178,215,100);ArtBank.DrawIcon(game.HeroFramesV51(kind)[0,3],new Rect(box.x+7,box.y+3,48,88),Color.white);
+                var kind=(CharacterV51)i;var box=new Rect(r.x+70+i*225,r.y+178,215,100);ArtBank.DrawIcon(game.HeroFramesV51(kind)[0,3],new Rect(box.x+7,box.y+3+(i==1?35:0),48,i==1?53:88),Color.white);
                 if(Button(new Rect(box.x+62,box.y+7,148,39),i==0?"Человек":"Лягушка",c==kind))game.ChooseCharacterV51(kind);
                 GUI.Label(new Rect(box.x+63,box.y+53,146,30),i==0?"100 ХП · 100 маны":"50 ХП · 200 маны",CachedStyle(small,TextAnchor.MiddleCenter,13));
             }
