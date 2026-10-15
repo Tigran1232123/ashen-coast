@@ -52,8 +52,8 @@ namespace AshenCoast
             if(Hired && HoldPosition){if(Vector2.Distance(Position,game.body.position)>12)return;HoldPosition=false;}
             if(attackAge>=0)
             {
-                attackAge+=dt;float p=Mathf.Clamp01(attackAge/duration);
-                if(!delivered && p>=.42f){delivered=true;Deliver();}
+                attackAge+=dt;AttackFootworkV54(dt);float p=Mathf.Clamp01(attackAge/duration);
+                if(!delivered && p>=(Weapon?.kind==ItemKind.Bow?.62f:.42f)){delivered=true;Deliver();}
                 if(p>=1)attackAge=-1;Pose(false);return;
             }
             victim=FindEnemy();Vector2 destination=Position;
@@ -64,8 +64,8 @@ namespace AshenCoast
                 if(delta.magnitude<=reach && !game.WorldBlocked(Position,victim.Position,.06f) && ready<=0)BeginAttack();
                 else if(delta.magnitude>reach*.83f)destination=victim.Position-aim*reach*.65f;
             }
-            else if(Hired){int formation=village.Allies.ToList().IndexOf(this);destination=game.body.position+new Vector2(-1.3f-(formation%3)*.65f,-.7f-(formation/3)*.75f);}
-            else if(!Slaver && !Hunter && !WeaponMerchantV48)destination=PatrolV48(dt);
+            else if(Hired)destination=game.FormationPointV54(Renderer);
+            else if(Slaver)destination=home;else if(!WeaponMerchantV48)destination=PatrolV48(dt);
             var movement=destination-Position;bool walking=movement.magnitude>.30f;
             if(walking)
             {
@@ -99,7 +99,7 @@ namespace AshenCoast
             return Vector2.zero;
         }
         void BeginAttack()
-        {var d=Weapon.Definition;attackAge=0;delivered=false;duration=d.attackSeconds/(IsSlave?1:1.5f);ready=d.cooldown/(IsSlave?1:1.5f);AttackCount++;village.game.WorldSwishV53(Renderer);}
+        {var d=Weapon.Definition;attackAge=0;delivered=false;duration=Weapon.kind==ItemKind.Bow?.85f:Mathf.Max(.36f,d.attackSeconds/(IsSlave?1:1.5f));ready=Weapon.kind==ItemKind.Bow?2:d.cooldown/(IsSlave?1:1.5f);AttackCount++;village.game.WorldSwishV53(Renderer);}
         void Deliver()
         {
             if(SparringV48 && victim==SparringPartnerV48){if(Weapon?.kind==ItemKind.Bow)village.ShootPracticeV48(this,aim);else village.TrainingImpactV48(SparringPartnerV48.Position+Vector2.up*.9f);return;}
@@ -107,62 +107,12 @@ namespace AshenCoast
             if(Weapon.kind==ItemKind.Bow){village.Shoot(this,aim);return;}
             if(Vector2.Distance(victim.Position,Position)>Weapon.Definition.reach+.3f || village.game.WorldBlocked(Position,victim.Position,.06f))return;
             if(Weapon.Definition.arc>0 && Weapon.Definition.arc<360 && Vector2.Angle(aim,victim.Position-Position)>Weapon.Definition.arc*.5f)return;
-            village.game.HurtTarget(victim,AmazonSettlementV46.WeaponDamage(Weapon,victim),Renderer);if(Weapon.kind==ItemKind.GoldenSpear)village.game.v44.Apply(victim);
+            if(!village.game.CanReachV54(victim,DamageDeliveryV54.Melee))return;if(Weapon.kind==ItemKind.GoldenSpear)village.game.v44.Apply(victim);village.game.HurtTarget(victim,AmazonSettlementV46.WeaponDamage(Weapon,victim),Renderer,DamageDeliveryV54.Melee);
         }
         void Pose(bool walking)
         {
-            var game=village.game;int frame=walking?(int)(step/1.4f*6)%6:0;
-            Renderer.sprite=IsSlave?game.journey.art.driverRun[index%4,walking?(int)(step/1.4f*8)%8:0]:village.art.women[index%4,frame];if(Mathf.Abs(aim.x)>.25f)Renderer.flipX=aim.x<0;Renderer.sortingOrder=CoastGame.Depth(Position.y);game.art.PixelStyle(Renderer);Renderer.color=tint;
-            shadow.transform.position=Position;shadow.sortingOrder=-2000;gaitV53?.PoseSideV53(step/1.4f,walking,aim);
-            var weapon=Weapon;weaponSprite.enabled=weapon!=null && Attacking;if(!Attacking)Renderer.transform.localScale=Vector3.one;if(!weaponSprite.enabled)return;
-            weaponSprite.sprite=game.art.icons[weapon.Definition.icon];bool vertical=Combat.VerticalV44(weapon.kind) || weapon.kind==ItemKind.Bow;
-            float length=weapon.kind==ItemKind.Bow?1.5f:Combat.WeaponLengthV44(weapon.kind);weaponSprite.transform.localScale=Vector3.one*(length/((vertical?weaponSprite.sprite.rect.height:weaponSprite.sprite.rect.width)/weaponSprite.sprite.pixelsPerUnit));
-            float degrees=Mathf.Atan2(aim.y,aim.x)*Mathf.Rad2Deg;
-            var hand=Position+new Vector2(aim.x<0?-.18f:.18f,.91f);
-            if(attackAge>=0)
-            {float progress=Mathf.SmoothStep(0,1,Mathf.Clamp01(attackAge/duration));if(Combat.ThrustV44(weapon.kind))hand+=aim*Mathf.Sin(progress*Mathf.PI)*.6f;else degrees+=weapon.Definition.arc*(progress-.5f);Renderer.transform.localScale=new Vector3(1+Mathf.Sin(progress*Mathf.PI)*.035f,1-Mathf.Sin(progress*Mathf.PI)*.025f,1);}
-            else {degrees=weapon.kind==ItemKind.Bow?90:aim.x<0?120:65;Renderer.transform.localScale=Vector3.one;}
-            weaponSprite.transform.position=hand;weaponSprite.transform.rotation=Quaternion.Euler(0,0,degrees-(vertical?90:0));weaponSprite.sortingOrder=Renderer.sortingOrder+2;game.art.PixelStyle(weaponSprite);
+            PoseV54(walking);
         }
     }
-    public sealed class VillageArrowV46
-    {public LineRenderer line;public Vector2 point,velocity;public SpriteRenderer source;public bool player,practice;public VillageActorV46 practiceTargetV53;public float age;}
-    public sealed partial class AmazonSettlementV46
-    {
-        public readonly List<VillageArrowV46> arrows=new List<VillageArrowV46>();
-        public bool ShootPlayer(Vector2 direction)
-        {
-            if(Time.time<game.combat.readyAt)return false;var bow=game.survivor.equipment[0];if(bow?.kind!=ItemKind.Bow || !bow.Usable)return false;
-            bow.Wear(.3f);game.combat.readyAt=Time.time+bow.Definition.cooldown;SpawnArrow(game.body.position+Vector2.up*.9f,direction,game.hero,true);game.PlaySwish();return true;
-        }
-        public void Shoot(VillageActorV46 actor,Vector2 direction)=>SpawnArrow(actor.Position+Vector2.up*.9f,direction,actor.Renderer,actor.Hired);
-        public void ShootPracticeV48(VillageActorV46 actor,Vector2 direction)=>SpawnArrow(actor.Position+Vector2.up*.9f,direction,actor.Renderer,false,true,actor.SparringPartnerV48);
-        public void ShootBanditV48(PlainBanditV48 actor,Vector2 direction)=>SpawnArrow(actor.Position+Vector2.up*.9f,direction,actor.Renderer,false);
-        void SpawnArrow(Vector2 from,Vector2 direction,SpriteRenderer source,bool player,bool practice=false,VillageActorV46 practiceTargetV53=null)
-        {
-            var line=new GameObject("Amazon flying arrow").AddComponent<LineRenderer>();line.transform.SetParent(source.transform.parent,true);line.sharedMaterial=game.art.lit;line.positionCount=2;line.startWidth=.045f;line.endWidth=.02f;line.startColor=new Color(.51f,.35f,.16f);line.endColor=new Color(.84f,.79f,.61f);line.sortingOrder=CoastGame.Depth(from.y)+5;
-            var a=new VillageArrowV46{line=line,point=from,velocity=direction.normalized*15,source=source,player=player,practice=practice,practiceTargetV53=practiceTargetV53};line.SetPosition(0,from);line.SetPosition(1,from-direction.normalized*.35f);arrows.Add(a);
-        }
-        void TickArrows(float dt)
-        {
-            for(int i=arrows.Count-1;i>=0;i--)
-            {
-                var a=arrows[i];a.age+=dt;var next=a.point+a.velocity*dt;bool remove=a.age>1.2f || game.WorldBlocked(a.point-Vector2.up*.9f,next-Vector2.up*.9f,.03f);
-                if(!remove && a.practice && a.practiceTargetV53!=null)
-                {var centre=(Vector2)a.practiceTargetV53.Renderer.bounds.center;var segment=next-a.point;float fraction=segment.sqrMagnitude>0?Mathf.Clamp01(Vector2.Dot(centre-a.point,segment)/segment.sqrMagnitude):0;if(Vector2.Distance(centre,a.point+segment*fraction)<.4f){TrainingImpactV48(centre);remove=true;}}
-                if(!remove && !a.practice)foreach(var target in game.WorldCreatures.ToArray())
-                {
-                    if(!target.Alive || target.Renderer==a.source || target is PracticeTargetV46)continue;
-                    bool hunts=a.source && people.Any(p=>p.Renderer==a.source && !p.Hostile && !p.Hired);
-                    if(!a.practice && hunts && !(target is PlainBanditV48 || target is WoodlouseActor || Enemy(target) && !(target is VillageActorV46)))continue;
-                    if(!a.practice && !hunts && a.player && (target is HeroCombatActor || target is MageCombatActor || target is SnailHouseV50 || target is VillageActorV46 ally && ally.Hired))continue;
-                    if(!a.practice && !hunts && !a.player && !(target is HeroCombatActor || target is MageCombatActor || target is SnailHouseV50 || target is VillageActorV46 friendly && (friendly.Hired || a.source && plains.bandits.Any(b=>b.Renderer==a.source))))continue;
-                    var centre=target is SnailHouseV50?target.Position+Vector2.up*.9f:(Vector2)target.Renderer.bounds.center;var segment=next-a.point;float t=segment.sqrMagnitude>0?Mathf.Clamp01(Vector2.Dot(centre-a.point,segment)/segment.sqrMagnitude):0;
-                    if(Vector2.Distance(centre,a.point+segment*t)>.36f)continue;
-                    if(a.practice)TrainingImpactV48(centre);else game.HurtTarget(target,20,a.source);remove=true;break;
-                }
-                if(remove){Destroy(a.line.gameObject);arrows.RemoveAt(i);}else{a.point=next;a.line.SetPosition(0,next);a.line.SetPosition(1,next-a.velocity.normalized*.35f);}
-            }
-        }
-    }
+
 }

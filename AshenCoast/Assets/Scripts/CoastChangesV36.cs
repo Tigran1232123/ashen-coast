@@ -5,11 +5,12 @@ namespace AshenCoast
 {
     public sealed partial class CoastGame
     {
-        public float HurtTarget(ICombatTarget victim,float amount,SpriteRenderer source)
+        public float HurtTarget(ICombatTarget victim,float amount,SpriteRenderer source,DamageDeliveryV54 delivery=DamageDeliveryV54.Other)
         {
+            if(!CanReachV54(victim,delivery))return 0;
             if(victim==null || !victim.Alive || amount<=0 || (spellcraft!=null && spellcraft.ImmobilizedV44(source)))return 0;
             if(CoopOnline && coop.IsPlayer(victim.Renderer) && coop.IsPlayer(source))return 0;
-            if(CoopOnline && coop.world.RedirectDamage(victim,amount,source))return 0;
+            if(CoopOnline && coop.world.RedirectDamage(victim,amount,source,delivery))return 0;
             if(victim is PracticeTargetV46 practice && source==hero && (!CoopOnline || coop.Context==null))RecordDummyV48(practice.Renderer,Mathf.Min(practice.health,amount));
             return victim is VillageActorV46 villager?villager.HurtFrom(amount,source):victim is NightHunter nightHunter?nightHunter.HurtFrom(amount,source):victim is FrogActor frog?frog.HurtFrom(amount,source):victim.Hurt(amount);
         }
@@ -75,7 +76,7 @@ namespace AshenCoast
                 var t=castHits[i].collider.transform;
                 if(t!=sprite.transform && !t.IsChildOf(sprite.transform) && t!=victim.Renderer.transform && !t.IsChildOf(victim.Renderer.transform))return;
             }
-            if(game.HurtTarget(victim,AttackDamage,sprite)>0){attackCooldown=AttackInterval;attackAge=0;}
+            if(game.HurtTarget(victim,AttackDamage,sprite,DamageDeliveryV54.Melee)>0){attackCooldown=AttackInterval;attackAge=0;}
         }
     }
 }

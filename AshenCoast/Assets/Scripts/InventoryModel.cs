@@ -80,7 +80,7 @@ namespace AshenCoast
             AddWeapon(d,ItemKind.Zen,"Дзен",2,4,53,90,2,.46f/3,.58f/3,360);
             AddWeapon(d,ItemKind.Axe,"Топор",1,3,54,30,2,.45f,1,120);
             AddWeapon(d,ItemKind.Stake,"Боевой кол",1,4,55,24,3,.22f,.29f,0);
-            AddWeapon(d,ItemKind.Bow,"Лук",2,3,56,20,9,.30f,.8f,0);
+            AddWeapon(d,ItemKind.Bow,"Лук",2,3,56,36,9,.72f,2f,0);
             Add(d,ItemKind.ReturnScroll,"Свиток: Возвращение",1,2,57);
             return d;
         }
@@ -261,7 +261,7 @@ namespace AshenCoast
         public GridInventory inventory = new GridInventory(10, 5, "Инвентарь"){allowOpenBooks=true};
         public float HungerMax => 100 + (foods.Count >= 2 ? 20 : 0) + (foods.Count >= 4 ? 30 : 0);
         public GridInventory Bag => equipment[(int)GearSlot.Back]?.contents;
-        public Survivor() { equipment[(int)GearSlot.Back] = new Item(ItemKind.Sack); inventory.Add(new Item(ItemKind.Lamp));inventory.Add(new Item(ItemKind.Zen));inventory.Add(new Item(ItemKind.GoldenSpear));inventory.Add(new Item(ItemKind.Pyromancy));inventory.Add(new Item(ItemKind.AbyssTome));inventory.Add(new Item(ItemKind.YoYo));inventory.Add(new Item(ItemKind.Coin){count=10});inventory.Add(new Item(ItemKind.LastPrism));inventory.Add(new Item(ItemKind.RollerSkates)); inventory.Add(new Item(ItemKind.ShacklesScroll));inventory.Add(new Item(ItemKind.CurseScroll));inventory.Add(new Item(ItemKind.Spectrum));inventory.Add(new Item(ItemKind.WaterBottle));inventory.Add(new Item(ItemKind.ReturnScroll)); spatialInventory.insertionAllowed=()=>SpatialLayerOpen; }
+        public Survivor() { equipment[(int)GearSlot.Back] = new Item(ItemKind.Sack); equipment[(int)GearSlot.Feet]=new Item(ItemKind.Boots); inventory.Add(new Item(ItemKind.Lamp));inventory.Add(new Item(ItemKind.Zen));inventory.Add(new Item(ItemKind.GoldenSpear));inventory.Add(new Item(ItemKind.Pyromancy));inventory.Add(new Item(ItemKind.AbyssTome));inventory.Add(new Item(ItemKind.YoYo));inventory.Add(new Item(ItemKind.Coin){count=10});inventory.Add(new Item(ItemKind.LastPrism));inventory.Add(new Item(ItemKind.RollerSkates)); inventory.Add(new Item(ItemKind.ShacklesScroll));inventory.Add(new Item(ItemKind.CurseScroll));inventory.Add(new Item(ItemKind.Spectrum));inventory.Add(new Item(ItemKind.WaterBottle));inventory.Add(new Item(ItemKind.ReturnScroll)); spatialInventory.insertionAllowed=()=>SpatialLayerOpen; }
         public int Coins=>inventory.items.Where(i=>i.kind==ItemKind.Coin).Sum(i=>i.count)+(Bag==null?0:Bag.items.Where(i=>i.kind==ItemKind.Coin).Sum(i=>i.count));
         public bool SpendCoins(int price)
         {

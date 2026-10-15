@@ -157,7 +157,7 @@ namespace AshenCoast
             if(game.Dead && !game.paused)DrawDeath();
             if(game.LocalMenuPausedV49) DrawPause();
             else if(game.journey.HireOffer)DrawHireOffer();
-            DrawCoopUIV49();DrawSnailsV50();
+            DrawCoopUIV49();DrawSnailsV50();DrawItemTooltipV54();
             GUI.matrix=original;
         }
         void DrawHUD()
@@ -217,9 +217,9 @@ namespace AshenCoast
             GUI.Label(new Rect(r.x+7,r.y,r.width-86,r.height-6),label,hudName);
             GUI.Label(new Rect(r.xMax-80,r.y,73,r.height-6),Meter(value,max),hudValue);
         }
-        void ActorVital(Vector2 at,string name,float value,float max,Color color,SpriteRenderer actor=null)
+        void ActorVital(Vector2 at,string name,float value,float max,Color color,SpriteRenderer actor=null,bool always=false)
         {
-            if(actor && !game.PlayerStruck.Contains(actor) && !game.feedback.WasHit(actor))return;
+            if(!always && actor && !game.PlayerStruck.Contains(actor) && !game.feedback.WasHit(actor))return;
             if(!PackActorLabel(at,out at))return;
             float hit=game.feedback.Flash(actor);color=Color.Lerp(color,new Color(1,.63f,.28f),hit);
             var track=new Rect(at.x-50,at.y,100,15);if(hit>0){Border(new Rect(track.x-2,track.y-2,track.width+4,track.height+4),new Color(1,.64f,.27f,hit));}Fill(track,new Color(.035f,.039f,.041f,.93f));Border(track,new Color(.37f,.36f,.29f));
@@ -359,7 +359,7 @@ namespace AshenCoast
             }
             if(stationOpen!=null)DrawStation();
             if(skatesOpen)DrawSkatesPanel();
-            DrawDetail(new Rect(x,MainGridY+230,420,138));
+            // Item information is drawn beside the hovered item after all inventory windows.
         }
         void Window(Rect r,string name)
         {
@@ -416,29 +416,6 @@ namespace AshenCoast
                 var p=view.Cell(Pointer)-grab;var box=new Rect(r.x+p.x*c,r.y+p.y*c,dragItem.Definition.width*c,dragItem.Definition.height*c);
                 var placement=grid==game.survivor.inventory?PlacementGrid(dragItem,p,view.Cell(Pointer)):grid;bool valid=placement!=dragItem.contents && placement.CanPlace(dragItem,p.x,p.y);
                 Fill(box,valid?new Color(.38f,.52f,.24f,.35f):new Color(.60f,.15f,.12f,.35f));Border(box,valid?new Color(.65f,.73f,.38f):new Color(.80f,.27f,.20f));
-            }
-        }
-        void DrawDetail(Rect r)
-        {
-            Frame(r,new Color(.072f,.067f,.05f));
-            if(hoverItem==null){DrawOrnament(r.center);return;}
-            var d=hoverItem.Definition;
-            if(hoverItem.Definition.Divine){var oldColor=GUI.color;GUI.color=SpectrumNameColorV43(Time.time);GUI.Label(new Rect(r.x+12,r.y+7,r.width-24,35),d.name,CachedStyle(bold,TextAnchor.MiddleLeft,16,FontStyle.Bold,true));GUI.color=oldColor;}else GUI.Label(new Rect(r.x+12,r.y+7,r.width-24,35),d.name,CachedStyle(bold,TextAnchor.MiddleLeft,16,FontStyle.Bold,true));
-            GUI.Label(new Rect(r.x+12,r.y+42,r.width-24,23),d.width+" × "+d.height,small);
-            if(d.Book)GUI.Label(new Rect(r.x+12,r.y+78,r.width-24,25),hoverItem.opened?"Открыт":"Закрыт",text);
-            if(d.Weapon)
-            {
-                GUI.Label(new Rect(r.x+12,r.y+65,r.width-24,25),d.damage+" урона",text);
-                GUI.Label(new Rect(r.x+12,r.y+90,r.width-24,23),"Дальность "+d.reach,small);
-                if(hoverItem.kind==ItemKind.Zen)GUI.Label(new Rect(r.x+185,r.y+65,r.width-197,25),game.survivor.hunger>0?"4 сытости / удар":"4 здоровья / удар",small);
-                if(d.arc>0)GUI.Label(new Rect(r.x+190,r.y+90,r.width-204,23),d.arc+"°",small);
-            }
-            else if(d.Food)
-            {
-                GUI.Label(new Rect(r.x+12,r.y+66,r.width-24,24),"Сытость +"+d.nourishment,small);
-                if(d.mana>0)GUI.Label(new Rect(r.x+12,r.y+88,r.width-24,24),"Мана +"+d.mana,small);
-                if(hoverItem.kind!=ItemKind.Brain)GUI.Label(new Rect(r.x+210,r.y+66,180,24),d.foodDuration+" с",small);
-                if(hoverItem.kind!=ItemKind.Brain)GUI.Label(new Rect(r.x+12,r.y+108,r.width-24,22),hoverItem.Spoiled?"Испорчено":"Срок годности: "+(hoverItem.freshness/360).ToString("0.0")+" дн.",CachedStyle(small,TextAnchor.MiddleLeft,12));
             }
         }
         void ProcessInteractions(Event e)

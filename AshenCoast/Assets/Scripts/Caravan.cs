@@ -55,7 +55,7 @@ namespace AshenCoast
         }
         public float Hurt(float damage)
         {
-            float applied=vitals.Hurt(damage*(world.game.spellcraft?.DamageFactor(Renderer)??1));if(applied<=0)return 0;flash=1;world.cartDriver.Frighten();
+            float applied=vitals.Hurt(damage*(world.game.spellcraft?.DamageFactor(Renderer)??1),world.game.v44!=null && world.game.v44.Stunned(Renderer));if(applied<=0)return 0;flash=1;world.cartDriver.Frighten();
             world.game.ShowDamage(applied,Position+Vector2.up*1.8f,Renderer,false,vitals.Curled);Pose(false);
             if(!Alive)world.game.DropMeat(Position);return applied;
         }

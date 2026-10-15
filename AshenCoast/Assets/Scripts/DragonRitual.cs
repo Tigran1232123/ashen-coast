@@ -317,7 +317,7 @@ namespace AshenCoast
                 if(!struck && stateTime>=duration*.51f)
                 {
                     Pose();struck=true;var contact=Action==DragonAction.Peck?Mouth-Vector2.up*.8f:Position+aim*1.05f;float reach=Action==DragonAction.Peck?.86f:1.07f;
-                    foreach(var victim in game.WorldCreatures.ToArray())if(victim.Alive && victim.Renderer!=Renderer && Vector2.Distance(victim.Position,contact)<reach && Clear(Position,victim.Position))game.HurtTarget(victim,Action==DragonAction.Peck?32:44,Renderer);
+                    foreach(var victim in game.WorldCreatures.ToArray())if(victim.Alive && victim.Renderer!=Renderer && Vector2.Distance(victim.Position,contact)<reach && Clear(Position,victim.Position))game.HurtTarget(victim,Action==DragonAction.Peck?32:44,Renderer,DamageDeliveryV54.Melee);
                     game.PlaySwish();
                 }
                 if(stateTime>=duration)Rest(.75f);return;

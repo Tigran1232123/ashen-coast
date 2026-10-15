@@ -4,10 +4,11 @@ namespace AshenCoast
     public sealed partial class Survivor
     {
         public readonly GridInventory skateSlot=new GridInventory(2,2,"Ролики"){craftingEnabled=false,onlyKind=ItemKind.RollerSkates};
+        public bool WearingBootsV54=>equipment[(int)GearSlot.Feet]?.kind==ItemKind.Boots && equipment[(int)GearSlot.Feet].Usable;
         public Item Skates=>skateSlot.items.Count>0?skateSlot.items[0]:null;
         public bool EquipSkates(Item item,GridInventory source,bool canDrop,out Item dropped)
         {
-            dropped=null;if(item?.kind!=ItemKind.RollerSkates || source==null || !source.items.Contains(item))return false;
+            dropped=null;if(!WearingBootsV54 || item?.kind!=ItemKind.RollerSkates || source==null || !source.items.Contains(item))return false;
             if(source==skateSlot)return true;var previous=Skates;
             if(previous!=null && !canDrop && !inventory.FindSpace(previous,out _,new[]{item}))return false;
             source.items.Remove(item);skateSlot.items.Clear();
@@ -37,7 +38,7 @@ namespace AshenCoast
         public readonly RollerMotion rollers=new RollerMotion();
         public Vector2 MotionVelocity(Vector2 input,float dt)
         {
-            if(survivor.Skates!=null)return rollers.Step(input,body.linearVelocity,BaseMovementSpeed,dt);
+            if(survivor.WearingBootsV54 && survivor.Skates!=null)return rollers.Step(input,body.linearVelocity,BaseMovementSpeed,dt);
             rollers.Reset();return input*BaseMovementSpeed;
         }
     }

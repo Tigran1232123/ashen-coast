@@ -65,9 +65,9 @@ namespace AshenCoast
         {
             age+=dt;poseFrame=Mathf.FloorToInt(age*30);Pose();if(game.CoopOnline && !game.coop.CanSimulate)return;
             if(root.activeInHierarchy && game.cave.Inside && age>.55f && age<Duration)foreach(var spider in game.cave.spiders)if(spider.Alive && !spider.Grabbed && Vector2.Distance(spider.Position,position)<radius && !game.WorldBlocked(position,spider.Position,.03f)){spider.Grabbed=true;spider.sprite.GetComponent<Collider2D>().enabled=false;game.PlayerHit(spider.sprite);pulledSpiders.Add(new PulledSpider{spider=spider,start=spider.Position});}
-            foreach(var caught in pulledSpiders){if(!caught.spider.Alive)continue;caught.age+=dt;float p=Mathf.Clamp01(caught.age/1.25f);var spider=caught.spider;spider.sprite.transform.position=caught.start+Vector2.down*(.8f*p*p);spider.sprite.transform.rotation=Quaternion.Euler(0,0,Mathf.Sin(caught.age*17)*12*(1-p));var b=new MaterialPropertyBlock();spider.sprite.GetPropertyBlock(b);b.SetFloat("_GroundClip",1);b.SetFloat("_GroundY",caught.start.y+p*.18f);spider.sprite.SetPropertyBlock(b);if(p>=1)game.HurtTarget(spider,1000,caster);}
+            foreach(var caught in pulledSpiders){if(!caught.spider.Alive)continue;caught.age+=dt;float p=Mathf.Clamp01(caught.age/1.25f);var spider=caught.spider;spider.sprite.transform.position=caught.start+Vector2.down*(.8f*p*p);spider.sprite.transform.rotation=Quaternion.Euler(0,0,Mathf.Sin(caught.age*17)*12*(1-p));var b=new MaterialPropertyBlock();spider.sprite.GetPropertyBlock(b);b.SetFloat("_GroundClip",1);b.SetFloat("_GroundY",caught.start.y+p*.18f);spider.sprite.SetPropertyBlock(b);if(p>=1)game.HurtTarget(spider,1000,caster,DamageDeliveryV54.Tentacle);}
             bool damageTick=root.activeInHierarchy && age<Duration && age>=nextDamage;
-            if(damageTick){nextDamage+=.40f;foreach(var enemy in game.AdditionalTargets)if(enemy.Alive && !(enemy is CaveSpider spider && spider.Grabbed) && Vector2.Distance(enemy.Position,position)<radius && (!game.WorldBlocked(position,enemy.Position,.03f))){game.PlayerHit(enemy.Renderer);game.HurtTarget(enemy,PulseDamage,caster);}}
+            if(damageTick){nextDamage+=.40f;foreach(var enemy in game.AdditionalTargets)if(enemy.Alive && !(enemy is CaveSpider spider && spider.Grabbed) && Vector2.Distance(enemy.Position,position)<radius && (!game.WorldBlocked(position,enemy.Position,.03f))){game.PlayerHit(enemy.Renderer);game.HurtTarget(enemy,PulseDamage,caster,DamageDeliveryV54.Tentacle);}}
             if(root.activeInHierarchy && !game.magic.InPocket && game.journey.IsCoast && age<Duration)
             {
                 foreach(var mob in game.woodlice)
@@ -75,8 +75,8 @@ namespace AshenCoast
                     {game.PlayerHit(mob.renderer);mob.Grabbed=true;mob.feet.enabled=false;pulled.Add(new PulledCreature{mob=mob,start=mob.Position});}
                 if(damageTick)
                 {
-                    foreach(var mob in game.woodlice)if(mob.vitals.Alive && !mob.Grabbed && Vector2.Distance(mob.Position,position)<radius){game.PlayerHit(mob.renderer);game.HurtTarget(new WoodlouseActor(mob),PulseDamage,caster);}
-                    foreach(var frog in owner.frogs)if(frog.Alive && Vector2.Distance(frog.Position,position)<radius){game.PlayerHit(frog.renderer);game.HurtTarget(new FrogActor(frog),PulseDamage,caster);}
+                    foreach(var mob in game.woodlice)if(mob.vitals.Alive && !mob.Grabbed && Vector2.Distance(mob.Position,position)<radius){game.PlayerHit(mob.renderer);game.HurtTarget(new WoodlouseActor(mob),PulseDamage,caster,DamageDeliveryV54.Tentacle);}
+                    foreach(var frog in owner.frogs)if(frog.Alive && Vector2.Distance(frog.Position,position)<radius){game.PlayerHit(frog.renderer);game.HurtTarget(new FrogActor(frog),PulseDamage,caster,DamageDeliveryV54.Tentacle);}
                     if(game.dummyHealth>0 && Vector2.Distance(game.DummyBase,position)<radius)game.DamageDummy(PulseDamage);
                 }
             }
@@ -87,7 +87,7 @@ namespace AshenCoast
                 mob.renderer.transform.rotation=Quaternion.Euler(0,0,Mathf.Sin(caught.age*11)*12*(1-progress));
                 var block=new MaterialPropertyBlock();mob.renderer.GetPropertyBlock(block);block.SetFloat("_GroundClip",1);block.SetFloat("_GroundY",caught.start.y+progress*.20f);mob.renderer.SetPropertyBlock(block);
                 mob.shadow.color=new Color(.04f,.03f,.02f,(1-progress)*.42f);
-                if(progress>=1){game.HurtTarget(new WoodlouseActor(mob),mob.vitals.health*10,caster);mob.renderer.transform.rotation=Quaternion.identity;}
+                if(progress>=1){game.HurtTarget(new WoodlouseActor(mob),mob.vitals.health*10,caster,DamageDeliveryV54.Tentacle);mob.renderer.transform.rotation=Quaternion.identity;}
             }
         }
         void Pose()

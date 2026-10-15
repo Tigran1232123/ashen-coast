@@ -175,8 +175,7 @@ namespace AshenCoast
         {foreach(var arrow in arrows){Destroy(arrow.line.sharedMaterial);Destroy(arrow.line.gameObject);}arrows.Clear();}
         public void Shoot(Vector2 origin,Vector2 aim)
         {
-            var o=new GameObject("Bandit arrow in flight");o.transform.SetParent(root.transform,false);var line=o.AddComponent<LineRenderer>();line.sharedMaterial=new Material(Shader.Find("Sprites/Default"));line.startWidth=.042f;line.endWidth=.018f;line.positionCount=3;line.startColor=new Color(.56f,.45f,.31f);line.endColor=new Color(.84f,.84f,.71f);line.sortingOrder=CoastGame.Depth(origin.y)+4;
-            arrows.Add(new BanditArrow{line=line,position=origin,velocity=aim.normalized*12.5f});effects.PlayOneShot(bowSound,.21f);
+            var source=bandits.Where(b=>b.Alive && b.role==BanditRole.Archer).OrderBy(b=>Vector2.Distance(b.Position,origin)).FirstOrDefault();if(source!=null)game.amazons.ShootFortV54(source,aim);
         }
         void TickArrows(float dt)
         {
@@ -262,8 +261,8 @@ namespace AshenCoast
                 }
                 else if(attackKind==2)
                 {
-                    if(!attackDelivered && attackTime>=.62f){world.Shoot(Position+Vector2.up*.80f,aim);attackDelivered=true;}
-                    if(attackTime>=.95f)FinishAttack(1.3f);
+                    if(!attackDelivered && attackTime>=.62f){world.game.amazons.ShootFortV54(this,aim);attackDelivered=true;}
+                    if(attackTime>=.95f)FinishAttack(1.05f);
                 }
                 else if(attackKind==3)
                 {

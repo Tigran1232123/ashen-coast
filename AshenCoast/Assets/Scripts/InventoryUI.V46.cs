@@ -76,9 +76,10 @@ namespace AshenCoast
         void DrawAmazonHealthV46()
         {
             if(game.amazons==null)return;
+            DrawMageVitalsV54();
             foreach(var target in game.amazons.targets)DrawDummyDpsV48(target.Renderer);
             foreach(var a in game.amazons.people)if(a.Renderer.enabled && a.Renderer.gameObject.activeInHierarchy && (a.Alive || game.feedback.Recent(a.Renderer)) && Vector2.Distance(game.body.position,a.Position)<16)
-                ActorVital(World(new Vector2(a.Position.x,a.Renderer.bounds.max.y+.15f)),"",a.health,a.MaxHealth,a.Hired?new Color(.26f,.48f,.28f):new Color(.60f,.26f,.20f),a.Renderer);
+                ActorVital(World(new Vector2(a.Position.x,a.Renderer.bounds.max.y+.15f)),"",a.health,a.MaxHealth,a.Hired?new Color(.26f,.48f,.28f):new Color(.60f,.26f,.20f),a.Renderer,a.Hired && !game.snails.Resting(a.Renderer));
             foreach(var b in game.amazons.plains.bandits)if(b.Renderer.enabled && b.Renderer.gameObject.activeInHierarchy && game.feedback.Recent(b.Renderer))ActorVital(World(new Vector2(b.Position.x,b.Renderer.bounds.max.y+.15f)),"",b.health,100,new Color(.6f,.26f,.2f),b.Renderer);
         }
     }

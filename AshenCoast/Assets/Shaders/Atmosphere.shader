@@ -28,10 +28,12 @@ Shader "AshenCoast/Atmosphere"
      if(well>=_ZenWellCount)break;
      float2 q=(zenWorld-_ZenWells[well].xy)/max(.01,_ZenWells[well].z);
      float zenDistance=length(q),strength=pow(1-smoothstep(.08,1,zenDistance),2)*_ZenWells[well].w;
-     float phase=zenDistance*11-_EffectClock*1.4;
-     zenWarp+=float2(sin(q.y*8+phase),cos(q.x*7+phase*.8))*strength;
+     float phase=zenDistance*19-_EffectClock*4.8;
+     float2 radial=q/max(.08,zenDistance),tangent=float2(-radial.y,radial.x);
+     zenWarp+=(radial*sin(phase)*1.8+tangent*sin(zenDistance*10+_EffectClock*2.9)*1.25)*strength;
     }
-    heatUV+=clamp(zenWarp,-.85,.85)*_PixelSize.zw;
+    // Refract sharp pixels rather than blending a blurred copy of the scene.
+    heatUV+=round(clamp(zenWarp,-2.5,2.5))*_PixelSize.zw;
     float hotBand=pow(.5+.5*sin(uv.y*23+uv.x*9-_EffectClock*1.7),3);
     float2 ripple=float2(sin(uv.y*116-_EffectClock*12+sin(uv.x*24)),cos(uv.x*91+_EffectClock*9));
     heatUV+=ripple*_PixelSize.zw*(1.2+hotBand*2.2)*_BattleHeat*(1-protectedHero*.8);

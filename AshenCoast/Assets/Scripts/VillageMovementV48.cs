@@ -10,28 +10,33 @@ namespace AshenCoast
         public Vector2 TrainingPointV48;
         public int TrainingSideV48;public float TrainingPhaseV48;
         public bool SparringV48=>SparringPartnerV48!=null && SparringPartnerV48.Alive && !Hostile && !Hired && !SparringPartnerV48.Hostile && village.TrainingTimeV48;
-        List<Vector2> route=new List<Vector2>();Vector2 routeGoal,velocity,patrolGoal;int routeIndex,patrolVisit;float rest,repath;
+        List<Vector2> route=new List<Vector2>();Vector2 routeGoal,velocity,patrolGoal;int routeIndex,patrolVisit;float rest,repath;bool restingV54;
         public void ResetRouteV48(){route.Clear();routeIndex=0;velocity=Vector2.zero;repath=0;}
         Vector2 PatrolV48(float dt)
         {
-            rest=Mathf.Max(0,rest-dt);
-            if(patrolGoal==Vector2.zero || rest<=0 && Vector2.Distance(Position,patrolGoal)<.4f)
+            bool arrived=patrolGoal!=Vector2.zero && Vector2.Distance(Position,patrolGoal)<.4f;
+            if(arrived && !restingV54){restingV54=true;rest=5+(index%4)*2.2f;}
+            if(restingV54)rest=Mathf.Max(0,rest-dt);
+            if(patrolGoal==Vector2.zero || arrived && rest<=0)
             {
-                patrolVisit++;rest=1.2f+(index%4)*.5f;
+                patrolVisit++;restingV54=false;
                 float a=(index*1.7f+patrolVisit*1.31f);
                 if(HuntingV48)patrolGoal=home+new Vector2(Mathf.Sin(a)*13,Mathf.Cos(a)*10);
-                else if(patrolVisit%3==0)patrolGoal=village.houses[(index+patrolVisit)%village.houses.Count].entrance+Vector2.down*1.2f;
-                else patrolGoal=village.Centre+new Vector2(Mathf.Sin(a),Mathf.Cos(a))*(12.5f+index%4*1.5f);
+                else if(patrolVisit%4==0)patrolGoal=village.houses[(index+patrolVisit)%village.houses.Count].entrance+Vector2.down*1.2f;
+                else if(patrolVisit%4==1)patrolGoal=village.Centre+new Vector2((index%2==0?-1:1)*4.2f,-3.4f);
+                else if(patrolVisit%4==2)patrolGoal=village.Centre+new Vector2(-7+(index%4)*4.5f,3.8f);
+                else patrolGoal=village.houses[(index+patrolVisit/2)%village.houses.Count].entrance+new Vector2(index%2==0?1:-1,-1.1f);
             }
+            if(Vector2.Distance(Position,patrolGoal)<.4f && rest>0){aim=Vector2.Lerp(aim,(village.Centre-Position).normalized,Mathf.Min(1,dt*2)).normalized;return Position;}
             return patrolGoal;
         }
         bool MoveV48(Vector2 destination,float speed,float dt)
         {
             if(dt<=0)return false;repath=Mathf.Max(0,repath-dt);
-            if(route.Count==0 && repath<=0 || Vector2.Distance(routeGoal,destination)>1.25f && repath<=0)
-            {routeGoal=destination;route=village.PathV48(Position,destination);routeIndex=0;repath=.9f;}
+            if(route.Count==0 && repath<=0 || Vector2.Distance(routeGoal,destination)>.55f && repath<=0)
+            {routeGoal=destination;route=village.PathV48(Position,destination);routeIndex=0;repath=.35f;}
             while(routeIndex<route.Count && Vector2.Distance(Position,route[routeIndex])<.26f)routeIndex++;
-            if(routeIndex>=route.Count){velocity=Vector2.zero;if(Vector2.Distance(Position,destination)>.7f && repath<=0)route.Clear();return false;}
+            if(routeIndex>=route.Count){velocity=Vector2.MoveTowards(velocity,Vector2.zero,dt*8);if(Vector2.Distance(Position,destination)>.4f && repath<=0)route.Clear();return false;}
             Vector2 delta=route[routeIndex]-Position;Vector2 wanted=delta.normalized*speed;
             // Soft separation is stable; it never swaps a route's chosen side of a fence.
             foreach(var other in village.people)if(other!=this && other.Alive && !other.Captive && other.Renderer.gameObject.activeInHierarchy)
@@ -45,12 +50,14 @@ namespace AshenCoast
         void TickSparringV48(float dt)
         {
             victim=SparringPartnerV48;
-            float angle=village.game.DaySeconds*.30f+TrainingPhaseV48;float distance=Weapon.kind==ItemKind.Bow || SparringPartnerV48.Weapon?.kind==ItemKind.Bow?2.5f:1.02f;
-            var offset=new Vector2(Mathf.Cos(angle),Mathf.Sin(angle)*.6f)*distance*TrainingSideV48;
+            float angle=village.game.DaySeconds*.23f+TrainingPhaseV48;float distance=Weapon.kind==ItemKind.Bow || SparringPartnerV48.Weapon?.kind==ItemKind.Bow?2.5f:1.02f;
+            float beat=Mathf.Repeat(village.game.DaySeconds+TrainingPhaseV48*1.7f,5);
+            float dodge=Mathf.Sin(beat*Mathf.PI)*.35f;
+            var offset=new Vector2(Mathf.Cos(angle),Mathf.Sin(angle)*.62f)*(distance+dodge)*TrainingSideV48;
             var destination=TrainingPointV48+offset;
             bool moving=Vector2.Distance(Position,destination)>.30f && MoveV48(destination,2.3f,dt);
             aim=(victim.Position-Position).normalized;
-            if(Vector2.Distance(Position,TrainingPointV48)<distance+.8f && Vector2.Distance(victim.Position,TrainingPointV48)<distance+.8f && ready<=0 && !village.game.WorldBlocked(Position,victim.Position,.04f))BeginAttack();
+            if(Vector2.Distance(Position,TrainingPointV48)<distance+.8f && Vector2.Distance(victim.Position,TrainingPointV48)<distance+.8f && ready<=0 && (Mathf.Repeat(village.game.DaySeconds+TrainingPhaseV48,2.7f)<1.45f)==(TrainingSideV48>0) && !village.game.WorldBlocked(Position,victim.Position,.04f))BeginAttack();
             Pose(moving);
         }
     }

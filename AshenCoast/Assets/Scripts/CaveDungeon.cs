@@ -36,10 +36,12 @@ namespace AshenCoast
         {
             stone=bank.Load("CaveTilesV33");var portal=bank.Load("CatacombEntranceV33");entrance=bank.Slice(portal,new RectInt(0,0,portal.width,portal.height),new Vector2(.5f,0),200);
             LoadRows(bank,"SpiderV33",4,8,(r,c,s)=>spider[r,c]=s,1.25f,false);
-            LoadRows(bank,"WormHeadV34",4,4,(r,c,s)=>head[r*4+c]=s,2.50f,true);
-            LoadRows(bank,"WormBodyV34",4,4,(r,c,s)=>body[r*4+c]=s,2.50f,true);
-            LoadRows(bank,"WormTailV34",4,4,(r,c,s)=>tail[r*4+c]=s,2.50f,true);
+            LoadWormV54(bank,"WormHeadV54",head,2.50f);
+            LoadWormV54(bank,"WormBodyV54",body,2.50f);
+            LoadWormV54(bank,"WormTailV54",tail,2.50f);
         }
+        static void LoadWormV54(ArtBank bank,string name,Sprite[] destination,float width)
+        {var frames=AtlasV54.Actors(bank,name,4,4,width,true);for(int r=0;r<4;r++)for(int c=0;c<4;c++)destination[r*4+c]=frames[r,c];}
         static void LoadRows(ArtBank bank,string name,int rows,int columns,System.Action<int,int,Sprite> put,float size,bool width)
         {
             var t=bank.Load(name);var bands=bank.Bands(t,true,rows);var data=t.GetPixels32();
@@ -185,7 +187,7 @@ namespace AshenCoast
         public float Hurt(float amount)
         {if(!Alive)return 0;amount*=cave.game.spellcraft?.DamageFactor(sprite)??1;float applied=Mathf.Min(health,(cave.game.prism!=null && cave.game.prism.ApplyingDamage || cave.game.spellcraft!=null && (cave.game.spellcraft.BypassDamage || cave.game.spellcraft.Bound(sprite)))?amount:Mathf.Min(DamageLimit,amount));health-=applied;cave.game.ShowDamage(applied,Position+Vector2.up*.55f,sprite);if(!Alive){sprite.enabled=false;sprite.GetComponent<Collider2D>().enabled=false;cave.Sever(this);}return applied;}
         public void Pose(Vector2 direction,float clock,bool head,bool tail)
-        {IsHead=head;int phase=Mathf.FloorToInt(clock*24+seed*2.7f);sprite.sprite=head?cave.art.head[phase%cave.art.head.Length]:tail?cave.art.tail[phase%cave.art.tail.Length]:cave.art.body[phase%cave.art.body.Length];sprite.transform.rotation=Quaternion.Euler(0,0,Mathf.Atan2(direction.y,direction.x)*Mathf.Rad2Deg+(tail?180:0));sprite.sortingOrder=CoastGame.Depth(Position.y)+1;cave.game.art.PixelStyle(sprite);var block=new MaterialPropertyBlock();sprite.GetPropertyBlock(block);block.SetFloat("_InkTime",clock+seed*1.71f);sprite.SetPropertyBlock(block);}
+        {IsHead=head;int phase=Mathf.FloorToInt(clock*13+seed*2.7f);sprite.sprite=head?cave.art.head[phase%cave.art.head.Length]:tail?cave.art.tail[phase%cave.art.tail.Length]:cave.art.body[phase%cave.art.body.Length];sprite.transform.rotation=Quaternion.Euler(0,0,Mathf.Atan2(direction.y,direction.x)*Mathf.Rad2Deg+(tail?180:0));sprite.sortingOrder=CoastGame.Depth(Position.y)+1;cave.game.art.PixelStyle(sprite);sprite.transform.localScale=new Vector3(1+.035f*Mathf.Sin(clock*5.2f-seed*.8f),1+.07f*Mathf.Sin(clock*5.2f-seed*.8f+1.4f),1);var block=new MaterialPropertyBlock();sprite.GetPropertyBlock(block);block.SetFloat("_ArtStep",1);block.SetFloat("_InkTime",clock+seed*1.71f);sprite.SetPropertyBlock(block);}
     }
     public sealed class SpectralWorm
     {

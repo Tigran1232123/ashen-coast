@@ -5,9 +5,9 @@ using UnityEngine;
 namespace AshenCoast
 {
     [Serializable] public sealed class LanPacketV49
-    {public string kind,region,body;public int peer,target=-1,version=53;public long sequence;}
-    [Serializable] public sealed class LanHelloV49 {public string name;public int build=53;}
-    [Serializable] public sealed class LanWelcomeV49 {public int peer,seed;public float seconds,x,y,networkTime;public string name;}
+    {public string kind,region,body;public int peer,target=-1,version=54;public long sequence;}
+    [Serializable] public sealed class LanHelloV49 {public string name;public int build=54;}
+    [Serializable] public sealed class LanWelcomeV49 {public int peer,seed,villageSeed;public float seconds,x,y,networkTime;public string name;}
     [Serializable] public sealed class LanPlayerV49
     {public int peer,facing,frame,character,weapon=-1;public string name,region;public float x,y,health=100,hunger=100,mana,immunity=100,walk,angle,scale=1;public bool moving,attacking,invulnerable,dead;public float duration,elapsed,weaponX,weaponY,weaponScale=1;public LanItemV49[] equipment;}
     [Serializable] public sealed class LanOwnerV49 {public string region;public int peer;}
@@ -64,6 +64,6 @@ namespace AshenCoast
     [Serializable] public sealed class LanTransactionV49 {public string id;public LanGridV49[] grids;public LanPrivateV49 inventory;public LanWorldActionV49[] actions;}
     [Serializable] public sealed class LanCommitV49 {public string id;public bool accepted;public LanGridV49[] grids;public LanWorldActionV49[] actions;}
     [Serializable] public sealed class LanWorldActionV49 {public string kind,key,region;public float x,y;public int value;public bool upright;public LanItemV49 item;}
-    [Serializable] public sealed class LanDamageV49 {public string key;public float amount;public bool bypass,prism;public int effect;}
+    [Serializable] public sealed class LanDamageV49 {public string key;public float amount;public bool bypass,prism;public int effect,delivery;}
     [Serializable] public sealed class LanEffectV49 {public string kind,key;public float x,y,value,value2;public Vector2[] points;}
 }

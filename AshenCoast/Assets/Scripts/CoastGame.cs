@@ -40,7 +40,7 @@ namespace AshenCoast
         public const float AttackWalkSpeed = 1.55f;
         public bool FastMovement {get;private set;}
         public float BaseMovementSpeed=>(combat.Attacking?AttackWalkSpeed:WalkSpeed)*(FastMovement?5:1)*(cave?.SlowMultiplier??1);
-        public float MovementSpeed=>BaseMovementSpeed*(survivor?.Skates!=null?1+rollers.Bonus:1);
+        public float MovementSpeed=>BaseMovementSpeed*(survivor?.Skates!=null && survivor.WearingBootsV54?1+rollers.Bonus:1);
         public void ToggleFastMovement(){FastMovement=!FastMovement;ui.Notice(FastMovement?"Скорость: ×5":"Обычная скорость");}
         public void StartNight()
         {
@@ -132,7 +132,7 @@ namespace AshenCoast
         void Awake()
         {
             hoverBlock=new MaterialPropertyBlock();AutoPickup=PlayerPrefs.GetInt("AutoPickup",0)==1;
-            testMode=Environment.GetCommandLineArgs().Contains("-polish-check") || Environment.GetCommandLineArgs().Contains("-frog-check") || Environment.GetCommandLineArgs().Contains("-v51-check") || Environment.GetCommandLineArgs().Contains("-coast-test") || Environment.GetCommandLineArgs().Contains("-snail-check") || Environment.GetCommandLineArgs().Contains("-lan-native-check");
+            testMode=Environment.GetCommandLineArgs().Contains("-v54-check") || Environment.GetCommandLineArgs().Contains("-polish-check") || Environment.GetCommandLineArgs().Contains("-frog-check") || Environment.GetCommandLineArgs().Contains("-v51-check") || Environment.GetCommandLineArgs().Contains("-coast-test") || Environment.GetCommandLineArgs().Contains("-snail-check") || Environment.GetCommandLineArgs().Contains("-lan-native-check");
             Application.targetFrameRate = 60;
             QualitySettings.vSyncCount = 1;
             art=new ArtBank();newArt=new CoastArtV34(art);v43Art=new CoastArtV43(art); survivor=new Survivor(); shipStorage=CoastTime.CreateShipStorage();
@@ -167,7 +167,7 @@ namespace AshenCoast
             meditation=new Meditation(this);
             v37Art=new CoastArtV37(art);v38Art=new CoastArtV38(art);CoastArtV43.ApplyBooks(art);v44Art=new CoastArtV44(art);v44=gameObject.AddComponent<CombatStatusV44>();v44.Initialize(this);spellcraft=gameObject.AddComponent<Spellcraft>();spellcraft.Initialize(this);spectrum=gameObject.AddComponent<SpectrumWeapon>();spectrum.Initialize(this);amazons=gameObject.AddComponent<AmazonSettlementV46>();amazons.Initialize(this);
             v51Art=new CharacterArtV51(art);snails=gameObject.AddComponent<SnailHomesV50>();snails.Initialize(this);coop=gameObject.AddComponent<CoopSessionV49>();coop.Initialize(this);corpses=gameObject.AddComponent<CorpseWorldV51>();corpses.Initialize(this);if(snails.SetupOpen){paused=true;Time.timeScale=0;}
-            if(Environment.GetCommandLineArgs().Contains("-polish-check"))gameObject.AddComponent<PolishChecksV53>().game=this;else if(Environment.GetCommandLineArgs().Contains("-frog-check"))gameObject.AddComponent<FrogChecksV52>().game=this;else if(Environment.GetCommandLineArgs().Contains("-v51-check"))gameObject.AddComponent<ChecksV51>().game=this;else if(Environment.GetCommandLineArgs().Contains("-snail-check"))gameObject.AddComponent<SnailChecksV50>().game=this;else if(Environment.GetCommandLineArgs().Contains("-lan-native-check"))gameObject.AddComponent<LanNativeChecksV49>().game=this;else if(testMode)gameObject.AddComponent<RuntimeChecks>().game=this;
+            if(Environment.GetCommandLineArgs().Contains("-v54-check"))gameObject.AddComponent<ChecksV54>().game=this;else if(Environment.GetCommandLineArgs().Contains("-polish-check"))gameObject.AddComponent<PolishChecksV53>().game=this;else if(Environment.GetCommandLineArgs().Contains("-frog-check"))gameObject.AddComponent<FrogChecksV52>().game=this;else if(Environment.GetCommandLineArgs().Contains("-v51-check"))gameObject.AddComponent<ChecksV51>().game=this;else if(Environment.GetCommandLineArgs().Contains("-snail-check"))gameObject.AddComponent<SnailChecksV50>().game=this;else if(Environment.GetCommandLineArgs().Contains("-lan-native-check"))gameObject.AddComponent<LanNativeChecksV49>().game=this;else if(testMode)gameObject.AddComponent<RuntimeChecks>().game=this;
         }
 
 

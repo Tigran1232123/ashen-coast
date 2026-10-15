@@ -10,12 +10,12 @@ namespace AshenCoast
         public bool firstHit;
         public bool Alive=>health>0;
         public bool Curled=>Alive && curlRemaining>0;
-        public float Hurt(float damage)
+        public float Hurt(float damage,bool preventCurl=false)
         {
             if(!Alive || damage<=0)return 0;
             float applied=damage*(Curled?.20f:1);
             health=Mathf.Max(0,health-applied);
-            if(!Curled && Alive){firstHit=true;curlRemaining=CurlDuration;}
+            if(!Curled && Alive && !preventCurl){firstHit=true;curlRemaining=CurlDuration;}
             return applied;
         }
         public void Tick(float dt){curlRemaining=Mathf.Max(0,curlRemaining-Mathf.Max(0,dt));}
@@ -81,7 +81,7 @@ namespace AshenCoast
         public float Hurt(float damage)
         {
             if(game.CoopOnline && game.coop.world.RedirectDamage(new WoodlouseActor(this),damage,game.hero))return 0;
-            float applied=vitals.Hurt(damage*(game.spellcraft?.DamageFactor(renderer)??1));if(applied<=0)return 0;
+            float applied=vitals.Hurt(damage*(game.spellcraft?.DamageFactor(renderer)??1),game.v44!=null && game.v44.Stunned(renderer));if(applied<=0)return 0;
             hitFlash=1;
             game.ShowDamage(applied,Position+new Vector2(.9f,1.75f),renderer,false,vitals.Curled);Pose();
             if(!vitals.Alive)

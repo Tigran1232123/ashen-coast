@@ -61,8 +61,9 @@ namespace AshenCoast
         public static float WeaponLengthV44(ItemKind kind)=>kind==ItemKind.Stake || kind==ItemKind.Spear || kind==ItemKind.GoldenSpear?2.60f:kind==ItemKind.Zen?2.35f:kind==ItemKind.Sword?1.95f:kind==ItemKind.Dagger || kind==ItemKind.Spectrum?.88f:1.65f;
         void StrikeV44(ICombatTarget target)
         {
-            if(active.kind==ItemKind.Spectrum)game.spellcraft.Damage(target,active.Definition.damage,true);else game.HurtTarget(target,AmazonSettlementV46.WeaponDamage(active,target),game.hero);
+            if(!game.CanReachV54(target,DamageDeliveryV54.Melee))return;
             if(active.kind==ItemKind.GoldenSpear)game.v44.Apply(target);
+            if(active.kind==ItemKind.Spectrum)game.spellcraft.Damage(target,active.Definition.damage,true);else game.HurtTarget(target,AmazonSettlementV46.WeaponDamage(active,target),game.hero,DamageDeliveryV54.Melee);
         }
         public void MoveZenDashV44(float dt)
         {

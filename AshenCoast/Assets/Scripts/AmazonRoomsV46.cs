@@ -6,7 +6,7 @@ namespace AshenCoast
     {
         readonly Dictionary<AmazonHouseV46,GameObject> rooms=new Dictionary<AmazonHouseV46,GameObject>();
         public Rect RoomBounds=>new Rect(-7,-5.5f,14,11);
-        public Vector2 ClampRoom(Vector2 point)=>new Vector2(Mathf.Clamp(point.x,-6.7f,6.7f),Mathf.Clamp(point.y,-5.3f,5.3f));
+        public Vector2 ClampRoom(Vector2 point){var q=new Vector2(point.x/6.1f,(point.y+.1f)/4.3f);if(q.magnitude>.98f)q=q.normalized*.98f;return new Vector2(q.x*6.1f,Mathf.Min(3.15f,q.y*4.3f-.1f));}
         void Floor(string name,Transform parent,Vector2 centre,Vector2 size,bool indoor)
         {
             var obj=GameObject.CreatePrimitive(PrimitiveType.Quad);Destroy(obj.GetComponent<Collider>());obj.name=name;obj.transform.SetParent(parent,true);obj.transform.position=new Vector3(centre.x,centre.y,4);obj.transform.localScale=new Vector3(size.x,size.y,1);
@@ -14,38 +14,13 @@ namespace AshenCoast
         }
         void CreateRoom()
         {
-            Floor("Woven dwelling floor",roomRoot.transform,Vector2.zero,new Vector2(14,11),true);
-            exit=Prop("Выйти из дома",game.journey.art.walls[2],new Vector2(0,-5.15f),1.7f,roomRoot.transform,1000);
-            for(int i=0;i<4;i++)Prop("Woven straw interior wall",furnishingsV48[6],new Vector2(-5.25f+i*3.5f,4.3f),3.65f,roomRoot.transform,400);
-            for(int side=-1;side<=1;side+=2){var post=Prop("Dwelling upright timber post",game.journey.art.walls[1],new Vector2(side*6.8f,-5),.32f,roomRoot.transform,600);post.transform.localScale=new Vector3(post.transform.localScale.x,10/post.sprite.bounds.size.y,1);}
-            foreach(var house in houses)
-            {
-                var group=new GameObject(house.chief?"Chieftain's hearth hall":"Straw dwelling interior");group.transform.SetParent(roomRoot.transform,false);rooms[house]=group;group.SetActive(false);
-                var parent=group.transform;
-                for(int i=0;i<(house.chief?4:2);i++)
-                {
-                    Prop("Woven sleeping mat and straw pillow",furnishingsV48[0],new Vector2(i%2==0?-4.3f:4.3f,-.7f+i/2*2.1f),2.3f,parent,-1500);
-                    Prop("Clay drinking cup",game.journey.art.props[2],new Vector2(i%2==0?-3.0f:3.0f,-.5f+i/2*2.1f),.30f,parent);
-                }
-                Prop("Deer hide gathering rug",furnishingsV48[1],new Vector2(0,house.chief?1.9f:.5f),house.chief?3.4f:3.1f,parent,-1490);
-                Prop("Flower and medicinal herb drying rack",furnishingsV48[4],new Vector2(-2.6f,3.5f),2.2f,parent);
-                Prop("Woven food basket",furnishingsV48[7],new Vector2(2.8f,2.6f),1.05f,parent);
-                Prop("Hunting trophies and dried meat",furnishingsV48[5],new Vector2(3.9f,3.4f),2.1f,parent);
-                Prop("Warrior's weapon rack",furnishingsV48[3],new Vector2(-4.2f,-2),1.8f,parent);
-                var pot=game.buildings.CreateStation(ItemKind.StoragePot,new Vector2Int(-6,3),false,null,parent);pot.inventory.Add(new Item(ItemKind.RawMeat));pot.inventory.Add(new Item(ItemKind.BeetleMeat));pot.inventory.Add(new Item(ItemKind.Wood));house.furnishings.Add(pot);
-                if(house.chief)
-                {
-                    var supply=game.buildings.CreateStation(ItemKind.StoragePot,new Vector2Int(5,3),false,null,parent);supply.inventory.Add(new Item(ItemKind.Axe));supply.inventory.Add(new Item(ItemKind.Stake));house.furnishings.Add(supply);
-                    var fire=Prop("Chieftain stone hearth",game.art.campfireBase,new Vector2(0,-.5f),2.4f,parent);var flame=Prop("Hall hearth flame",game.art.flame[0],new Vector2(0,-.38f),1.9f,parent,fire.sortingOrder+3);roomFlames.Add(flame);
-                    Prop("Carved fur-lined chieftain throne",furnishingsV48[2],new Vector2(0,2.6f),2.05f,parent);
-                }
-            }
+            CreateRoomsV54();
         }
         readonly List<SpriteRenderer> roomFlames=new List<SpriteRenderer>();
         public void EnterHouse(AmazonHouseV46 house)
         {
             currentHouse=house;foreach(var entry in rooms)entry.Value.SetActive(entry.Key==house);
-            game.journey.SetArea(WorldArea.AmazonHouse,new Vector2(0,-3.8f));game.cameraView.orthographicSize=6.2f;game.ResetCamera(new Vector3(0,.15f,-20));doorWait=1;
+            game.journey.SetArea(WorldArea.AmazonHouse,new Vector2(0,-3.4f));game.cameraView.orthographicSize=6.2f;game.ResetCamera(new Vector3(0,.15f,-20));doorWait=1;
         }
         public void LeaveHouse()
         {if(currentHouse==null)return;var point=currentHouse.entrance+Vector2.down*1.1f;game.journey.SetArea(WorldArea.Coast,point);doorWait=1;}

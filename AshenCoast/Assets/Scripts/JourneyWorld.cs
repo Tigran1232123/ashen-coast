@@ -352,11 +352,11 @@ namespace AshenCoast
             if(!target && world.InCatacombs)target=game.cave.Targets.Where(t=>t.Alive && Vector2.Distance(t.Position,Position)<8).Select(t=>t.Renderer).FirstOrDefault();
             if(!target && world.InFort)target=game.fort.bandits.Where(b=>b.Alive && b.Alert && Vector2.Distance(b.Position,Position)<8).Select(b=>b.sprite).FirstOrDefault();
             if(!target && world.IsCoast && !game.magic.InPocket)target=game.arcane.frogs.Where(f=>f.Alive && f.Hostile && Vector2.Distance(f.Position,Position)<7).Select(f=>f.renderer).FirstOrDefault();
-            Vector2 delta=game.body.position-Position;Firing=target && mana>0 && Vector2.Distance(target.transform.position,Position)<=7;
-            bool unobstructed=ClearLine(Position,game.body.position);
-            if(delta.magnitude>1.5f || ((world.Interior || world.InFort || world.InCatacombs) && !unobstructed))
+            var followGoal=game.FormationPointV54(sprite);Vector2 delta=followGoal-Position;Firing=target && mana>0 && Vector2.Distance(target.transform.position,Position)<=7;
+            bool unobstructed=ClearLine(Position,followGoal);
+            if(delta.magnitude>.32f || ((world.Interior || world.InFort || world.InCatacombs) && !unobstructed))
             {
-                Vector2 move=(world.Interior || world.InFort || world.InCatacombs) && !unobstructed?FollowRoute(game.body.position,dt):Steer(delta.normalized,dt*FollowSpeed);sprite.transform.position+=(Vector3)move;distance+=move.magnitude;frame=Mathf.FloorToInt(distance/1.65f*8)%8;walking=move.sqrMagnitude>.00001f;walkDirection=move;if(walking)direction=Facing(move);
+                Vector2 move=(world.Interior || world.InFort || world.InCatacombs) && !unobstructed?FollowRoute(followGoal,dt):Steer(delta.normalized,Mathf.Min(delta.magnitude,dt*FollowSpeed));sprite.transform.position+=(Vector3)move;distance+=move.magnitude;frame=Mathf.FloorToInt(distance/1.65f*8)%8;walking=move.sqrMagnitude>.00001f;walkDirection=move;if(walking)direction=Facing(move);
                 if(delta.magnitude>16 && !suppressCatchUp)Warp(game.body.position+new Vector2(-1,-.4f));
             }
             else {frame=3;walking=false;}

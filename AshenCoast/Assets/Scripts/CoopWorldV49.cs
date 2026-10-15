@@ -8,9 +8,9 @@ namespace AshenCoast
     [Serializable] public sealed class LanFieldV49 {public string name;public int type;public float value,y;public Vector2[] points;}
     [Serializable] public sealed class LanRenderV49
     {
-        public string texture;public float rx,ry,rw,rh,px,py,ppu,x,y,z,sx,sy,angle,r,g,b,a;public bool enabled,flipX,flipY;public int order;
+        public string texture;public float rx,ry,rw,rh,px,py,ppu,x,y,z,sx,sy,angle,r,g,b,a,floor;public bool enabled,flipX,flipY;public int order;
         public static LanRenderV49 Capture(SpriteRenderer r)
-        {var s=r.sprite;return new LanRenderV49{texture=s.texture.name,rx=s.rect.x,ry=s.rect.y,rw=s.rect.width,rh=s.rect.height,px=s.pivot.x/s.rect.width,py=s.pivot.y/s.rect.height,ppu=s.pixelsPerUnit,x=r.transform.position.x,y=r.transform.position.y,z=r.transform.position.z,sx=r.transform.lossyScale.x,sy=r.transform.lossyScale.y,angle=r.transform.eulerAngles.z,r=r.color.r,g=r.color.g,b=r.color.b,a=r.color.a,enabled=r.enabled,flipX=r.flipX,flipY=r.flipY,order=r.sortingOrder};}
+        {var s=r.sprite;var block=new MaterialPropertyBlock();r.GetPropertyBlock(block);return new LanRenderV49{floor=block.GetFloat("_BodyFloor"),texture=s.texture.name,rx=s.rect.x,ry=s.rect.y,rw=s.rect.width,rh=s.rect.height,px=s.pivot.x/s.rect.width,py=s.pivot.y/s.rect.height,ppu=s.pixelsPerUnit,x=r.transform.position.x,y=r.transform.position.y,z=r.transform.position.z,sx=r.transform.lossyScale.x,sy=r.transform.lossyScale.y,angle=r.transform.eulerAngles.z,r=r.color.r,g=r.color.g,b=r.color.b,a=r.color.a,enabled=r.enabled,flipX=r.flipX,flipY=r.flipY,order=r.sortingOrder};}
     }
     [Serializable] public sealed class LanActorV49 {public string key,type,region;public float health,bound,curse,stun,anchorX,anchorY;public int owner=-1;public bool hired;public LanRenderV49[] renders;public LanFieldV49[] fields;}
     [Serializable] public sealed class LanLootV49 {public LanItemV49 item;public string key,region;public float x,y,fromX,fromY,age,duration;public bool collected;}
@@ -126,7 +126,7 @@ namespace AshenCoast
         {
             var sprite=ResolveSprite(d);if(sprite)r.sprite=sprite;r.enabled=d.enabled;r.flipX=d.flipX;r.flipY=d.flipY;r.sortingOrder=d.order;r.color=new Color(d.r,d.g,d.b,d.a);
             if(position){r.transform.position=new Vector3(d.x,d.y,d.z);r.transform.rotation=Quaternion.Euler(0,0,d.angle);}
-            var parent=r.transform.parent?r.transform.parent.lossyScale:Vector3.one;r.transform.localScale=new Vector3(d.sx/Mathf.Max(.0001f,parent.x),d.sy/Mathf.Max(.0001f,parent.y),1);G.art.PixelStyle(r);
+            var parent=r.transform.parent?r.transform.parent.lossyScale:Vector3.one;r.transform.localScale=new Vector3(d.sx/Mathf.Max(.0001f,parent.x),d.sy/Mathf.Max(.0001f,parent.y),1);G.art.PixelStyle(r);var block=new MaterialPropertyBlock();r.GetPropertyBlock(block);block.SetFloat("_BodyFloor",d.floor);r.SetPropertyBlock(block);
         }
         public static LanFieldV49[] CaptureFields(object obj)
         {
@@ -161,10 +161,10 @@ namespace AshenCoast
         public void MarkFlower(string key,bool value)
         {if(key.StartsWith("p/") && long.TryParse(key.Substring(2),out var id))G.meadow.SetPickedV49(id,value);foreach(var f in G.flowers.Where(f=>FlowerKey(f)==key)){f.picked=value;if(f.renderer)f.renderer.enabled=!value;if(f.stems)f.stems.enabled=!value;if(f.shadow)f.shadow.enabled=!value;if(f.procedural)G.meadow.SetPickedV49(f.proceduralId,value);}}
         public void RegionChanged(){session.ReapplyRegion();foreach(var b in entities.Values)if(allyOwners.ContainsKey(b.key))b.renders[0].gameObject.SetActive(b.region==session.Region);}
-        public bool RedirectDamage(ICombatTarget target,float damage,SpriteRenderer source)
+        public bool RedirectDamage(ICombatTarget target,float damage,SpriteRenderer source,DamageDeliveryV54 delivery=DamageDeliveryV54.Other)
         {
             if(!session.Online || session.ApplyingNetwork || target is HeroCombatActor || target is RemotePlayerV49)return false;
-            string id=Key(target);if(id==null)return false;if(!session.CanSimulate){session.Send(new LanPacketV49{kind="damage",region=session.Region,body=JsonUtility.ToJson(new LanDamageV49{key=id,amount=damage,bypass=G.spellcraft.BypassDamage || G.prism.ApplyingDamage,prism=G.prism.ApplyingDamage})});return true;}return false;
+            string id=Key(target);if(id==null)return false;if(!session.CanSimulate){session.Send(new LanPacketV49{kind="damage",region=session.Region,body=JsonUtility.ToJson(new LanDamageV49{key=id,amount=damage,delivery=(int)delivery,bypass=G.spellcraft.BypassDamage || G.prism.ApplyingDamage,prism=G.prism.ApplyingDamage})});return true;}return false;
         }
         public void ApplyCommand(LanPacketV49 packet)
         {
@@ -181,7 +181,7 @@ namespace AshenCoast
                     if(d.key=="dummy"){float actual=Mathf.Min(G.dummyHealth,d.amount);G.DamageDummy(Mathf.RoundToInt(d.amount),false);if(d.effect!=0)session.SendDpsV49(packet.peer,"dummy",actual);return;}
                     if(binding.target==null)return;float hp=binding.health();
                     bool previous=G.spellcraft.BypassDamage;G.spellcraft.BypassDamage=d.bypass;
-                    try{session.ForNearest(binding.renders[0].transform.position,()=>G.HurtTarget(binding.target,Mathf.Min(d.amount,10000),source),packet.peer);}finally{G.spellcraft.BypassDamage=previous;}
+                    try{session.ForNearest(binding.renders[0].transform.position,()=>G.HurtTarget(binding.target,Mathf.Min(d.amount,10000),source,(DamageDeliveryV54)d.delivery),packet.peer);}finally{G.spellcraft.BypassDamage=previous;}
                     if(G.coop.IsPlayer(source))G.PlayerHit(binding.renders[0]);if(binding.target is PracticeTargetV46)session.SendDpsV49(packet.peer,d.key,Mathf.Min(hp,d.amount));
                 }
                 else if(packet.kind=="effect")ApplyEffectV49(packet);

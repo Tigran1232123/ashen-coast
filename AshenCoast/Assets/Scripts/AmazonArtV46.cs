@@ -11,7 +11,7 @@ namespace AshenCoast
             var sheet=bank.Load("AmazonVillageV46");
             int split=Mathf.RoundToInt(sheet.height*602f/1024);
             for(int i=0;i<6;i++)props[i]=bank.Slice(sheet,new RectInt(i%3*sheet.width/3,i<3?0:split,sheet.width/3,i<3?split:sheet.height-split),new Vector2(.5f,0),100);
-            var goddess=bank.Load("AlvielStatueV46");statue=bank.Slice(goddess,new RectInt(0,0,goddess.width,goddess.height),new Vector2(.5f,0),100);
+            var goddess=bank.Load("AlvielStatueV54");statue=bank.Slice(goddess,new RectInt(0,0,goddess.width,goddess.height),new Vector2(.5f,0),100);
             var actors=bank.Load("AmazonActorsV46");
             int[] rows={0,271,533,788,1024};
             for(int row=0;row<4;row++)

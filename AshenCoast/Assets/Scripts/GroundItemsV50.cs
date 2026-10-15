@@ -7,9 +7,9 @@ namespace AshenCoast
         {
             if(drop.collected || drop.InFlight || drop.item.kind==ItemKind.Spectrum || drop.item.kind==ItemKind.Zen)return;
             var item=drop.item;var r=drop.renderer;
-            bool flat=item.Definition.Melee || item.Definition.Book || item.kind==ItemKind.Rope || item.kind==ItemKind.IronIngot || item.kind==ItemKind.Coin || item.Definition.Flower || item.kind==ItemKind.Clover || item.kind==ItemKind.FourLeafClover;
-            bool vertical=Combat.VerticalV44(item.kind) || item.kind==ItemKind.Stake || item.kind==ItemKind.Axe;
-            float angle=item.Definition.Melee?(vertical?-72:-18):item.Definition.Flower?-28:0;
+            bool flat=item.kind==ItemKind.Bow || item.Definition.Melee || item.Definition.Book || item.kind==ItemKind.Rope || item.kind==ItemKind.IronIngot || item.kind==ItemKind.Coin || item.Definition.Flower || item.kind==ItemKind.Clover || item.kind==ItemKind.FourLeafClover;
+            bool vertical=Combat.VerticalV44(item.kind) || item.kind==ItemKind.Axe;
+            float angle=item.kind==ItemKind.Bow?-68:item.Definition.Melee?(vertical?-72:-18):item.Definition.Flower?-28:0;
             r.transform.rotation=Quaternion.Euler(0,0,angle);
             var bounds=r.sprite.bounds;var offset=(Vector2)(r.transform.rotation*Vector3.Scale(bounds.center,r.transform.localScale));
             r.transform.position=drop.position-offset+Vector2.up*.08f;
@@ -21,7 +21,7 @@ namespace AshenCoast
         {
             switch(item.kind)
             {
-                case ItemKind.Sack:return .85f;case ItemKind.Bow:return 1.7f;
+                case ItemKind.Sack:return .85f;case ItemKind.Bow:return 1.12f;
                 case ItemKind.Tome:case ItemKind.OpenTome:case ItemKind.AbyssTome:case ItemKind.OpenAbyssTome:return .94f;
                 case ItemKind.Pyromancy:case ItemKind.OpenPyromancy:return .72f;
                 case ItemKind.Orb:return .52f;case ItemKind.Coin:return .26f;

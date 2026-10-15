@@ -4,7 +4,7 @@ namespace AshenCoast
 {
     public sealed partial class CoastGame
     {
-        public const float ZenGroundAngleV45=30,ZenBuryDepthV45=.16f,ZenWellRadiusV45=1.45f;
+        public const float ZenGroundAngleV45=60,ZenBuryDepthV45=.16f,ZenWellRadiusV45=1.45f;
         public bool GroundPixelV45(GroundLoot drop,Vector2 point)=>(drop.item.kind!=ItemKind.Zen || point.y>=drop.position.y-.015f) && art.Opaque(drop.renderer.sprite,drop.renderer.transform.InverseTransformPoint(point));
         public int GroundZenWellsV45(Vector4[] points,Vector2 viewCentre)
         {

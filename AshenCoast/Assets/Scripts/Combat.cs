@@ -108,7 +108,7 @@ namespace AshenCoast
                     }}
                     if(active.kind==ItemKind.Axe && game.amazons!=null)foreach(var tree in game.amazons.trees)if(tree.Standing && !touched.Contains(tree.sprite) && game.art.SpriteContact(weapon,tree.sprite,0) && Vector2.Distance(game.body.position,tree.position)<3){touched.Add(tree.sprite);tree.Chop(game.body.position);hit=true;}
                     foreach(var target in game.AdditionalTargets)
-                    {if(hit && ThrustV44(active.kind))break;if(target.Alive && (!game.WorldBlocked(game.body.position,target.Position,.03f)) && !touched.Contains(target.Renderer) && game.art.SpriteContact(weapon,target.Renderer,0)){touched.Add(target.Renderer);hit=true;hits++;game.PlayerHit(target.Renderer);StrikeV44(target);game.journey.companion.Engage(target.Renderer);}}
+                    {if(hit && ThrustV44(active.kind))break;if(target.Alive && game.CanReachV54(target,DamageDeliveryV54.Melee) && (!game.WorldBlocked(game.body.position,target.Position,.03f)) && !touched.Contains(target.Renderer) && game.art.SpriteContact(weapon,target.Renderer,0)){touched.Add(target.Renderer);hit=true;hits++;game.PlayerHit(target.Renderer);StrikeV44(target);game.journey.companion.Engage(target.Renderer);}}
                 }
             }
             previousPhase=phase; Pose(phase);

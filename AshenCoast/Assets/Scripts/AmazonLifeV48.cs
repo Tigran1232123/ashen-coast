@@ -37,19 +37,13 @@ namespace AshenCoast
             float length=Vector2.Distance(from,to);int steps=Mathf.Max(1,Mathf.CeilToInt(length/1.25f));
             for(int i=0;i<steps;i++)
             {
-                var p=Vector2.Lerp(from,to,(i+.5f)/steps);var r=Prop("Village cobblestone path",furnishingsV48[8],p,1.95f,root.transform,-19900);
+                var p=Vector2.Lerp(from,to,(i+.5f)/steps);var r=Prop("Village cobblestone path",furnishingsV48[8],p,1.95f,pavingV54.transform,-19900);
                 r.transform.localScale=new Vector3(r.transform.localScale.x,r.transform.localScale.y*.72f,1);r.color=new Color(.84f,.81f,.75f);
             }
         }
         void VillageLifeV48()
         {
-            for(int i=0;i<houses.Count;i++)
-            {
-                var h=houses[i];var outward=(h.entrance-Centre).normalized;
-                PaveV48(h.entrance+Vector2.down*.30f,Centre+outward*13);
-            }
-            for(int i=0;i<48;i++){float a=i*Mathf.PI*2/48,b=(i+1)*Mathf.PI*2/48;PaveV48(Centre+new Vector2(Mathf.Sin(a),Mathf.Cos(a))*13,Centre+new Vector2(Mathf.Sin(b),Mathf.Cos(b))*13);}
-            PaveV48(Centre+Vector2.down*13,Centre+Vector2.down*6.5f);
+            BuildRoadsV54();
             var trader=new VillageActorV46(this,Centre+new Vector2(16,-8),19,false,false,false,ItemKind.Axe){WeaponMerchantV48=true};
             trader.stock.name="Оружейница";
             foreach(var kind in new[]{ItemKind.Dagger,ItemKind.Dagger,ItemKind.Sword,ItemKind.Stake,ItemKind.Spear,ItemKind.Axe,ItemKind.Axe})trader.stock.Add(new Item(kind));people.Add(trader);
@@ -85,7 +79,7 @@ namespace AshenCoast
         public List<Vector2> PathV48(Vector2 from,Vector2 destination)
         {
             // Persistent waypoints prevent frame-by-frame left/right obstacle oscillation.
-            if(Interior || Vector2.Distance(from,Centre)>60 || Vector2.Distance(destination,Centre)>60)return new List<Vector2>{destination};
+            if(Vector2.Distance(from,Centre)>60 || Vector2.Distance(destination,Centre)>60)return new List<Vector2>{destination};
             int samples=Mathf.CeilToInt(Vector2.Distance(from,destination)/.3f);bool clear=true;
             for(int i=1;i<=samples;i++)if(!WalkableV48(Vector2.Lerp(from,destination,(float)i/samples))){clear=false;break;}
             if(clear)return new List<Vector2>{destination};
@@ -101,7 +95,7 @@ namespace AshenCoast
                 for(int y=-1;y<=1;y++)for(int x=-1;x<=1;x++)
                 {
                     if(x==0 && y==0)continue;int xx=at%side+x,yy=at/side+y;if(xx<0 || yy<0 || xx>=side || yy>=side)continue;int next=yy*side+xx;
-                    if(closed.Contains(next) || !WalkableV48(Point(next)) || Blocked(Point(at),Point(next),.28f))continue;
+                    if(closed.Contains(next) || !WalkableV48(Point(next)) || CoastBlockedV53(Point(at),Point(next),.28f))continue;
                     if(x!=0 && y!=0 && (!WalkableV48(Point(at)+new Vector2(x*cell,0)) || !WalkableV48(Point(at)+new Vector2(0,y*cell))))continue;
                     float cost=costs[at]+cell*(x==0 || y==0?1:1.414f);if(costs.TryGetValue(next,out var old) && old<=cost)continue;costs[next]=cost;previous[next]=at;open.Push(next,cost+Vector2.Distance(Point(next),Point(goal)));
                 }
