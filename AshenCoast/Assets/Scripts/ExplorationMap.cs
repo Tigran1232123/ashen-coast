@@ -229,7 +229,7 @@ namespace AshenCoast
                 if(p.x>0 && p.x<Plot.width && p.y>0 && p.y<Plot.height)
                 {Fill(new Rect(p.x-7,p.y-7,14,14),new Color(.16f,.20f,.19f));Border(new Rect(p.x-7,p.y-7,14,14),ink);Fill(new Rect(p.x-3,p.y-3,6,6),new Color(.92f,.76f,.37f));}
             }
-            DrawSnailMapV50();DrawTravelRadius();
+            DrawCaravanRouteV51();DrawSnailMapV50();DrawTravelRadius();
             GUI.EndGroup();
             float bottom=Plot.yMax+14;
             if(Button(new Rect(Plot.x,bottom,42,34),"−"))ChangeZoom(1/1.35f,Vector2.zero);

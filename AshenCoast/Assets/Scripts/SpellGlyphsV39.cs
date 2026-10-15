@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace AshenCoast
 {
-    public enum SpellGlyph { None,Star,Infinity,Triangle,Circle,Diamond,Tentacles,Fog,Abyss,Zigzag }
+    public enum SpellGlyph { None,Star,Infinity,Triangle,Circle,Diamond,Tentacles,Fog,Abyss,Zigzag,Return }
     public static class SpellGlyphs
     {
         public static readonly Vector2[] Fog={new Vector2(.02f,.78f),new Vector2(.98f,.18f),new Vector2(.12f,.02f),new Vector2(.76f,.98f)};
@@ -14,13 +14,13 @@ namespace AshenCoast
         static readonly Vector2[] Whirlpool=Enumerable.Range(0,81).Select(i=>{float t=i/80f,a=t*Mathf.PI*5;return Vector2.one*.5f+new Vector2(Mathf.Cos(a),Mathf.Sin(a))*(.45f*(1-t));}).ToArray();
         static readonly Vector2[] Diamond={new Vector2(.5f,.06f),new Vector2(.94f,.5f),new Vector2(.5f,.94f),new Vector2(.06f,.5f),new Vector2(.5f,.06f)};
         static readonly Vector2[] Triangle={new Vector2(.5f,.06f),new Vector2(.94f,.90f),new Vector2(.06f,.90f),new Vector2(.5f,.06f)};
-        public static Vector2[] Path(SpellGlyph glyph)=>glyph==SpellGlyph.Star?StarSigil.Template:glyph==SpellGlyph.Infinity?Infinity:glyph==SpellGlyph.Circle?Circle:glyph==SpellGlyph.Abyss?Whirlpool:glyph==SpellGlyph.Diamond?Diamond:glyph==SpellGlyph.Triangle?Triangle:glyph==SpellGlyph.Tentacles?SpatialSigil.Template:glyph==SpellGlyph.Fog?Fog:glyph==SpellGlyph.Zigzag?Zigzag:System.Array.Empty<Vector2>();
+        public static Vector2[] Path(SpellGlyph glyph)=>glyph==SpellGlyph.Return?ReturnRuneV51.Template:glyph==SpellGlyph.Star?StarSigil.Template:glyph==SpellGlyph.Infinity?Infinity:glyph==SpellGlyph.Circle?Circle:glyph==SpellGlyph.Abyss?Whirlpool:glyph==SpellGlyph.Diamond?Diamond:glyph==SpellGlyph.Triangle?Triangle:glyph==SpellGlyph.Tentacles?SpatialSigil.Template:glyph==SpellGlyph.Fog?Fog:glyph==SpellGlyph.Zigzag?Zigzag:System.Array.Empty<Vector2>();
         public static SpellGlyph For(Item book,SpellSlot slot)
         {
             if(slot==null || slot.kind==SpellKind.None)return SpellGlyph.None;
             if(!slot.locked && book.kind==ItemKind.Tome)return SpellGlyph.Diamond;
             if(!slot.locked && book.kind==ItemKind.AbyssTome)return SpellGlyph.Fog;
-            return slot.kind==SpellKind.Pocket?SpellGlyph.Star:slot.kind==SpellKind.WorldTravel?SpellGlyph.Infinity:slot.kind==SpellKind.FireBlast?SpellGlyph.Zigzag:slot.kind==SpellKind.Tentacles?SpellGlyph.Tentacles:slot.kind==SpellKind.Abyss?SpellGlyph.Abyss:slot.kind==SpellKind.Shackles?SpellGlyph.Triangle:SpellGlyph.Circle;
+            return slot.kind==SpellKind.Return?SpellGlyph.Return:slot.kind==SpellKind.Pocket?SpellGlyph.Star:slot.kind==SpellKind.WorldTravel?SpellGlyph.Infinity:slot.kind==SpellKind.FireBlast?SpellGlyph.Zigzag:slot.kind==SpellKind.Tentacles?SpellGlyph.Tentacles:slot.kind==SpellKind.Abyss?SpellGlyph.Abyss:slot.kind==SpellKind.Shackles?SpellGlyph.Triangle:SpellGlyph.Circle;
         }
         public static Vector2[] Normalize(IList<Vector2> p)
         {float x=p.Min(v=>v.x),y=p.Min(v=>v.y),w=Mathf.Max(.0001f,p.Max(v=>v.x)-x),h=Mathf.Max(.0001f,p.Max(v=>v.y)-y);return p.Select(v=>new Vector2((v.x-x)/w,(v.y-y)/h)).ToArray();}

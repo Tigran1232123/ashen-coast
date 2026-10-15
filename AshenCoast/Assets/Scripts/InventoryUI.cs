@@ -166,10 +166,10 @@ namespace AshenCoast
             var survivor=game.survivor;
             var panel=StatusPanel;
             Frame(panel,new Color(.045f,.052f,.055f,.88f));
-            Status(new Rect(34,32,230,46),"Здоровье",survivor.health,100,new Color(.55f,.20f,.16f),0);
+            Status(new Rect(34,32,230,46),"Здоровье",survivor.health,survivor.MaxHealth,new Color(.55f,.20f,.16f),0);
             Status(new Rect(34,82,230,36),"Сытость",survivor.hunger,survivor.HungerMax,new Color(.55f,.42f,.21f),1);
             Status(new Rect(34,122,230,36),"Иммунитет",survivor.immunity,100,new Color(.29f,.43f,.34f),2);
-            Status(new Rect(34,162,230,36),"Мана",survivor.mana,100,new Color(.29f,.36f,.53f),3);
+            Status(new Rect(34,162,230,36),"Мана",survivor.mana,survivor.MaxMana,new Color(.29f,.36f,.53f),3);
             var foodPanel=FoodPanel;Frame(foodPanel,new Color(.045f,.052f,.055f,.86f));
             GUI.Label(new Rect(34,foodPanel.y+7,230,22),"Насыщенность",hudName);
             for(int i=0;i<5;i++)
@@ -612,7 +612,7 @@ namespace AshenCoast
             var old=GUI.matrix;ArtBank.RotateUI(45,p);Border(new Rect(p.x-5,p.y-5,10,10),c);GUI.matrix=old;
         }
         void DrawDeath()
-        {Fill(new Rect(0,0,CanvasWidth,CanvasHeight),new Color(.025f,.01f,.045f,.64f));float x=CanvasWidth/2-190,y=CanvasHeight/2-100;Frame(new Rect(x,y,380,200),new Color(.075f,.055f,.075f));GUI.Label(new Rect(x+20,y+20,340,55),DeathTitle,CachedStyle(title,TextAnchor.MiddleCenter));if(Button(new Rect(x+55,y+100,270,44),RestartLabel))game.Restart();}
+        {Fill(new Rect(0,0,CanvasWidth,CanvasHeight),new Color(.025f,.01f,.045f,.64f));float x=CanvasWidth/2-190,y=CanvasHeight/2-100;Frame(new Rect(x,y,380,200),new Color(.075f,.055f,.075f));GUI.Label(new Rect(x+20,y+20,340,55),game.CoopOnline && game.corpses.HasBody("player/"+game.coop.Peer)?"Ожидайте воскрешения":DeathTitle,CachedStyle(title,TextAnchor.MiddleCenter));if(Button(new Rect(x+55,y+100,270,44),RestartLabel))game.Restart();}
         void DrawPause()
         {
             Fill(new Rect(0,0,CanvasWidth,CanvasHeight),new Color(.025f,.03f,.025f,.70f));

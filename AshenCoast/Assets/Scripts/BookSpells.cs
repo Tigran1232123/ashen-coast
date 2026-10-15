@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace AshenCoast
 {
-    public enum SpellKind { None, Pocket, WorldTravel, FireBlast, Tentacles, Abyss, Shackles, Curse }
+    public enum SpellKind { None, Pocket, WorldTravel, FireBlast, Tentacles, Abyss, Shackles, Curse, Return }
     [Serializable] public sealed class SpellSlot
     {
         public SpellKind kind;
@@ -26,7 +26,7 @@ namespace AshenCoast
             else Builtin(0,SpellKind.FireBlast);
             return slots;
         }
-        public static SpellKind ScrollSpell(ItemKind kind)=>kind==ItemKind.ShacklesScroll?SpellKind.Shackles:kind==ItemKind.CurseScroll?SpellKind.Curse:SpellKind.None;
+        public static SpellKind ScrollSpell(ItemKind kind)=>kind==ItemKind.ReturnScroll?SpellKind.Return:kind==ItemKind.ShacklesScroll?SpellKind.Shackles:kind==ItemKind.CurseScroll?SpellKind.Curse:SpellKind.None;
         public static bool Insert(Item book,int index,Item scroll,GridInventory source)
         {
             if(book?.spells==null || index<0 || index>=book.spells.Length || scroll==null || source==null || !source.items.Contains(scroll))return false;
@@ -41,7 +41,7 @@ namespace AshenCoast
             var item=slot.scroll;item.spellCooldown=slot.cooldownUntil;book.spells[index]=new SpellSlot();return item;
         }
         public static int Cost(Item book,int baseMana)=>book?.kind==ItemKind.Pyromancy?Mathf.CeilToInt(baseMana*.7f):baseMana;
-        public static string Name(SpellKind kind)=>kind==SpellKind.Pocket?"Карманное измерение":kind==SpellKind.WorldTravel?"Пространственный переход":kind==SpellKind.FireBlast?"Взрыв костра":kind==SpellKind.Tentacles?"Щупальца":kind==SpellKind.Abyss?"Бездна":kind==SpellKind.Shackles?"Небесные оковы":kind==SpellKind.Curse?"Порча":"Пустая ячейка";
+        public static string Name(SpellKind kind)=>kind==SpellKind.Return?"Возвращение":kind==SpellKind.Pocket?"Карманное измерение":kind==SpellKind.WorldTravel?"Пространственный переход":kind==SpellKind.FireBlast?"Взрыв костра":kind==SpellKind.Tentacles?"Щупальца":kind==SpellKind.Abyss?"Бездна":kind==SpellKind.Shackles?"Небесные оковы":kind==SpellKind.Curse?"Порча":"Пустая ячейка";
     }
     public sealed partial class Survivor
     {

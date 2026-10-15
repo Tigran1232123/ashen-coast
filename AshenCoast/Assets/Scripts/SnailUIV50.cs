@@ -12,11 +12,11 @@ namespace AshenCoast
             var caravan=game.snails;if(caravan==null)return;SnailHUDRectsV50.Clear();
             if(caravan.SetupOpen)
             {
-                Fill(new Rect(0,0,CanvasWidth,CanvasHeight),new Color(.025f,.025f,.018f,.86f));var r=SnailPanelV50;Window(r,"Берег обломков · V50");
+                Fill(new Rect(0,0,CanvasWidth,CanvasHeight),new Color(.025f,.025f,.018f,.86f));var r=SnailPanelV50;Window(r,"Берег обломков · V51");
                 GUI.Label(new Rect(r.x+20,r.y+65,r.width-40,34),"Сколько игроков будет в мире?",centered);
                 for(int i=1;i<=4;i++)if(Button(new Rect(r.x+45+(i-1)*125,r.y+125,110,56),i==1?"Один":i+" игрока",caravan.PlayerCount==i))caravan.Configure(i);
-                GUI.Label(new Rect(r.x+24,r.y+211,r.width-48,44),caravan.PlayerCount==1?"Четыре улитки принадлежат вам":"Улитки распределены на "+caravan.PlayerCount+" игроков",centered);
-                if(Button(new Rect(r.x+95,r.y+300,390,46),"Начать")){caravan.SetupOpen=false;game.paused=false;Time.timeScale=1;}
+                GUI.Label(new Rect(r.x+24,r.y+280,r.width-48,44),caravan.PlayerCount==1?"Личная комната и три казармы":"Личная комната и войска у каждого игрока",centered);
+                CharacterChoiceV51(r);if(Button(new Rect(r.x+95,r.y+330,390,46),"Начать")){caravan.SetupOpen=false;game.paused=false;Time.timeScale=1;}
                 return;
             }
             var following=caravan.Following.ToArray();float x=CanvasWidth/2-following.GroupBy(t=>t.home).Sum(a=>84+Mathf.Min(10,a.Count())*58+12)/2f;
@@ -58,7 +58,7 @@ namespace AshenCoast
                     if(Button(new Rect(row.x+95,row.y+8,row.width-95,45),label,false,caravan.Available(i,caravan.HireKey,caravan.LocalPeer)))caravan.FinishHire(i);
                 }
             }
-            foreach(var h in caravan.houses)if(h.Renderer.gameObject.activeInHierarchy && (h.Hidden || game.feedback.Recent(h.Renderer)))ActorVital(World(h.position+Vector2.up*5),"Улитка "+(h.index+1),h.health,1000,new Color(.37f,.53f,.29f),h.Renderer);
+            foreach(var h in caravan.houses)if(h.Renderer.gameObject.activeInHierarchy){var at=World(h.position+Vector2.up*4.9f);if(at.x<35 || at.x>CanvasWidth*WorldFraction-35 || at.y<18 || at.y>CanvasHeight-25)continue;var bar=new Rect(at.x-52,at.y,104,6);Fill(bar,dark);Fill(new Rect(bar.x+1,bar.y+1,102*h.health/1000,4),new Color(.42f,.58f,.29f));GUI.Label(new Rect(at.x-65,at.y-25,130,23),"№ "+(h.index+1)+" · "+Mathf.CeilToInt(h.health)+" / 1000",CachedStyle(small,TextAnchor.MiddleCenter,13));}if(caravan.campPhaseV51==1)GUI.Label(new Rect(CanvasWidth/2-160,130,320,27),"Сбор каравана · "+Mathf.CeilToInt(caravan.gatherV51)+" с",centered);
         }
     }
     public sealed partial class ExplorationMap
@@ -66,7 +66,7 @@ namespace AshenCoast
         public bool SnailCommandV50;
         public void OpenSnailCommand(Vector2 at){if(!SetOpen(true))return;SnailCommandV50=true;Region=MapRegion.Coast;Centre=at;Zoom=8;}
         bool SelectSnailV50(Vector2 canvas)
-        {if(!SnailCommandV50 || Region!=MapRegion.Coast)return false;var point=Centre+new Vector2(canvas.x-Plot.center.x,Plot.center.y-canvas.y)/Zoom;if(!SnailHomesV50.Land(point)){game.ui.Notice("Недоступное место");return false;}game.snails.Command(new CaravanCommandV50{kind="order",x=point.x,y=point.y});SetOpen(false);return true;}
+        {if(!SnailCommandV50 || Region!=MapRegion.Coast)return false;var point=Centre+new Vector2(canvas.x-Plot.center.x,Plot.center.y-canvas.y)/Zoom;if(!SnailHomesV50.Land(point) || !IsVisited(MapRegion.Coast,point)){game.ui.Notice("Недоступное место");return false;}game.snails.Command(new CaravanCommandV50{kind="order",x=point.x,y=point.y});SetOpen(false);return true;}
         void DrawSnailMapV50()
         {
             if(Region==MapRegion.Coast && game.snails!=null)foreach(var h in game.snails.houses)

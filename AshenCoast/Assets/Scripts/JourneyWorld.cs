@@ -233,7 +233,7 @@ namespace AshenCoast
         void TickRide(float dt)
         {
             phaseTime+=dt;var seat=CartPosition+new Vector2(-.35f,1.05f);
-            if(ridePhase==1 || ridePhase==5){game.hero.sprite=game.art.hero[6,Mathf.FloorToInt(phaseTime*12)%8];game.hero.flipX=true;game.art.PixelStyle(game.hero);}
+            if(ridePhase==1 || ridePhase==5){game.hero.sprite=game.HeroFramesV51(game.survivor.character)[6,Mathf.FloorToInt(phaseTime*12)%8];game.hero.flipX=true;game.art.PixelStyle(game.hero);}
             if(ridePhase==1)
             {game.hero.transform.position=Vector2.Lerp(boardingStart,seat,Mathf.SmoothStep(0,1,Mathf.Clamp01(phaseTime/1.2f)));game.facing=6;if(phaseTime>=1.2f){ridePhase=2;phaseTime=0;}}
             else if(ridePhase==2)

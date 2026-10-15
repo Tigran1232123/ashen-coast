@@ -152,7 +152,7 @@ namespace AshenCoast
                 if(flame.targetOnly && !flame.dragonFire)
                 {
                     var victim=game.WorldCreatures.FirstOrDefault(t=>t.Renderer==flame.targetOnly && t.Alive);
-                    if(victim!=null && game.art.SpriteContact(flame.renderer,victim.Renderer,0) && !game.WorldBlocked(flame.origin-Vector2.up*.8f,victim.Position,.03f) && Ready(victim.Renderer,.28f))game.HurtTarget(victim,8,flame.source);
+                    if(victim!=null && game.art.SpriteContact(flame.renderer,victim.Renderer,0) && !game.WorldBlocked(flame.origin-Vector2.up*.8f,victim.Position,.03f) && Ready(victim.Renderer,.28f))game.HurtTarget(victim,24,flame.source);
                     return;
                 }
                 if(flame.dragonFire)
@@ -162,16 +162,16 @@ namespace AshenCoast
                 }
                 var target=(Vector2)game.hero.transform.position+new Vector2(0,.70f);
                 if(Vector2.Distance(target,flame.renderer.bounds.center)<.42f && (!game.WorldBlocked(flame.origin-Vector2.up*.8f,game.body.position,.03f)) && Ready(game.hero,.28f))
-                {game.HurtPlayer(8);}
-                if(game.journey!=null && game.journey.companion.Hired && game.journey.companion.Alive && Vector2.Distance(game.journey.companion.Position+Vector2.up*.7f,flame.renderer.bounds.center)<.42f && (!game.WorldBlocked(flame.origin-Vector2.up*.8f,game.journey.companion.Position,.03f)) && Ready(game.journey.companion,.28f))game.journey.companion.Hurt(8);
+                {game.HurtPlayer(24);}
+                if(game.journey!=null && game.journey.companion.Hired && game.journey.companion.Alive && Vector2.Distance(game.journey.companion.Position+Vector2.up*.7f,flame.renderer.bounds.center)<.42f && (!game.WorldBlocked(flame.origin-Vector2.up*.8f,game.journey.companion.Position,.03f)) && Ready(game.journey.companion,.28f))game.journey.companion.Hurt(24);
                 return;
             }
-            foreach(var enemy in game.AdditionalTargets)if(enemy.Alive && (flame.targetOnly==null || flame.targetOnly==enemy.Renderer) && game.art.SpriteContact(flame.renderer,enemy.Renderer,0) && (!game.WorldBlocked(flame.origin-Vector2.up*.8f,enemy.Position,.03f)) && Ready(enemy,.28f)){if(flame.targetOnly==null)game.PlayerHit(enemy.Renderer);game.HurtTarget(enemy,10,flame.source);if(flame.targetOnly==null)game.journey.companion.Engage(enemy.Renderer);}
+            foreach(var enemy in game.AdditionalTargets)if(enemy.Alive && (flame.targetOnly==null || flame.targetOnly==enemy.Renderer) && game.art.SpriteContact(flame.renderer,enemy.Renderer,0) && (!game.WorldBlocked(flame.origin-Vector2.up*.8f,enemy.Position,.03f)) && Ready(enemy,.28f)){if(flame.targetOnly==null)game.PlayerHit(enemy.Renderer);game.HurtTarget(enemy,30,flame.source);if(flame.targetOnly==null)game.journey.companion.Engage(enemy.Renderer);}
             if(game.magic.InPocket)return;
             if(!game.journey.IsCoast)return;
-            if(flame.targetOnly==null && game.dummyHealth>0 && game.art.SpriteContact(flame.renderer,game.dummy) && Ready(game.dummy,.28f))game.DamageDummy(10);
-            foreach(var mob in game.woodlice)if((flame.targetOnly==null || flame.targetOnly==mob.renderer) && mob.vitals.Alive && !mob.Grabbed && game.art.SpriteContact(flame.renderer,mob.renderer,0) && Ready(mob,.28f)){if(flame.targetOnly==null)game.PlayerHit(mob.renderer);mob.Hurt(10);if(flame.targetOnly==null)game.journey?.companion.Engage(mob.renderer);}
-            foreach(var frog in frogs)if((flame.targetOnly==null || flame.targetOnly==frog.renderer) && frog.Alive && game.art.SpriteContact(flame.renderer,frog.renderer,0) && Ready(frog,.28f)){if(flame.targetOnly==null)game.PlayerHit(frog.renderer);frog.HurtFrom(10,flame.source);if(flame.targetOnly==null)game.journey?.companion.Engage(frog.renderer);}
+            if(flame.targetOnly==null && game.dummyHealth>0 && game.art.SpriteContact(flame.renderer,game.dummy) && Ready(game.dummy,.28f))game.DamageDummy(30);
+            foreach(var mob in game.woodlice)if((flame.targetOnly==null || flame.targetOnly==mob.renderer) && mob.vitals.Alive && !mob.Grabbed && game.art.SpriteContact(flame.renderer,mob.renderer,0) && Ready(mob,.28f)){if(flame.targetOnly==null)game.PlayerHit(mob.renderer);mob.Hurt(30);if(flame.targetOnly==null)game.journey?.companion.Engage(mob.renderer);}
+            foreach(var frog in frogs)if((flame.targetOnly==null || flame.targetOnly==frog.renderer) && frog.Alive && game.art.SpriteContact(flame.renderer,frog.renderer,0) && Ready(frog,.28f)){if(flame.targetOnly==null)game.PlayerHit(frog.renderer);frog.HurtFrom(30,flame.source);if(flame.targetOnly==null)game.journey?.companion.Engage(frog.renderer);}
         }
         public void EmitCone(Vector2 origin,Vector2 direction,bool hostile,int amount=6,float reach=5,float arc=120,SpriteRenderer targetOnly=null,bool dragonFire=false,SpriteRenderer source=null)
         {

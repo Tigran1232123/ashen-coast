@@ -15,7 +15,7 @@ namespace AshenCoast
     }
     public sealed class AbyssFog
     {public Vector2 point;public Transform world;public float remaining=60;public GameObject visual;}
-    public sealed class Spellcraft : MonoBehaviour
+    public sealed partial class Spellcraft : MonoBehaviour
     {
         public CoastGame game;
         public Item SelectedBook;
@@ -86,6 +86,7 @@ namespace AshenCoast
                 game.arcane.SummonTentacles(centre,5.6f);foreach(var f in fogs.Where(f=>f.remaining>0 && f.world==game.arcane.WorldRoot).ToArray())game.arcane.SummonTentacles(f.point,4);
                 game.sounds.PlayOneShot(Resources.Load<AudioClip>("Audio/TentaclesV37"),.8f);return true;
             }
+            if(CastReturnV51(screenStroke,world,centre))return true;
             var pyro=game.survivor.OpenBook(ItemKind.Pyromancy);if(pyro==null)return false;
             if(openRune==SpellGlyph.Zigzag)
             {var fire=game.arcane.campfires.Where(f=>!f.exploded && f.logs.gameObject.activeInHierarchy && Vector2.Distance(f.position,centre)<Mathf.Max(1.2f,Vector2.Distance(world[0],centre)+.65f)).OrderBy(f=>Vector2.Distance(f.position,centre)).FirstOrDefault();return fire!=null && game.arcane.TryExplodeFireGlyph(fire.position);}

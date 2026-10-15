@@ -5,7 +5,7 @@ namespace AshenCoast
 {
     public sealed class RemotePlayerV49:ICombatTarget
     {
-        readonly CoopSessionV49 session;readonly SpriteRenderer shadow,weapon;readonly PixelGait gait;
+        readonly CoopSessionV49 session;readonly SpriteRenderer shadow,weapon;PixelGait gait;
         public int Peer{get;}public LanPlayerV49 State{get;private set;}public SpriteRenderer Renderer{get;}public Rigidbody2D Body{get;}public Survivor Mirror{get;}=new Survivor();
         public Vector2 Position=>Renderer.transform.position;public bool Alive=>State!=null && State.health>0;Vector2 target;
         public RemotePlayerV49(CoopSessionV49 owner,LanPlayerV49 state)
@@ -14,21 +14,22 @@ namespace AshenCoast
             Body=Renderer.gameObject.AddComponent<Rigidbody2D>();Body.bodyType=RigidbodyType2D.Kinematic;Body.gravityScale=0;Body.simulated=false;
             shadow=g.Shadow("Co-op player shadow",Renderer.transform.position,new Vector2(.62f,.24f),.34f);shadow.transform.SetParent(Renderer.transform,true);
             weapon=g.art.Renderer("Co-op held weapon",g.art.icons[4],Renderer.transform.position,0);weapon.transform.SetParent(Renderer.transform,true);weapon.enabled=false;
-            gait=new PixelGait(g.art,Renderer,g.art.hero,.43f);Renderer.transform.position=target=new Vector2(state.x,state.y);Mirror.inventory.items.Clear();Mirror.spatialInventory.items.Clear();Receive(state);
+            gait=new PixelGait(g.art,Renderer,g.HeroFramesV51((CharacterV51)state.character),.43f);Renderer.transform.position=target=new Vector2(state.x,state.y);Mirror.inventory.items.Clear();Mirror.spatialInventory.items.Clear();Receive(state);
         }
         public void Receive(LanPlayerV49 state)
         {
+            if(State!=null && State.character!=state.character){if(gait.Lower)UnityEngine.Object.Destroy(gait.Lower.gameObject);gait=new PixelGait(session.game.art,Renderer,session.game.HeroFramesV51((CharacterV51)state.character),.43f);}
             bool changed=State==null || State.region!=state.region || Vector2.Distance(target,new Vector2(state.x,state.y))>6;State=state;target=new Vector2(state.x,state.y);if(changed)Renderer.transform.position=target;
-            Mirror.health=state.health;Mirror.hunger=state.hunger;Mirror.mana=state.mana;Mirror.immunity=state.immunity;
+            Mirror.character=(CharacterV51)state.character;Mirror.health=state.health;Mirror.hunger=state.hunger;Mirror.mana=state.mana;Mirror.immunity=state.immunity;
             if(state.equipment!=null && state.equipment.Length==Mirror.equipment.Length)for(int i=0;i<Mirror.equipment.Length;i++)Mirror.equipment[i]=state.equipment[i]?.Restore();
         }
         public void Tick(float dt)
         {
             bool visible=State!=null && State.region==session.Region;Renderer.gameObject.SetActive(visible);if(!visible)return;
             var g=session.game;var point=Vector2.Lerp(Position,target,1-Mathf.Exp(-dt*23));Renderer.transform.position=point;Body.position=point;
-            Renderer.enabled=Alive;Renderer.sprite=g.art.hero[Mathf.Clamp(State.facing,0,7),Mathf.Clamp(State.frame,0,7)];Renderer.flipX=State.facing>=5;
+            Renderer.enabled=Alive;Renderer.sprite=g.HeroFramesV51((CharacterV51)State.character)[Mathf.Clamp(State.facing,0,7),Mathf.Clamp(State.frame,0,7)];Renderer.flipX=State.character==0 && State.facing>=5;
             Renderer.sortingOrder=CoastGame.Depth(point.y);Renderer.transform.localScale=Vector3.one*Mathf.Clamp(State.scale,.8f,1.2f);g.art.PixelStyle(Renderer);
-            gait.Pose(State.facing,State.walk,State.moving,Vector2.zero);shadow.transform.position=point;shadow.sortingOrder=Mathf.Min(-2000,Renderer.sortingOrder-1600);
+            gait.Pose(State.facing,State.walk,State.moving,Vector2.zero);if(!Alive && gait.Lower)gait.Lower.enabled=false;shadow.enabled=Alive;shadow.transform.position=point;shadow.sortingOrder=Mathf.Min(-2000,Renderer.sortingOrder-1600);
             bool held=State.weapon>=0 && Enum.IsDefined(typeof(ItemKind),State.weapon);var kind=held?(ItemKind)State.weapon:ItemKind.Dagger;
             weapon.enabled=Alive && held && (State.attacking || kind==ItemKind.Orb || kind==ItemKind.Lamp || kind==ItemKind.LastPrism || kind==ItemKind.Spectrum);
             if(weapon.enabled)
@@ -51,7 +52,7 @@ namespace AshenCoast
     {
         public LanPlayerV49 CapturePlayer()
         {
-            var g=game;return new LanPlayerV49{peer=Peer,name=PlayerName,region=Region,x=g.body.position.x,y=g.body.position.y,health=g.survivor.health,hunger=g.survivor.hunger,mana=g.survivor.mana,immunity=g.survivor.immunity,facing=g.facing,frame=g.walkFrame,moving=g.walking,walk=g.walkTime,weapon=(int?)g.survivor.equipment[0]?.kind??-1,attacking=g.combat.Attacking,invulnerable=g.combat.ZenInvulnerable || g.spectrum.Riding || g.spellcraft.Teleporting,elapsed=g.combat.elapsed,angle=g.combat.weapon.transform.eulerAngles.z,scale=g.hero.transform.localScale.x,weaponX=g.combat.weapon.transform.position.x,weaponY=g.combat.weapon.transform.position.y,weaponScale=g.combat.weapon.transform.lossyScale.x,equipment=g.survivor.equipment.Select(i=>LanItemV49.Capture(i)).ToArray()};
+            var g=game;return new LanPlayerV49{peer=Peer,name=PlayerName,character=(int)g.survivor.character,region=Region,x=g.body.position.x,y=g.body.position.y,health=g.survivor.health,hunger=g.survivor.hunger,mana=g.survivor.mana,immunity=g.survivor.immunity,facing=g.facing,frame=g.walkFrame,moving=g.walking,walk=g.walkTime,weapon=(int?)g.survivor.equipment[0]?.kind??-1,attacking=g.combat.Attacking,invulnerable=g.combat.ZenInvulnerable || g.spectrum.Riding || g.spellcraft.Teleporting,elapsed=g.combat.elapsed,angle=g.combat.weapon.transform.eulerAngles.z,scale=g.hero.transform.localScale.x,weaponX=g.combat.weapon.transform.position.x,weaponY=g.combat.weapon.transform.position.y,weaponScale=g.combat.weapon.transform.lossyScale.x,equipment=g.survivor.equipment.Select(i=>LanItemV49.Capture(i)).ToArray()};
         }
         public void ForNearest(Vector2 point,Action action,int? preferred=null)
         {

@@ -23,7 +23,7 @@ namespace AshenCoast
         {
             art=bank;body=torso;cutoff=floor;directions=frames.GetLength(0);
             var source=frames[0,3];
-            style=source.texture.name.StartsWith("Mage")?2:source.texture.name.StartsWith("Tavern")?1:0;
+            style=source.texture.name.StartsWith("FrogHeroV51")?3:source.texture.name.StartsWith("Mage")?2:source.texture.name.StartsWith("Tavern")?1:0;
             // The robe covers adult-sized legs rather than compressing a whole leg below its hem.
             top=style==2?.74f:(source.rect.height*floor-source.pivot.y)/source.pixelsPerUnit+.045f;
             clothTone=style==1?.78f:style==2?.65f:1;
@@ -38,6 +38,7 @@ namespace AshenCoast
         }
         public void Pose(int facing,float cycles,bool walking,Vector2 forward,bool flip=false)
         {
+            if(style==3){lower.enabled=false;body.GetPropertyBlock(block);block.SetFloat("_BodyFloor",0);body.SetPropertyBlock(block);return;}
             int direction=Mathf.Clamp(facing,0,directions-1);
             Phase=Mathf.Repeat(cycles,1);Walking=walking;
             if(forward.sqrMagnitude>.0001f)Axis=forward.normalized;

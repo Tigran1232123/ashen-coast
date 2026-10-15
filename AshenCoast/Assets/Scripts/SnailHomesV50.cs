@@ -6,11 +6,11 @@ using UnityEngine;
 namespace AshenCoast
 {
     [Serializable] public sealed class SnailStateV50 {public float x,y,hp=1000,hidden,damage,window;public bool moving;}
-    [Serializable] public sealed class TroopStateV50 {public string key;public int home,seat;public bool resting,returning;public float hp,mana,x,y;}
-    [Serializable] public sealed class CaravanStateV50 {public int count;public int[] peers;public SnailStateV50[] snails;public TroopStateV50[] troops;public float stop,x,y;public bool ordered;}
-    [Serializable] public sealed class CaravanCommandV50 {public string kind,key;public int home;public float x,y,amount;}
+    [Serializable] public sealed class TroopStateV50 {public string key;public int home,seat;public bool resting,returning,campRestV51,seatedV51,fluteV51,makerV51;public float campTimeV51;public float hp,mana,x,y;}
+    [Serializable] public sealed class CaravanStateV50 {public int count;public int[] peers;public CampStateV51 camp;public SnailStateV50[] snails;public TroopStateV50[] troops;public float stop,x,y;public bool ordered;}
+    [Serializable] public sealed class CaravanCommandV50 {public string kind,key;public bool known;public int home;public float x,y,amount;}
 
-    public sealed class SnailHouseV50:ICombatTarget
+    public sealed partial class SnailHouseV50:ICombatTarget
     {
         public readonly SnailHomesV50 caravan;public readonly int index;
         public readonly SpriteRenderer Renderer,shadow;public readonly GameObject room;
@@ -24,7 +24,7 @@ namespace AshenCoast
             caravan=owner;index=i;position=at;var g=owner.game;
             Renderer=g.art.Renderer("Улитка "+(i+1),owner.shells[0],at,CoastGame.Depth(at.y));Renderer.transform.SetParent(g.coastRoot.transform,true);
             shadow=g.Shadow("Snail contact",at,new Vector2(7,1.9f),.29f);shadow.transform.SetParent(g.coastRoot.transform,true);
-            room=new GameObject("Snail room "+(i+1));owner.Furnish(this);room.SetActive(false);Pose(0);
+            room=new GameObject("Snail room "+(i+1));owner.FurnishV51(this);room.SetActive(false);Pose(0);
         }
         public float Hurt(float amount)
         {
@@ -41,16 +41,12 @@ namespace AshenCoast
         public void Hide(){if(caravan.Occupied(index))return;hidden=15;moving=false;caravan.Eject(index);Pose(0);}
         public void Pose(float clock)
         {
-            Renderer.sprite=caravan.shells[Hidden?1:moving && (int)(clock*3)%2==1?2:0];
-            float scale=8/caravan.shells[0].bounds.size.x;
-            Renderer.transform.localScale=new Vector3(scale*(1+(moving?Mathf.Sin(clock*5+index)*.007f:0)),scale,1);
-            Renderer.transform.position=position+Vector2.up*(moving?Mathf.Sin(clock*5+index)*.025f:0);Renderer.sortingOrder=CoastGame.Depth(position.y);
-            shadow.transform.position=position;caravan.game.art.PixelStyle(Renderer);
+            PoseBodyV51(clock);shadow.transform.position=position;caravan.DecorateV51(this);
             foreach(var obj in personal)obj.SetActive(caravan.Personal(index) && caravan.PlayerCount==1);foreach(var obj in barracks)obj.SetActive(!caravan.Personal(index) || caravan.PlayerCount>1);
         }
     }
 
-    public sealed class SnailHomesV50:MonoBehaviour
+    public sealed partial class SnailHomesV50:MonoBehaviour
     {
         public CoastGame game;public readonly List<SnailHouseV50> houses=new List<SnailHouseV50>();
         public readonly Dictionary<string,TroopStateV50> troops=new Dictionary<string,TroopStateV50>();
@@ -64,14 +60,14 @@ namespace AshenCoast
         public string Key(SpriteRenderer actor)=>actor==game.journey.companion.sprite?"mage":"amazon/"+game.amazons.people.FindIndex(a=>a.Renderer==actor);
         public SpriteRenderer Sprite(string key)=>key=="mage"?game.journey.companion.sprite:int.TryParse(key?.Replace("amazon/",""),out var i) && i>=0 && i<game.amazons.people.Count?game.amazons.people[i].Renderer:null;
         public VillageActorV46 Woman(string key)=>key=="mage"?null:game.amazons.people.FirstOrDefault(a=>Key(a.Renderer)==key);
-        public bool Resting(SpriteRenderer actor)=>actor && troops.TryGetValue(Key(actor),out var t) && t.resting;
+        public bool Resting(SpriteRenderer actor)=>actor && troops.TryGetValue(Key(actor),out var t) && (t.resting || t.campRestV51);
         public bool Returning(SpriteRenderer actor)=>actor && troops.TryGetValue(Key(actor),out var t) && t.returning;
         public int Cost(string key)=>key=="mage"?3:Woman(key)?.IsSlave==true?1:2;
         public int Seat(int peer)=>Array.IndexOf(peers,peer);
         public int OwnerSeat(int home)=>PlayerCount==1?0:PlayerCount==2?home/2:PlayerCount==3 && home==3?-1:home;
         public bool Personal(int home)=>PlayerCount==1?home==0:PlayerCount==2?home%2==0:home<PlayerCount;
         public int Capacity(int home)=>PlayerCount==1 && home==0?0:10;
-        public int Used(int home)=>troops.Values.Where(t=>t.home==home && Living(t)).Sum(t=>Cost(t.key));
+        public int Used(int home)=>troops.Values.Where(t=>t.home==home && (Living(t) || game.corpses!=null && game.corpses.HasBody(t.key))).Sum(t=>Cost(t.key));
         public bool CanUse(int home,int peer)=>home>=0 && home<4 && Seat(peer)>=0 && (OwnerSeat(home)<0 || OwnerSeat(home)==Seat(peer));
         public int OwnerPeer(TroopStateV50 t)=>!game.CoopOnline?0:t.seat>=0 && t.seat<peers.Length?peers[t.seat]:-1;
         public bool Own(TroopStateV50 t)=>!game.CoopOnline || OwnerPeer(t)==LocalPeer;
@@ -81,11 +77,11 @@ namespace AshenCoast
         public void Initialize(CoastGame g)
         {
             game=g;SetupOpen=!g.testMode && !Environment.GetCommandLineArgs().Contains("-snail-check");
-            shells=Atlas("SnailHousesV50",2,2);var ft=game.art.Load("SnailFurnitureV50");var rects=new[]{new RectInt(0,0,520,570),new RectInt(520,0,504,590),new RectInt(0,575,520,465),new RectInt(520,590,504,500),new RectInt(0,1040,520,496),new RectInt(520,1100,504,436)};furniture=rects.Select(r=>game.art.Slice(ft,r,new Vector2(.5f,0),200)).ToArray();
+            var shellsTexture=game.art.Load("SnailHousesV50");shells=new[]{new RectInt(0,0,900,512),new RectInt(900,0,636,512),new RectInt(0,512,900,512),new RectInt(900,512,636,512)}.Select(rect=>game.art.Slice(shellsTexture,rect,new Vector2(.5f,0),200)).ToArray();var ft=game.art.Load("SnailFurnitureV50");var rects=new[]{new RectInt(0,0,520,570),new RectInt(520,0,504,590),new RectInt(0,575,520,465),new RectInt(520,590,504,500),new RectInt(0,1040,520,496),new RectInt(520,1100,504,436)};furniture=rects.Select(r=>game.art.Slice(ft,r,new Vector2(.5f,0),200)).ToArray();
             var start=g.journey.CartPosition+Vector2.up*10;
             for(int i=0;i<4;i++){var p=FindLand(start+new Vector2(i%2*10-4,i/2*8));houses.Add(new SnailHouseV50(this,i,p));}
             const int rate=22050;var samples=new float[rate];for(int i=0;i<samples.Length;i++){float t=(float)i/rate;float env=Mathf.Sin(Mathf.PI*t)*Mathf.Min(1,t*25);samples[i]=Mathf.Sin(2*Mathf.PI*(1650*t+260*t*t+8*Mathf.Sin(t*9)))*env*.25f;}whistle=AudioClip.Create("Player whistle",rate,1,rate,false);whistle.SetData(samples,0);
-            Reveal();
+            InitializeCampV51();Reveal();
         }
         Sprite[] Atlas(string name,int columns,int rows)
         {var texture=game.art.Load(name);var result=new Sprite[columns*rows];for(int i=0;i<result.Length;i++)result[i]=game.art.Slice(texture,new RectInt(i%columns*texture.width/columns,i/columns*texture.height/rows,texture.width/columns,texture.height/rows),new Vector2(.5f,0),200);return result;}
@@ -95,7 +91,7 @@ namespace AshenCoast
         {int slot=Array.IndexOf(peers,peer);if(slot>=0)return slot;for(int i=1;i<PlayerCount;i++)if(peers[i]<0){peers[i]=peer;SyncOwners();return i;}return -1;}
         public void Left(int peer){int slot=Seat(peer);if(slot>=0)peers[slot]=-1;SyncOwners();}
         public void SyncOwners()
-        {if(!game.CoopOnline)return;foreach(var t in troops.Values){game.coop.world.allyOwners[t.key]=OwnerPeer(t);if(t.resting || t.returning)game.coop.world.allyRegions[t.key]="area/0";}}
+        {if(!game.CoopOnline)return;foreach(var t in troops.Values){game.coop.world.allyOwners[t.key]=OwnerPeer(t);if(t.resting || t.returning || t.campRestV51)game.coop.world.allyRegions[t.key]="area/0";}}
         public bool SelectHire(string key,Action action)
         {
             if(CommitHire || game.coop!=null && game.coop.ApplyingNetwork)return false;
@@ -110,12 +106,12 @@ namespace AshenCoast
         }
         public void Assign(string key,int home,int peer)
         {if(troops.ContainsKey(key))return;troops[key]=new TroopStateV50{key=key,home=home,seat=Mathf.Max(0,Seat(peer))};SyncOwners();}
-        public IEnumerable<TroopStateV50> Following=>troops.Values.Where(t=>Own(t) && Living(t) && !t.resting && !t.returning);
+        public IEnumerable<TroopStateV50> Following=>troops.Values.Where(t=>Own(t) && Living(t) && !t.resting && !t.returning && !t.campRestV51);
         public bool SendHome(string key,int peer)
         {
             if(!troops.TryGetValue(key,out var t) || OwnerPeer(t)!=peer || !Living(t))return false;
             if(houses[t.home].Hidden){game.ui.Notice("Улитка недоступна");return false;}
-            t.resting=false;t.returning=true;var sprite=Sprite(key);if(!sprite || !sprite.transform.IsChildOf(game.coastRoot.transform))PlaceOutside(t);SyncOwners();return true;
+            t.campRestV51=t.seatedV51=false;t.resting=false;t.returning=true;var sprite=Sprite(key);if(!sprite || !sprite.transform.IsChildOf(game.coastRoot.transform))PlaceOutside(t);SyncOwners();return true;
         }
         void PlaceOutside(TroopStateV50 t)
         {
@@ -126,11 +122,11 @@ namespace AshenCoast
             sprite.gameObject.SetActive(game.journey.IsCoast && !game.magic.InPocket);
         }
         public void Eject(int home)
-        {foreach(var t in troops.Values.Where(t=>t.home==home && (t.resting || t.returning))){t.resting=t.returning=false;PlaceOutside(t);}SyncOwners();}
+        {foreach(var t in troops.Values.Where(t=>t.home==home && (t.resting || t.returning))){t.resting=t.returning=t.campRestV51=t.seatedV51=false;PlaceOutside(t);}SyncOwners();}
         public void Recall(string key,int peer)
         {
             if(!troops.TryGetValue(key,out var t) || OwnerPeer(t)!=peer || !Living(t))return;
-            if(houses[t.home].Hidden)return;t.resting=t.returning=false;
+            if(houses[t.home].Hidden)return;t.resting=t.returning=t.campRestV51=t.seatedV51=false;
             var p=game.CoopOnline && game.coop.players.TryGetValue(peer,out var player)?new Vector2(player.x,player.y):game.body.position;
             string region=game.CoopOnline && game.coop.players.TryGetValue(peer,out var state)?state.region:Inside>=0?"snail/"+Inside:"area/"+(int)game.journey.Area;
             var sprite=Sprite(key);sprite.transform.SetParent(game.CoopOnline?game.coop.world.Root(region):game.arcane.WorldRoot,true);
@@ -142,11 +138,12 @@ namespace AshenCoast
             foreach(var t in troops.Values.Where(Living).ToArray())
             {
                 var sprite=Sprite(t.key);if(!sprite)continue;
+                if(t.campRestV51){TickCampTroopV51(t,dt);continue;}
                 if(t.resting)
                 {
                     if(t.key=="mage"){var m=game.journey.companion;m.health=Mathf.Min(CompanionMage.MaxHealth,m.health+dt*8);m.mana=Mathf.Min(CompanionMage.MaxMana,m.mana+dt*10);}
                     else{var woman=Woman(t.key);woman.health=Mathf.Min(woman.MaxHealth,woman.health+dt*8);}
-                    sprite.transform.SetParent(houses[t.home].room.transform,true);sprite.transform.position=new Vector2(-1.9f+(troops.Values.ToList().IndexOf(t)%4)*1.1f,.4f);sprite.gameObject.SetActive(Inside==t.home);continue;
+                    sprite.transform.SetParent(houses[t.home].room.transform,true);sprite.transform.position=new Vector2(-2.1f+(troops.Values.ToList().IndexOf(t)%4)*1.1f,-1.8f);sprite.gameObject.SetActive(Inside==t.home);continue;
                 }
                 if(t.returning)
                 {
@@ -168,14 +165,14 @@ namespace AshenCoast
             {
                 stopped=Mathf.Max(0,stopped-dt);
                 foreach(var h in houses){h.health=Mathf.Min(1000,h.health+dt*2);h.window-=dt;if(h.window<=0)h.damage=0;if(h.hidden>0 && h.health>0)h.hidden=Mathf.Max(0,h.hidden-dt);if(h.damage>=250 && !h.Hidden && !Occupied(h.index))h.Hide();}
-                if(ordered && stopped<=0)Move(dt);else foreach(var h in houses)h.moving=false;
+                bool campBusy=CampTickV51(dt);if(ordered && stopped<=0 && !campBusy)Move(dt);else if(!campBusy)foreach(var h in houses)h.moving=false;
                 TickTroops(dt);
                 if(game.CoopOnline && Time.unscaledTime>=nextSync){nextSync=Time.unscaledTime+.12f;game.coop.BroadcastV49(new LanPacketV49{kind="caravanState",body=JsonUtility.ToJson(Capture())});}
             }
             else foreach(var t in troops.Values.Where(t=>t.resting)){var sprite=Sprite(t.key);if(sprite)sprite.gameObject.SetActive(Inside==t.home);}
-            foreach(var h in houses)h.Pose(clock);
+            foreach(var h in houses)h.Pose(clock);CampVisualsV51();
             if(clock>=nextReveal){nextReveal=clock+.7f;Reveal();}
-            if(Inside>=0 && doorWait<=0 && game.body.position.y< -3.3f && Mathf.Abs(game.body.position.x)<1.0f)Leave();
+            if(Inside>=0 && doorWait<=0 && Vector2.Distance(game.body.position,RoomDoorV51(Inside))<.50f)Leave();
             TickLure(dt);
         }
         void Reveal(){if(game.map==null)return;foreach(var h in houses)game.map.regions[0].Reveal(h.position,11);}
@@ -198,14 +195,14 @@ namespace AshenCoast
             var start=Vector2Int.RoundToInt(houses[0].position/4);var end=Vector2Int.RoundToInt(point/4);var open=new List<Vector2Int>{start};var costs=new Dictionary<Vector2Int,float>{{start,0}};var prev=new Dictionary<Vector2Int,Vector2Int>();var seen=new HashSet<Vector2Int>();bool found=false;
             for(int n=0;open.Count>0 && n<12000;n++)
             {var at=open.OrderBy(p=>costs[p]+Vector2.Distance(p,end)).First();open.Remove(at);if(at==end){found=true;route.Clear();while(at!=start){route.Add((Vector2)at*4);at=prev[at];}route.Reverse();break;}seen.Add(at);for(int y=-1;y<=1;y++)for(int x=-1;x<=1;x++){if(x==0 && y==0)continue;var next=at+new Vector2Int(x,y);if(seen.Contains(next) || !Land((Vector2)next*4) || !Land((Vector2)(next+at)*2) || game.WorldBlocked((Vector2)at*4,(Vector2)next*4,.4f))continue;float cost=costs[at]+Mathf.Sqrt(x*x+y*y);if(costs.TryGetValue(next,out var old) && old<=cost)continue;costs[next]=cost;prev[next]=at;if(!open.Contains(next))open.Add(next);}}
-            if(!found){game.ui.Notice("Недоступное место");return false;}destination=point;ordered=true;routeAt=0;return true;
+            if(!found){game.ui.Notice("Недоступное место");return false;}destination=point;ordered=true;routeAt=0;BeginGatherV51();return true;
         }
         public void Command(CaravanCommandV50 command)
-        {if(game.CoopOnline)game.coop.Send(new LanPacketV49{kind="caravanCommand",region=game.coop.Region,body=JsonUtility.ToJson(command)});else ApplyCommand(command,0,null);}
+        {if(command.kind=="order"){command.known=game.map.IsVisited(MapRegion.Coast,new Vector2(command.x,command.y));if(!command.known){game.ui.Notice("Недоступное место");return;}}if(game.CoopOnline)game.coop.Send(new LanPacketV49{kind="caravanCommand",region=game.coop.Region,body=JsonUtility.ToJson(command)});else ApplyCommand(command,0,null);}
         public void ApplyCommand(CaravanCommandV50 command,int peer,string region)
         {
             if(command==null)return;
-            if(command.kind=="order"){if(Seat(peer)>=0 && LanItemV49.Finite(command.x) && LanItemV49.Finite(command.y))Order(new Vector2(command.x,command.y));}
+            if(command.kind=="order"){if(command.known && Seat(peer)>=0 && LanItemV49.Finite(command.x) && LanItemV49.Finite(command.y))Order(new Vector2(command.x,command.y));}
             else if(command.kind=="home")SendHome(command.key,peer);
             else if(command.kind=="recall")Recall(command.key,peer);
             else if(command.kind=="homeAll")foreach(var t in troops.Values.Where(t=>OwnerPeer(t)==peer && !t.resting && !t.returning).ToArray())SendHome(t.key,peer);
@@ -228,22 +225,22 @@ namespace AshenCoast
             {if(!pair.Key || pair.Value<=clock || !pair.Key.enabled){lured.Remove(pair.Key);continue;}var from=(Vector2)pair.Key.transform.position;var goal=lurePoints.TryGetValue(pair.Key,out var point)?point:game.body.position;var delta=goal-from;if(delta.magnitude>2.5f && !game.spellcraft.ImmobilizedV44(pair.Key)){var next=from+delta.normalized*Mathf.Min(dt*2.1f,delta.magnitude-2.5f);if(!game.WorldBlocked(from,next,.2f))pair.Key.transform.position=next;}if(game.arcane.frogs.Any(f=>f.renderer==pair.Key))game.arcane.frogs.First(f=>f.renderer==pair.Key).LureV50(game.hero);}
         }
         public CaravanStateV50 Capture()
-        {foreach(var t in troops.Values){var woman=Woman(t.key);var sprite=Sprite(t.key);if(sprite){t.x=sprite.transform.position.x;t.y=sprite.transform.position.y;}t.hp=t.key=="mage"?game.journey.companion.health:woman?.health??0;t.mana=t.key=="mage"?game.journey.companion.mana:0;}return new CaravanStateV50{count=PlayerCount,peers=peers,snails=houses.Select(h=>new SnailStateV50{x=h.position.x,y=h.position.y,hp=h.health,hidden=h.hidden,damage=h.damage,window=h.window,moving=h.moving}).ToArray(),troops=troops.Values.ToArray(),stop=stopped,x=destination.x,y=destination.y,ordered=ordered};}
+        {foreach(var t in troops.Values){var woman=Woman(t.key);var sprite=Sprite(t.key);if(sprite){t.x=sprite.transform.position.x;t.y=sprite.transform.position.y;}t.hp=t.key=="mage"?game.journey.companion.health:woman?.health??0;t.mana=t.key=="mage"?game.journey.companion.mana:0;}return new CaravanStateV50{camp=CaptureCampV51(),count=PlayerCount,peers=peers,snails=houses.Select(h=>new SnailStateV50{x=h.position.x,y=h.position.y,hp=h.health,hidden=h.hidden,damage=h.damage,window=h.window,moving=h.moving}).ToArray(),troops=troops.Values.ToArray(),stop=stopped,x=destination.x,y=destination.y,ordered=ordered};}
         public void Apply(CaravanStateV50 state)
         {
-            if(Authority || state?.snails?.Length!=4 || state.peers?.Length!=4)return;PlayerCount=state.count;peers=state.peers;stopped=state.stop;destination=new Vector2(state.x,state.y);ordered=state.ordered;
+            if(Authority || state?.snails?.Length!=4 || state.peers?.Length!=4)return;ApplyCampV51(state.camp);PlayerCount=state.count;peers=state.peers;stopped=state.stop;destination=new Vector2(state.x,state.y);ordered=state.ordered;
             for(int i=0;i<4;i++){var data=state.snails[i];var h=houses[i];h.position=Vector2.Distance(h.position,new Vector2(data.x,data.y))>10?new Vector2(data.x,data.y):Vector2.Lerp(h.position,new Vector2(data.x,data.y),.75f);h.health=data.hp;h.hidden=data.hidden;h.moving=data.moving;}
-            troops.Clear();foreach(var t in state.troops??Array.Empty<TroopStateV50>()){troops[t.key]=t;if(t.returning){var sprite=Sprite(t.key);if(sprite){sprite.transform.SetParent(game.coastRoot.transform,true);if(t.key=="mage")game.journey.companion.WalkHomeV50(new Vector2(t.x,t.y));else Woman(t.key)?.WalkHomeV50(new Vector2(t.x,t.y));sprite.gameObject.SetActive(game.journey.IsCoast && !game.magic.InPocket);}}if(t.resting){var sprite=Sprite(t.key);if(sprite){sprite.transform.SetParent(houses[t.home].room.transform,true);sprite.transform.position=new Vector2(-1.9f+(troops.Count%4)*1.1f,.4f);sprite.gameObject.SetActive(Inside==t.home);}if(t.key=="mage"){game.journey.companion.health=t.hp;game.journey.companion.mana=t.mana;}else if(Woman(t.key)!=null)Woman(t.key).health=t.hp;}}SyncOwners();
+            troops.Clear();foreach(var t in state.troops??Array.Empty<TroopStateV50>()){troops[t.key]=t;if(t.returning || t.campRestV51){var sprite=Sprite(t.key);if(sprite){sprite.transform.SetParent(game.coastRoot.transform,true);if(t.key=="mage")game.journey.companion.WalkHomeV50(new Vector2(t.x,t.y));else Woman(t.key)?.WalkHomeV50(new Vector2(t.x,t.y));sprite.gameObject.SetActive(game.journey.IsCoast && !game.magic.InPocket);}}if(t.resting){var sprite=Sprite(t.key);if(sprite){sprite.transform.SetParent(houses[t.home].room.transform,true);sprite.transform.position=new Vector2(-2.1f+(troops.Count%4)*1.1f,-1.8f);sprite.gameObject.SetActive(Inside==t.home);}if(t.key=="mage"){game.journey.companion.health=t.hp;game.journey.companion.mana=t.mana;}else if(Woman(t.key)!=null)Woman(t.key).health=t.hp;}}SyncOwners();
         }
         public Renderer Interaction(Vector2 point,out string name)
         {
-            name=null;if(Inside>=0){if(new Rect(-1,-4,2,1.5f).Contains(point)){name="Выйти из улитки";return exit[Inside];}return null;}
+            name=null;if(Inside>=0){if(Vector2.Distance(point,RoomDoorV51(Inside)+Vector2.up*.6f)<1.1f){name="Выйти из улитки";return exit[Inside];}return null;}
             if(!game.journey.IsCoast || game.magic.InPocket)return null;
             foreach(var h in houses.AsEnumerable().Reverse())if(game.art.Opaque(h.Renderer.sprite,h.Renderer.transform.InverseTransformPoint(point))){name="Улитка "+(h.index+1)+(h.Hidden?" · в раковине":"");return h.Renderer;}return null;
         }
         public bool Interact(Vector2 point)
         {
-            if(Inside>=0 && new Rect(-1,-4,2,1.5f).Contains(point)){Leave();return true;}
+            if(Inside>=0 && Vector2.Distance(point,RoomDoorV51(Inside)+Vector2.up*.6f)<1.1f){Leave();return true;}
             var renderer=Interaction(point,out _);var h=houses.FirstOrDefault(s=>s.Renderer==renderer);if(h==null)return false;
             if(!h.Hidden && new Rect(h.Door.x-.9f,h.Door.y-.5f,1.8f,2.2f).Contains(point) && Vector2.Distance(game.body.position,h.Door)<3.4f){Enter(h.index);return true;}
             game.map.OpenSnailCommand(h.position);return true;
@@ -256,12 +253,12 @@ namespace AshenCoast
         public void PlayWhistle()=>game.sounds.PlayOneShot(whistle,.8f);
         public void Enter(int home)
         {
-            if(home<0 || home>=4 || houses[home].Hidden || doorWait>0)return;Inside=home;game.journey.SetArea(WorldArea.SnailHouse,new Vector2(0,-2.4f));doorWait=1;game.cameraView.orthographicSize=5.25f;game.ResetCamera(new Vector3(0,.7f,-20));Visibility(false);
+            if(home<0 || home>=4 || houses[home].Hidden || doorWait>0)return;Inside=home;game.journey.SetArea(WorldArea.SnailHouse,RoomDoorV51(home)+Vector2.down*1.3f);doorWait=1;game.cameraView.orthographicSize=5.25f;game.ResetCamera(new Vector3(0,-.6f,-20));Visibility(false);
         }
         public void Leave()
         {if(Inside<0)return;var h=houses[Inside];Inside=-1;game.journey.SetArea(WorldArea.Coast,h.Door+Vector2.down*1.4f);Visibility(false);doorWait=1;}
         public void Visibility(bool pocket){foreach(var h in houses)h.room.SetActive(!pocket && game.journey.Area==WorldArea.SnailHouse && Inside==h.index);}
-        public Vector2 Clamp(Vector2 point)=>new Vector2(Mathf.Clamp(point.x,-3.85f,3.85f),Mathf.Clamp(point.y,-3.5f,3.15f));
+        public Vector2 Clamp(Vector2 point)=>new Vector2(Mathf.Clamp(point.x,-3.6f,3.8f),Mathf.Clamp(point.y,-3.1f,-.45f));
         public readonly List<SpriteRenderer> exit=new List<SpriteRenderer>();
         SpriteRenderer Prop(SnailHouseV50 h,string name,Sprite sprite,Vector2 at,float width,int depth=-999)
         {var r=game.art.Renderer(name,sprite,at,depth==-999?CoastGame.Depth(at.y):depth);r.transform.SetParent(h.room.transform,true);r.transform.localScale=Vector3.one*(width/sprite.bounds.size.x);return r;}

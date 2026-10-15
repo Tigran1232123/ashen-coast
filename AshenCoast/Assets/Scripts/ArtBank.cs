@@ -7,7 +7,7 @@ namespace AshenCoast
     {
         public const float PrismVisualScale=.70f;
         public Sprite ship, mannequin, door, galaxy, planet;
-        public readonly Sprite[] icons = new Sprite[57], flowers = new Sprite[11];
+        public readonly Sprite[] icons = new Sprite[58], flowers = new Sprite[11];
         public Sprite orbCloth;
         public readonly Sprite[] skateAttachments=new Sprite[2];
         public readonly Sprite[] ruins=new Sprite[6];

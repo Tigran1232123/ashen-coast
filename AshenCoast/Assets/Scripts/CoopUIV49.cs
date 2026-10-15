@@ -17,7 +17,7 @@ namespace AshenCoast
                 {
                     var at=World(peer.Position+Vector2.up*2.05f);if(at.x<45 || at.x>CanvasWidth*WorldFraction-45 || at.y<30 || at.y>CanvasHeight-35)continue;
                     var box=new Rect(at.x-80,at.y-24,160,24);GUI.color=new Color(.03f,.035f,.02f);GUI.Label(new Rect(box.x+1,box.y+1,box.width,box.height),peer.State.name,CachedStyle(bold,TextAnchor.MiddleCenter,16));GUI.color=new Color(.78f,.86f,.68f);GUI.Label(box,peer.State.name,CachedStyle(bold,TextAnchor.MiddleCenter,16));GUI.color=Color.white;
-                    var bar=new Rect(at.x-32,at.y+1,64,4);Fill(bar,new Color(.06f,.07f,.05f));Fill(new Rect(bar.x,bar.y,bar.width*peer.State.health/100,bar.height),new Color(.34f,.60f,.35f));
+                    var bar=new Rect(at.x-32,at.y+1,64,4);Fill(bar,new Color(.06f,.07f,.05f));Fill(new Rect(bar.x,bar.y,bar.width*peer.State.health/(peer.State.character==1?50:100),bar.height),new Color(.34f,.60f,.35f));
                 }
                 GUI.Label(new Rect(CanvasWidth*WorldFraction-155,CanvasHeight-35,140,25),"Кооператив · "+session.players.Count+"/"+game.snails.PlayerCount,CachedStyle(small,TextAnchor.MiddleRight));
             }

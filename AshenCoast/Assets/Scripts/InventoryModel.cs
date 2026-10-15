@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace AshenCoast
 {
-    public enum ItemKind { Brain, Soup, BeetleMeat, Rope, Sword, Dagger, Scythe, Spear, Sack, Helmet, Armor, Amulet, Ring, BlueFlower, WhiteFlower, PinkFlower, Orb, Tome, OpenTome, Boots, YoYo, Lamp, Wood, Campfire, Pyromancy, OpenPyromancy, AbyssTome, OpenAbyssTome, Coin, Pie, LastPrism, RawMeat, CraftingTable, IronIngot, Anvil, Clay, StoragePot, RoastMeat, RoastBeetle, MeatAssortment, RollerSkates, ShacklesScroll, CurseScroll, Spectrum, Cauldron, WaterBottle, Buttercup, Poppy, Bellflower, Clover, FourLeafClover, Rot, GoldenSpear, Zen, Axe, Stake, Bow }
+    public enum ItemKind { Brain, Soup, BeetleMeat, Rope, Sword, Dagger, Scythe, Spear, Sack, Helmet, Armor, Amulet, Ring, BlueFlower, WhiteFlower, PinkFlower, Orb, Tome, OpenTome, Boots, YoYo, Lamp, Wood, Campfire, Pyromancy, OpenPyromancy, AbyssTome, OpenAbyssTome, Coin, Pie, LastPrism, RawMeat, CraftingTable, IronIngot, Anvil, Clay, StoragePot, RoastMeat, RoastBeetle, MeatAssortment, RollerSkates, ShacklesScroll, CurseScroll, Spectrum, Cauldron, WaterBottle, Buttercup, Poppy, Bellflower, Clover, FourLeafClover, Rot, GoldenSpear, Zen, Axe, Stake, Bow, ReturnScroll }
     public enum GearSlot { Hand, Head, Body, Back, Amulet, RingLeft, RingRight, Feet }
 
     [Serializable]
@@ -81,6 +81,7 @@ namespace AshenCoast
             AddWeapon(d,ItemKind.Axe,"Топор",1,3,54,30,2,.45f,1,120);
             AddWeapon(d,ItemKind.Stake,"Боевой кол",1,4,55,24,3,.22f,.29f,0);
             AddWeapon(d,ItemKind.Bow,"Лук",2,3,56,20,9,.30f,.8f,0);
+            Add(d,ItemKind.ReturnScroll,"Свиток: Возвращение",1,2,57);
             return d;
         }
         static void Add(Dictionary<ItemKind, ItemDefinition> d, ItemKind k, string n, int w, int h, int icon, float food = 0, float duration = 0, int mana = 0)
@@ -260,7 +261,7 @@ namespace AshenCoast
         public GridInventory inventory = new GridInventory(10, 5, "Инвентарь"){allowOpenBooks=true};
         public float HungerMax => 100 + (foods.Count >= 2 ? 20 : 0) + (foods.Count >= 4 ? 30 : 0);
         public GridInventory Bag => equipment[(int)GearSlot.Back]?.contents;
-        public Survivor() { equipment[(int)GearSlot.Back] = new Item(ItemKind.Sack); inventory.Add(new Item(ItemKind.Lamp));inventory.Add(new Item(ItemKind.Zen));inventory.Add(new Item(ItemKind.GoldenSpear));inventory.Add(new Item(ItemKind.Pyromancy));inventory.Add(new Item(ItemKind.AbyssTome));inventory.Add(new Item(ItemKind.YoYo));inventory.Add(new Item(ItemKind.Coin){count=10});inventory.Add(new Item(ItemKind.LastPrism));inventory.Add(new Item(ItemKind.RollerSkates)); inventory.Add(new Item(ItemKind.ShacklesScroll));inventory.Add(new Item(ItemKind.CurseScroll));inventory.Add(new Item(ItemKind.Spectrum));inventory.Add(new Item(ItemKind.WaterBottle)); spatialInventory.insertionAllowed=()=>SpatialLayerOpen; }
+        public Survivor() { equipment[(int)GearSlot.Back] = new Item(ItemKind.Sack); inventory.Add(new Item(ItemKind.Lamp));inventory.Add(new Item(ItemKind.Zen));inventory.Add(new Item(ItemKind.GoldenSpear));inventory.Add(new Item(ItemKind.Pyromancy));inventory.Add(new Item(ItemKind.AbyssTome));inventory.Add(new Item(ItemKind.YoYo));inventory.Add(new Item(ItemKind.Coin){count=10});inventory.Add(new Item(ItemKind.LastPrism));inventory.Add(new Item(ItemKind.RollerSkates)); inventory.Add(new Item(ItemKind.ShacklesScroll));inventory.Add(new Item(ItemKind.CurseScroll));inventory.Add(new Item(ItemKind.Spectrum));inventory.Add(new Item(ItemKind.WaterBottle));inventory.Add(new Item(ItemKind.ReturnScroll)); spatialInventory.insertionAllowed=()=>SpatialLayerOpen; }
         public int Coins=>inventory.items.Where(i=>i.kind==ItemKind.Coin).Sum(i=>i.count)+(Bag==null?0:Bag.items.Where(i=>i.kind==ItemKind.Coin).Sum(i=>i.count));
         public bool SpendCoins(int price)
         {
@@ -293,7 +294,7 @@ namespace AshenCoast
                 effect.remaining = effect.duration = d.foodDuration;
             }
             hunger = Mathf.Min(HungerMax, hunger + d.nourishment);
-            mana = Mathf.Min(100, mana + d.mana);
+            mana = Mathf.Min(MaxMana, mana + d.mana);
             if(item.count>1)item.count--;else source.items.Remove(item); return true;
         }
         public void Tick(float delta)
@@ -301,7 +302,7 @@ namespace AshenCoast
             foreach (var food in foods) food.remaining -= delta;
             foods.RemoveAll(f => f.remaining <= 0);
             hunger = Mathf.Clamp(hunger - delta * .035f, 0, HungerMax);
-            if (health>0 && foods.Count >= 3) health = Mathf.Min(100, health + delta * .6f);
+            if (health>0 && foods.Count >= 3) health = Mathf.Min(MaxHealth, health + delta * .6f);
             if (foods.Count >= 5) immunity = Mathf.Min(100, immunity + delta * .18f);
             if (hunger <= 0) health = Mathf.Max(0, health - delta * .1f);
             // Mana deliberately has no regeneration path.

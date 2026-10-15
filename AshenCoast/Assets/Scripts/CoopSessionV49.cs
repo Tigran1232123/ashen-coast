@@ -22,7 +22,7 @@ namespace AshenCoast
         public string Region=>game.journey.Area==WorldArea.SnailHouse && game.snails.Inside>=0 && !game.magic.InPocket?"snail/"+game.snails.Inside:game.magic.InPocket?"pocket/"+Peer:game.journey.Area==WorldArea.AmazonHouse?"house/"+Mathf.Max(0,game.amazons.houses.IndexOf(game.amazons.currentHouse)):"area/"+(int)game.journey.Area;
         public bool CanSimulate=>!Online || owners.TryGetValue(Region,out var owner) && owner==Peer;
         public void Initialize(CoastGame owner)
-        {game=owner;LocalHero=game.hero;LocalBody=game.body;LocalSurvivor=game.survivor;LanItemV49.Clock=()=>game.seconds;LanItemV49.SnapshotClock=()=>Online?NetworkTimeV49:Time.realtimeSinceStartup;world=new CoopWorldV49(this);inventory=new CoopInventoryV49(this);PlayerName=PlayerPrefs.GetString("LANName","Игрок");Address=PlayerPrefs.GetString("LANAddress","192.168.1.2");}
+        {game=owner;LocalHero=game.hero;LocalBody=game.body;LocalSurvivor=game.survivor;LanItemV49.Clock=()=>game.seconds;LanItemV49.SnapshotClock=()=>Online?NetworkTimeV49:Time.realtimeSinceStartup;world=new CoopWorldV49(this);world.RegisterInitial();inventory=new CoopInventoryV49(this);PlayerName=PlayerPrefs.GetString("LANName","Игрок");Address=PlayerPrefs.GetString("LANAddress","192.168.1.2");}
         public bool StartHost(int port=LanTransportV49.DefaultPort,bool localTest=false)
         {
             Disconnect(false);game.ui.CancelInteraction();if(localTest)game.snails.Configure(4);game.snails.peers=new[]{0,-1,-1,-1};
@@ -56,7 +56,7 @@ namespace AshenCoast
                     if(incoming.connected){lastSeen[incoming.peer]=Time.unscaledTime;if(!IsHost)Send(new LanPacketV49{kind="hello",body=JsonUtility.ToJson(new LanHelloV49{name=CleanName(PlayerName)})});continue;}
                     if(incoming.disconnected){if(IsHost){players.Remove(incoming.peer);game.snails.Left(incoming.peer);lastSeen.Remove(incoming.peer);Reassign();BroadcastRoster();}else{Disconnect(false);Status="Связь с ведущим потеряна";}continue;}
                     if(incoming.json==null){Status="Не удалось подключиться";if(!IsHost)Disconnect(false);continue;}
-                    var packet=JsonUtility.FromJson<LanPacketV49>(incoming.json);if(packet==null || packet.version!=50)throw new InvalidOperationException("Protocol mismatch");
+                    var packet=JsonUtility.FromJson<LanPacketV49>(incoming.json);if(packet==null || packet.version!=51)throw new InvalidOperationException("Protocol mismatch");
                     if(IsHost){packet.peer=incoming.peer;lastSeen[incoming.peer]=Time.unscaledTime;HandleHost(packet);}else Handle(packet);
                 }
                 catch(Exception e){Debug.LogWarning("LAN packet rejected: "+e.Message);if(IsHost)transport?.Drop(incoming.peer);else{Disconnect(false);Status="Не удалось синхронизировать игру";}}
@@ -84,7 +84,7 @@ namespace AshenCoast
         {
             if(packet.kind=="hello")
             {
-                var hello=JsonUtility.FromJson<LanHelloV49>(packet.body);if(hello.build!=50 || players.Count>=game.snails.PlayerCount || game.snails.JoinSeat(packet.peer)<0){transport.Drop(packet.peer);return;}
+                var hello=JsonUtility.FromJson<LanHelloV49>(packet.body);if(hello.build!=51 || players.Count>=game.snails.PlayerCount || game.snails.JoinSeat(packet.peer)<0){transport.Drop(packet.peer);return;}
                 players[packet.peer]=new LanPlayerV49{peer=packet.peer,name=CleanName(hello.name),region="area/0",x=-1.5f-packet.peer*.7f,y=-1.65f};
                 transport.Send(packet.peer,JsonUtility.ToJson(new LanPacketV49{kind="welcome",peer=0,body=JsonUtility.ToJson(new LanWelcomeV49{peer=packet.peer,seed=WorldShape.Seed,seconds=game.DaySeconds,name=hello.name,x=-1.5f-packet.peer*.7f,y=-1.65f,networkTime=Time.realtimeSinceStartup})}));
                 foreach(var entry in snapshots)transport.Send(packet.peer,JsonUtility.ToJson(new LanPacketV49{kind="world",peer=owners.TryGetValue(entry.Key,out var own)?own:0,region=entry.Key,body=entry.Value}));
@@ -98,6 +98,7 @@ namespace AshenCoast
                 case "fx":if(packet.region==players[packet.peer].region)Deliver(packet,packet.peer);break;
                 case "world":if(owners.TryGetValue(packet.region,out var owner) && owner==packet.peer){var state=JsonUtility.FromJson<LanRegionV49>(packet.body);inventory.MergeWorld(state);packet.body=JsonUtility.ToJson(state);snapshots[packet.region]=packet.body;Deliver(packet,packet.peer);}break;
                 case "caravanCommand":game.snails.ApplyCommand(JsonUtility.FromJson<CaravanCommandV50>(packet.body),packet.peer,players[packet.peer].region);break;
+                case "raise":if(packet.region==players[packet.peer].region)game.corpses.FinishRaise(JsonUtility.FromJson<RaiseRequestV51>(packet.body),packet.peer,packet.region);break;
                 case "transaction":inventory.HostTransaction(packet);break;
                 case "systemInventory":inventory.HostSystemV49(packet);break;
                 case "dps":if(owners.TryGetValue(packet.region,out var dpsOwner) && dpsOwner==packet.peer)SendToV49(packet.target,packet);break;
@@ -113,7 +114,7 @@ namespace AshenCoast
                 case "clock":if(float.TryParse(packet.body,System.Globalization.NumberStyles.Float,System.Globalization.CultureInfo.InvariantCulture,out var time) && LanItemV49.Finite(time)){game.seconds=time-(game.meditation?.DayOffset??0);Send(new LanPacketV49{kind="time",body=JsonUtility.ToJson(new LanClockV49{seconds=time,networkTime=Time.realtimeSinceStartup})});}break;
             }
         }
-        bool Validate(LanPlayerV49 p)=>p!=null && p.region!=null && world.ValidRegion(p.region) && LanItemV49.Finite(p.x) && LanItemV49.Finite(p.y) && Mathf.Abs(p.x)<2000 && Mathf.Abs(p.y)<2000 && LanItemV49.Finite(p.health) && p.health>=0 && p.health<=100 && p.equipment?.Length==8;
+        bool Validate(LanPlayerV49 p)=>p!=null && p.region!=null && world.ValidRegion(p.region) && LanItemV49.Finite(p.x) && LanItemV49.Finite(p.y) && Mathf.Abs(p.x)<2000 && Mathf.Abs(p.y)<2000 && LanItemV49.Finite(p.health) && p.health>=0 && p.character>=0 && p.character<=1 && p.health<=(p.character==1?50:100) && LanItemV49.Finite(p.mana) && p.mana>=0 && p.mana<=(p.character==1?200:100) && p.equipment?.Length==8;
         void Handle(LanPacketV49 packet)
         {
             switch(packet.kind)
@@ -123,6 +124,10 @@ namespace AshenCoast
                 case "roster":var roster=JsonUtility.FromJson<LanRosterV49>(packet.body);var previous=new Dictionary<string,int>(owners);owners.Clear();foreach(var o in roster.owners)owners[o.region]=o.peer;foreach(var p in roster.players){players[p.peer]=p;if(p.peer!=Peer)UpdateProxy(p);}foreach(var p in remote.Keys.ToArray())if(!roster.players.Any(s=>s.peer==p)){remote[p].Dispose();fx?.RemovePeer(p);remote.Remove(p);players.Remove(p);}if(Online && owners.TryGetValue(Region,out var own) && own==Peer && (!previous.TryGetValue(Region,out var old) || old!=Peer) && snapshots.TryGetValue(Region,out var latest))ApplyWorld(Region,latest,true);break;
                 case "world":snapshots[packet.region]=packet.body;if(Online && (packet.region==Region || IsHost) && packet.peer!=Peer)ApplyWorld(packet.region,packet.body,false);break;
                 case "time":var clock=JsonUtility.FromJson<LanClockV49>(packet.body);worldSeconds=clock.seconds;receivedTime=Time.unscaledTime;networkBase=clock.networkTime;networkReceived=Time.realtimeSinceStartup;break;
+                case "corpses":game.corpses.Receive(packet.body);break;
+                case "raisePlayer":game.corpses.RaiseLocalPlayer(JsonUtility.FromJson<CorpseDataV51>(packet.body));break;
+                case "raiseActor":game.corpses.RaiseActor(JsonUtility.FromJson<CorpseDataV51>(packet.body));break;
+                case "raiseResult":game.corpses.RaiseResult(JsonUtility.FromJson<RaiseResultV51>(packet.body));break;
                 case "mageCommand":if(packet.region==Region && CanSimulate && game.snails.troops.TryGetValue("mage",out var mageOrder) && game.snails.OwnerPeer(mageOrder)==packet.target && !mageOrder.resting){ForNearest(game.journey.companion.Position,()=>{if(!game.journey.companion.Explode())game.ui.Notice("Недостаточно маны");},packet.target);}break;
                 case "caravanState":game.snails.Apply(JsonUtility.FromJson<CaravanStateV50>(packet.body));break;
                 case "whistle":if(packet.region==Region && !IsHost){var whistle=JsonUtility.FromJson<CaravanCommandV50>(packet.body);game.snails.Lure(new Vector2(whistle.x,whistle.y));game.snails.PlayWhistle();}break;

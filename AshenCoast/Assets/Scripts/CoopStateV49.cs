@@ -5,11 +5,11 @@ using UnityEngine;
 namespace AshenCoast
 {
     [Serializable] public sealed class LanPacketV49
-    {public string kind,region,body;public int peer,target=-1,version=50;public long sequence;}
-    [Serializable] public sealed class LanHelloV49 {public string name;public int build=50;}
+    {public string kind,region,body;public int peer,target=-1,version=51;public long sequence;}
+    [Serializable] public sealed class LanHelloV49 {public string name;public int build=51;}
     [Serializable] public sealed class LanWelcomeV49 {public int peer,seed;public float seconds,x,y,networkTime;public string name;}
     [Serializable] public sealed class LanPlayerV49
-    {public int peer,facing,frame,weapon=-1;public string name,region;public float x,y,health=100,hunger=100,mana,immunity=100,walk,angle,scale=1;public bool moving,attacking,invulnerable,dead;public float duration,elapsed,weaponX,weaponY,weaponScale=1;public LanItemV49[] equipment;}
+    {public int peer,facing,frame,character,weapon=-1;public string name,region;public float x,y,health=100,hunger=100,mana,immunity=100,walk,angle,scale=1;public bool moving,attacking,invulnerable,dead;public float duration,elapsed,weaponX,weaponY,weaponScale=1;public LanItemV49[] equipment;}
     [Serializable] public sealed class LanOwnerV49 {public string region;public int peer;}
     [Serializable] public sealed class LanRosterV49 {public LanPlayerV49[] players;public LanOwnerV49[] owners;}
     [Serializable] public sealed class LanItemV49
