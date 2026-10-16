@@ -68,7 +68,10 @@ public static class ProjectBuilder
     // Rebuild the prepared project after a focused change without rerunning unchanged model checks.
     public static void BuildCurrent()
     {
-        AssetDatabase.Refresh();AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        foreach(var artPathV58 in AssetDatabase.FindAssets("t:Texture2D",new[]{"Assets/Resources/Art"}).Select(AssetDatabase.GUIDToAssetPath).Where(p=>p.Contains("V58")))
+        {var ti=(TextureImporter)AssetImporter.GetAtPath(artPathV58);ti.isReadable=true;ti.filterMode=FilterMode.Point;ti.mipmapEnabled=false;ti.alphaIsTransparency=true;ti.textureCompression=TextureImporterCompression.Uncompressed;ti.npotScale=TextureImporterNPOTScale.None;ti.maxTextureSize=4096;ti.wrapMode=TextureWrapMode.Clamp;ti.SaveAndReimport();}
+        AssetDatabase.SaveAssets();
         foreach(var name in new[]{"AmazonVillageV46","AmazonActorsV46","AmazonWeaponsV46","AlvielStatueV46"})
         {
             var changed=(TextureImporter)AssetImporter.GetAtPath("Assets/Resources/Art/"+name+".png");
@@ -102,7 +105,7 @@ public static class ModelChecks
         var s=new Survivor();Assert(s.inventory.columns==10 && s.inventory.rows==5,"50-slot inventory");
         Assert(s.inventory.items.Any(i=>i.kind==ItemKind.Lamp) && s.inventory.items.Any(i=>i.kind==ItemKind.Pyromancy) && s.inventory.items.Any(i=>i.kind==ItemKind.AbyssTome) && s.inventory.items.Any(i=>i.kind==ItemKind.YoYo),"player starts with lamp and both new books and yo-yo");s.inventory.items.Clear();
         Assert(s.Bag.columns==5 && s.Bag.rows==5,"25-slot equipped sack");Assert(s.mana==0,"initial mana zero");
-        var ship=CoastTime.CreateShipStorage();Assert(ship.Valid(),"ship no item overlap");Assert(ship.items.Count==39,"thirty-seven hold items including fourteen clay");
+        var ship=CoastTime.CreateShipStorage();Assert(ship.Valid(),"ship no item overlap");Assert(ship.items.Count==43 && ship.columns*ship.rows==160,"expanded hold, forty-three starting items including ranged equipment");
         Assert(ship.items.Count(i=>i.kind==ItemKind.Wood)==7 && ItemDefinition.All[ItemKind.Wood].width==1 && ItemDefinition.All[ItemKind.Wood].height==2,"five unstacked 1x2 wood resources in hold");
         Assert(ship.items.Count(i=>i.kind==ItemKind.Clay)==14,"fourteen clay in the hold");
         var potPattern=new GridInventory(5,5,"pot pattern");foreach(var p in new[]{new Vector2Int(0,0),new Vector2Int(2,0),new Vector2Int(0,1),new Vector2Int(2,1),new Vector2Int(0,2),new Vector2Int(1,2),new Vector2Int(2,2)})potPattern.Place(new Item(ItemKind.Clay),p.x,p.y);Assert(potPattern.Craft(new RectInt(0,0,3,3),out var pot) && pot.kind==ItemKind.StoragePot && pot.contents.columns==5 && pot.contents.rows==5,"seven-clay U creates a pot with 25 storage cells");

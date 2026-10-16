@@ -334,7 +334,7 @@ namespace AshenCoast
                 var target=home+new Vector2(Mathf.Sin(clock*.32f)*1.35f,Mathf.Sin(clock*.23f)*.65f);var delta=target-Position;
                 if(delta.magnitude>.08f && Vector2.Distance(Position,game.body.position)>1.4f){velocity=delta.normalized*.65f;direction=Direction(delta);}
             }
-            var move=velocity*dt;renderer.transform.position+=(Vector3)move;walkDistance+=move.magnitude;
+            var move=velocity*dt;if(!game.GroundAllowedV58(Position+move,.18f))move=Vector2.zero;renderer.transform.position+=(Vector3)move;walkDistance+=move.magnitude;
             frame=velocity.sqrMagnitude>.01f?Mathf.FloorToInt(walkDistance/.58f*8)%8:2;Pose();
         }
         static int Direction(Vector2 d)=>Mathf.Abs(d.x)>Mathf.Abs(d.y)?d.x<0?1:3:d.y>0?2:0;

@@ -36,7 +36,7 @@ namespace AshenCoast
     {
         // Caravan navigation always uses outdoor geometry, even while the host is indoors.
         public bool CoastBlockedV53(Vector2 from,Vector2 to,float radius)
-        {foreach(var b in barriers){var r=new Rect(b.xMin-radius,b.yMin-radius,b.width+2*radius,b.height+2*radius);if(r.Contains(to) && !r.Contains(from))return true;}foreach(var t in trees)if(t.Standing && Vector2.Distance(to,t.position)<radius+.23f && Vector2.Distance(from,t.position)>=radius+.23f)return true;return false;}
+        {for(int i=0;i<barriers.Count;i++)if(BarrierContainsV58(i,to,radius) && !BarrierContainsV58(i,from,radius))return true;foreach(var t in trees)if(t.Standing && Vector2.Distance(to,t.position)<radius+.23f && Vector2.Distance(from,t.position)>=radius+.23f)return true;return false;}
     }
     public sealed class MinHeapV53<T>
     {

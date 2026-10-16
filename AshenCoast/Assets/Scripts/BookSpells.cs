@@ -18,12 +18,12 @@ namespace AshenCoast
     {
         public static SpellSlot[] Create(ItemKind book)
         {
-            if(book!=ItemKind.Tome && book!=ItemKind.Pyromancy && book!=ItemKind.AbyssTome)return null;
-            var slots=Enumerable.Range(0,book==ItemKind.Pyromancy?4:6).Select(_=>new SpellSlot()).ToArray();
+            if(book!=ItemKind.Tome && book!=ItemKind.Pyromancy && book!=ItemKind.AbyssTome && book!=ItemKind.LeafTome)return null;
+            var slots=Enumerable.Range(0,book==ItemKind.Pyromancy || book==ItemKind.LeafTome?4:6).Select(_=>new SpellSlot()).ToArray();
             void Builtin(int at,SpellKind kind){slots[at].kind=kind;slots[at].locked=true;}
             if(book==ItemKind.Tome){Builtin(0,SpellKind.Pocket);Builtin(1,SpellKind.WorldTravel);}
             else if(book==ItemKind.AbyssTome){Builtin(0,SpellKind.Tentacles);Builtin(1,SpellKind.Abyss);}
-            else Builtin(0,SpellKind.FireBlast);
+            else if(book==ItemKind.Pyromancy)Builtin(0,SpellKind.FireBlast);
             return slots;
         }
         public static SpellKind ScrollSpell(ItemKind kind)=>kind==ItemKind.ReturnScroll?SpellKind.Return:kind==ItemKind.ShacklesScroll?SpellKind.Shackles:kind==ItemKind.CurseScroll?SpellKind.Curse:SpellKind.None;

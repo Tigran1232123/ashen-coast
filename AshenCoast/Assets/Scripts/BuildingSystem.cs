@@ -32,7 +32,7 @@ namespace AshenCoast
         int lastWheelFrame=-1;
         public int WheelRotations {get;private set;}
         public Vector2 PreviewPoint {get;private set;}
-        public static bool Buildable(ItemKind kind)=>kind==ItemKind.Campfire || kind==ItemKind.CraftingTable || kind==ItemKind.Anvil || VesselWaterV43.Vessel(kind);
+        public static bool Buildable(ItemKind kind)=>kind==ItemKind.Crossbow || kind==ItemKind.Campfire || kind==ItemKind.CraftingTable || kind==ItemKind.Anvil || VesselWaterV43.Vessel(kind);
         public static Vector2Int Footprint(ItemKind kind,bool upright)=>kind==ItemKind.CraftingTable?(upright?new Vector2Int(1,2):new Vector2Int(2,1)):Vector2Int.one;
         public void Initialize(CoastGame owner){game=owner;}
         public bool Begin(Item item,GridInventory inventory)
@@ -115,9 +115,9 @@ namespace AshenCoast
         {
             if(kind==ItemKind.CraftingTable)sr.sprite=upright?game.art.tableUpright:game.art.icons[32];
             else if(kind==ItemKind.Campfire)sr.sprite=game.art.campfireBase;
-            float width=kind==ItemKind.Campfire?.90f:kind==ItemKind.CraftingTable?(upright?.94f:1.92f):VesselWaterV43.Vessel(kind)?.93f:.91f;
+            float width=kind==ItemKind.Crossbow?2.3f:kind==ItemKind.Campfire?.90f:kind==ItemKind.CraftingTable?(upright?.94f:1.92f):VesselWaterV43.Vessel(kind)?.93f:.91f;
             sr.transform.localScale=Vector3.one*(width/sr.sprite.bounds.size.x);
-            sr.transform.rotation=Quaternion.identity;game.art.PixelStyle(sr);
+            sr.transform.rotation=Quaternion.identity;if(kind==ItemKind.Crossbow)sr.transform.position+=Vector3.up*sr.bounds.extents.y;game.art.PixelStyle(sr);
         }
         public bool Place(Vector2 at) => game.coop.inventory.Mutate(()=>PlaceV49(at));
         bool PlaceV49(Vector2 at)
@@ -146,6 +146,7 @@ namespace AshenCoast
             station.renderer.transform.SetParent(station.world,true);PoseStructure(station.renderer,kind,upright);
             var obstacle=new GameObject(station.inventory.name+" grid footprint");obstacle.transform.SetParent(station.world,true);obstacle.transform.position=station.Position;
             station.collider=obstacle.AddComponent<BoxCollider2D>();station.collider.size=(Vector2)station.size-Vector2.one*.06f;
+            if(kind==ItemKind.Crossbow){station.collider.size=new Vector2(.75f,.35f);station.collider.offset=new Vector2(-.58f,.16f);}
             if(kind==ItemKind.Anvil)station.collider.size=new Vector2(.80f,.64f);
             if(VesselWaterV43.Vessel(kind)){station.collider.size=new Vector2(.76f,.66f);station.fire=game.arcane.campfires.FirstOrDefault(f=>!f.exploded && f.Cell==cell && f.logs.transform.parent==station.world);if(station.fire!=null){station.collider.enabled=false;station.renderer.transform.position+=Vector3.up*.29f;station.renderer.sortingOrder=station.fire.logs.sortingOrder+7;}}
             CreateClearing(station.cell,station.size,station.world,false);
@@ -161,7 +162,7 @@ namespace AshenCoast
         public bool Interact(Vector2 point)
         {
             var station=At(point);if(station==null || Vector2.Distance(station.Position,game.body.position)>3.1f)return false;
-            game.ui.OpenStation(station);return true;
+            if(station.kind==ItemKind.Crossbow)return game.MountV58(station);game.ui.OpenStation(station);return true;
         }
         public void Cancel(){pending=null;source=null;if(ghost)Destroy(ghost.gameObject);ghost=null;ghostItem=null;}
         void OnGUI()

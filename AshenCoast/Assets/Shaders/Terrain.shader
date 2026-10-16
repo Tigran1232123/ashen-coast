@@ -12,6 +12,7 @@ Shader "AshenCoast/Terrain"
    #pragma fragment frag
    #include "UnityCG.cginc"
    #include "CoastLighting.cginc"
+   #include "WorldGeometryV58.cginc"
    float _Daylight, _ClearSky, _LandPhase;
    sampler2D _GroundTex;
    struct v2f { float4 pos:SV_POSITION; float2 world:TEXCOORD0; };
@@ -25,11 +26,7 @@ Shader "AshenCoast/Terrain"
     float2 p=floor(i.world*36)/36;
     float2 pixel=floor(i.world*36);
     float n=hash(pixel), patch=hash(floor(p*1.6)), grain=hash(floor(p*5));
-    float2 shapePoint=float2(p.x/410,(p.y-450)/450);
-    float shapeAngle=atan2(shapePoint.y,shapePoint.x);
-    float shapeRadius=1+.12*sin(shapeAngle*3+_LandPhase)+.055*sin(shapeAngle*5-_LandPhase*1.7)+.040*sin(shapeAngle*9+_LandPhase*.4)+.018*sin(shapeAngle*17+_LandPhase*1.3);
-    shapeRadius=max(shapeRadius,1.075*pow(max(0,-sin(shapeAngle)),6));
-    float shapeDistance=(shapeRadius-length(shapePoint))*350;float sandEdge=shore(p.x), distance=min(p.y-sandEdge,shapeDistance);
+    float shapeDistance=coastDistanceV58(p,_LandPhase);float distance=min(shapeDistance,riverBankV58(p));
     float3 sand=tile(p*.14,float2(0,.5))*.90;
     sand+=(patch-.5)*float3(.025,.023,.015)+(n-.5)*.013;
     float wet=saturate(1-distance/1.1);

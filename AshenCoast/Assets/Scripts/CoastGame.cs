@@ -39,7 +39,7 @@ namespace AshenCoast
         public const float WalkSpeed = 3.62f;
         public const float AttackWalkSpeed = 1.55f;
         public bool FastMovement {get;private set;}
-        public float BaseMovementSpeed=>(combat.Attacking?AttackWalkSpeed:WalkSpeed)*(FastMovement?5:1)*(cave?.SlowMultiplier??1);
+        public float BaseMovementSpeed=>(combat.Attacking || combat.BowDrawingV58?AttackWalkSpeed:WalkSpeed)*(FastMovement?5:1)*(cave?.SlowMultiplier??1);
         public float MovementSpeed=>BaseMovementSpeed*(survivor?.Skates!=null && survivor.WearingBootsV54?1+rollers.Bonus:1);
         public void ToggleFastMovement(){FastMovement=!FastMovement;ui.Notice(FastMovement?"Скорость: ×5":"Обычная скорость");}
         public void StartNight()
@@ -77,7 +77,7 @@ namespace AshenCoast
         public IEnumerable<ICombatTarget> AdditionalTargets
         {get{if(dragons!=null)foreach(var dragon in dragons.bosses)if(dragon.Active && dragon.Alive)yield return dragon;if(magic.InPocket)yield break;if(journey!=null){foreach(var resident in journey.TavernTargets)yield return resident;foreach(var traveller in journey.CaravanTargets)yield return traveller;}if(cave!=null && cave.Inside)foreach(var t in cave.Targets)yield return t;if(fort!=null && fort.Inside)foreach(var b in fort.bandits)if(b.Alive)yield return b;if(hunter!=null && hunter.Active && hunter.Alive)yield return hunter;if(amazons!=null){foreach(var actor in amazons.Targets)yield return actor;if(journey.IsCoast && amazons.plains!=null)foreach(var actor in amazons.plains.Targets)yield return actor;}}}
         public void HurtPlayer(float damage)
-        {if(CoopOnline && coop.RedirectPlayerHurt(damage))return;if(Dead || combat!=null && combat.ZenInvulnerable || spectrum!=null && spectrum.Riding || spellcraft!=null && spellcraft.Teleporting)return;float applied=Mathf.Min(survivor.health,damage);survivor.health=Mathf.Max(0,survivor.health-damage);if(survivor.health<20)meditation?.Stop();survivor.equipment[(int)GearSlot.Body]?.Wear(.18f);ShowDamage(applied,body.position+Vector2.up*1.5f,hero,true);if(Dead){body.linearVelocity=Vector2.zero;movement=Vector2.zero;ui.CloseContainers();combat.ResetForCheck();magic.CancelStroke();arcane.CancelHeldSkills();arcane.CancelPlacement();}}
+        {if(CoopOnline && coop.RedirectPlayerHurt(damage))return;if(survivor.InfiniteVitalsV58)return;if(Dead || combat!=null && combat.ZenInvulnerable || spectrum!=null && spectrum.Riding || spellcraft!=null && spellcraft.Teleporting)return;float applied=Mathf.Min(survivor.health,damage);survivor.health=Mathf.Max(0,survivor.health-damage);if(survivor.health<20)meditation?.Stop();survivor.equipment[(int)GearSlot.Body]?.Wear(.18f);ShowDamage(applied,body.position+Vector2.up*1.5f,hero,true);if(Dead){body.linearVelocity=Vector2.zero;movement=Vector2.zero;ui.CloseContainers();combat.ResetForCheck();magic.CancelStroke();arcane.CancelHeldSkills();arcane.CancelPlacement();}}
         public GroundLoot CreateFortLoot(Vector2 at)=>ScatterLoot(new Item(ItemKind.Coin){count=UnityEngine.Random.Range(1,4)},at,at);
         public GameObject coastRoot;
         public SpriteRenderer hero, ship, dummy, heroShadow;
@@ -99,7 +99,7 @@ namespace AshenCoast
         public float seconds, flash, dummyHealth = 500, dummyHitFlash;
         public bool paused, testMode, muted;
         public Spellcraft spellcraft;public SpectrumWeapon spectrum;public CoastArtV37 v37Art;public CoastArtV38 v38Art;
-        public bool MovementLocked=>Dead || (spellcraft!=null && spellcraft.Teleporting) || (spectrum!=null && spectrum.Riding) || magic.Teleporting || (journey!=null && journey.Cutscene);
+        public bool MovementLocked=>MountedCrossbowV58!=null || Dead || (spellcraft!=null && spellcraft.Teleporting) || (spectrum!=null && spectrum.Riding) || magic.Teleporting || (journey!=null && journey.Cutscene);
         public bool FeetLocked=>MovementLocked || (cave!=null && cave.Snared);
         public int facing;
         public float walkTime;
@@ -166,8 +166,8 @@ namespace AshenCoast
             buildings=gameObject.AddComponent<BuildingSystem>();buildings.Initialize(this);
             meditation=new Meditation(this);
             v37Art=new CoastArtV37(art);v38Art=new CoastArtV38(art);CoastArtV43.ApplyBooks(art);v44Art=new CoastArtV44(art);v44=gameObject.AddComponent<CombatStatusV44>();v44.Initialize(this);spellcraft=gameObject.AddComponent<Spellcraft>();spellcraft.Initialize(this);spectrum=gameObject.AddComponent<SpectrumWeapon>();spectrum.Initialize(this);amazons=gameObject.AddComponent<AmazonSettlementV46>();amazons.Initialize(this);
-            v51Art=new CharacterArtV51(art);snails=gameObject.AddComponent<SnailHomesV50>();snails.Initialize(this);coop=gameObject.AddComponent<CoopSessionV49>();coop.Initialize(this);corpses=gameObject.AddComponent<CorpseWorldV51>();corpses.Initialize(this);if(snails.SetupOpen){paused=true;Time.timeScale=0;}
-            if(Environment.GetCommandLineArgs().Contains("-motion-check"))gameObject.AddComponent<ChecksMotionV57>().game=this;else if(Environment.GetCommandLineArgs().Contains("-seed-check"))gameObject.AddComponent<ChecksWorldSeedV56>().game=this;else if(Environment.GetCommandLineArgs().Contains("-sync-check"))gameObject.AddComponent<ChecksSyncV55>().game=this;else if(Environment.GetCommandLineArgs().Contains("-v54-check"))gameObject.AddComponent<ChecksV54>().game=this;else if(Environment.GetCommandLineArgs().Contains("-polish-check"))gameObject.AddComponent<PolishChecksV53>().game=this;else if(Environment.GetCommandLineArgs().Contains("-frog-check"))gameObject.AddComponent<FrogChecksV52>().game=this;else if(Environment.GetCommandLineArgs().Contains("-v51-check"))gameObject.AddComponent<ChecksV51>().game=this;else if(Environment.GetCommandLineArgs().Contains("-snail-check"))gameObject.AddComponent<SnailChecksV50>().game=this;else if(Environment.GetCommandLineArgs().Contains("-lan-native-check"))gameObject.AddComponent<LanNativeChecksV49>().game=this;else if(testMode)gameObject.AddComponent<RuntimeChecks>().game=this;
+            LoadArtV58();v51Art=new CharacterArtV51(art);snails=gameObject.AddComponent<SnailHomesV50>();snails.Initialize(this);coop=gameObject.AddComponent<CoopSessionV49>();coop.Initialize(this);corpses=gameObject.AddComponent<CorpseWorldV51>();corpses.Initialize(this);InitializeV58();if(snails.SetupOpen){paused=true;Time.timeScale=0;}
+            if(Environment.GetCommandLineArgs().Contains("-v58-network-check"))gameObject.AddComponent<ChecksNetworkV58>().game=this;else if(Environment.GetCommandLineArgs().Contains("-v58-check"))gameObject.AddComponent<ChecksV58>().game=this;else if(Environment.GetCommandLineArgs().Contains("-motion-check"))gameObject.AddComponent<ChecksMotionV57>().game=this;else if(Environment.GetCommandLineArgs().Contains("-seed-check"))gameObject.AddComponent<ChecksWorldSeedV56>().game=this;else if(Environment.GetCommandLineArgs().Contains("-sync-check"))gameObject.AddComponent<ChecksSyncV55>().game=this;else if(Environment.GetCommandLineArgs().Contains("-v54-check"))gameObject.AddComponent<ChecksV54>().game=this;else if(Environment.GetCommandLineArgs().Contains("-polish-check"))gameObject.AddComponent<PolishChecksV53>().game=this;else if(Environment.GetCommandLineArgs().Contains("-frog-check"))gameObject.AddComponent<FrogChecksV52>().game=this;else if(Environment.GetCommandLineArgs().Contains("-v51-check"))gameObject.AddComponent<ChecksV51>().game=this;else if(Environment.GetCommandLineArgs().Contains("-snail-check"))gameObject.AddComponent<SnailChecksV50>().game=this;else if(Environment.GetCommandLineArgs().Contains("-lan-native-check"))gameObject.AddComponent<LanNativeChecksV49>().game=this;else if(testMode)gameObject.AddComponent<RuntimeChecks>().game=this;
         }
 
 
@@ -181,13 +181,16 @@ namespace AshenCoast
             if(!LocalInputLockedV49 && Input.GetKeyDown(KeyCode.M)){map.Toggle();return;}
             if(Input.GetKeyDown(KeyCode.Escape))
             {
+                if(ui.open || ui.Dragging){ui.CloseFromEscapeV58();return;}
+                if(MountedCrossbowV58!=null){DismountV58();return;}
                 if(coop!=null && coop.MenuOpen){coop.MenuOpen=false;return;}
                 if(map.Open){map.SetOpen(false);return;}
+                combat.CancelBowV58();
                 if(CoopOnline){coop.LocalPaused=!coop.LocalPaused;Time.timeScale=1;}else{paused=!paused;Time.timeScale=paused?0:1;}if(LocalMenuPausedV49){ui.CancelInteraction();magic.CancelStroke();}
             }
             if(Input.GetKeyDown(KeyCode.F10)) { muted=!muted; AudioListener.volume=muted?0:1; }
             if(paused) return;
-            if(!LocalInputLockedV49 && !Dead && !journey.Cutscene){if(Input.GetKeyDown(KeyCode.T))ToggleFastMovement();if(Input.GetKeyDown(KeyCode.U))ToggleDayV44();}
+            if(!LocalInputLockedV49 && !Dead && !journey.Cutscene){if(Input.GetKeyDown(KeyCode.T))ToggleCheatsV58();if(Input.GetKeyDown(KeyCode.U))ToggleDayV44();}
             if(!testMode){meadow.Refresh(body.position);map.RecordVisit();}
             float dt=Time.deltaTime;interactions.Tick();
             if(!LocalInputLockedV49 && Input.GetKeyDown(KeyCode.Q) && !testMode && !meditation.Toggle() && survivor.health<20)ui.Notice("Для медитации нужно хотя бы 20 здоровья");
@@ -211,11 +214,12 @@ namespace AshenCoast
             if(!blocked && !magic.InPocket && Input.GetKeyDown(KeyCode.F)) CollectNearest();
             if(!blocked && Input.GetMouseButtonDown(1))UseWorldRightClick(CursorWorld);
             if(arcane.Placing && !ui.IsPointerOver && Input.GetMouseButtonDown(0))arcane.PlacePendingFire(CursorWorld);
-            if(!blocked && (Input.GetMouseButtonDown(0) || survivor.equipment[0]?.kind==ItemKind.Zen && Input.GetMouseButton(0)))
+            combat.TickBowInputV58(blocked,CursorWorld);
+            if(!blocked && survivor.equipment[0]?.kind!=ItemKind.Bow && (Input.GetMouseButtonDown(0) || survivor.equipment[0]?.kind==ItemKind.Zen && Input.GetMouseButton(0)))
             {
                 combat.Begin(CursorWorld-((Vector2)hero.transform.position+new Vector2(0,.72f)));
             }
-            if(!blocked && Input.GetKeyDown(KeyCode.Space)) combat.Begin(CursorWorld-((Vector2)hero.transform.position+new Vector2(0,.72f)));
+            if(!blocked && survivor.equipment[0]?.kind!=ItemKind.Bow && Input.GetKeyDown(KeyCode.Space)) combat.Begin(CursorWorld-((Vector2)hero.transform.position+new Vector2(0,.72f)));
             UpdateEnvironment(dt);if(!testMode)TickFoodV43(DaySeconds);
             for(int i=numbers.Count-1;i>=0;i--) { numbers[i].age+=dt; if(numbers[i].age>1.25f) numbers.RemoveAt(i); }
             dummyHitFlash=Mathf.Max(0,dummyHitFlash-dt*5);
@@ -252,7 +256,9 @@ namespace AshenCoast
         {
             gait?.Pose(facing,walkTime,walking && !MovementLocked,movement,hero.flipX);
             meditation?.Pose();
+            PoseMountedV58();meditation?.PoseOperatorV58(MountedCrossbowV58!=null);combat.PoseBowV58();
             cameraRig.Tick();
+            TickSetupAudioV58();
         }
         public void ResetCamera(Vector3 position){cameraRig.Reset(position);lastWalkPosition=hero.transform.position;walkTime=0;}
         public void ShakeCamera(float power=.12f,float duration=.30f)=>cameraRig.Shake(power,duration);
@@ -264,7 +270,7 @@ namespace AshenCoast
             if(walking)
             {
                 walkTime+=Mathf.Min(distance,.15f)/1.65f;
-                if(!combat.Attacking)facing=Facing(body.linearVelocity);
+                if(!combat.Attacking && !combat.BowDrawingV58)facing=Facing(body.linearVelocity);
                 walkFrame=Mathf.FloorToInt(Mathf.Repeat(walkTime,1)*8);
             }
             else {walkTime=0;walkFrame=1;}
@@ -428,8 +434,8 @@ namespace AshenCoast
             var drop=loot.FirstOrDefault(l=>!l.collected && !l.InFlight && l.renderer.gameObject.activeInHierarchy && GroundPixelV45(l,point));
             return drop!=null && CollectLoot(drop);
         }
-        public void PlaySwish() { sounds.PlayOneShot(swish,.24f); }
-        public void PlayPickup() { sounds.PlayOneShot(pickup,.24f); }
+        public void PlaySwish() { if(snails!=null && snails.SetupOpen)return;sounds.PlayOneShot(swish,.24f); }
+        public void PlayPickup() { if(snails!=null && snails.SetupOpen)return;sounds.PlayOneShot(pickup,.24f); }
         public void Restart() { Time.timeScale=1; SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex); }
         void CreateAudio()
         {

@@ -57,7 +57,7 @@ namespace AshenCoast
             var r=Prop(h,name,furnitureV53[item],at,width,order);game.art.PixelStyle(r);
             // Furnishings keep their fine drawn detail instead of a second coarse sampling pass.
             var block=new MaterialPropertyBlock();r.GetPropertyBlock(block);block.SetFloat("_ArtStep",1);r.SetPropertyBlock(block);
-            if(solid){var box=r.gameObject.AddComponent<BoxCollider2D>();box.size=new Vector2(r.sprite.bounds.size.x*.82f,.55f/r.transform.localScale.y);box.offset=new Vector2(0,.26f/r.transform.localScale.y);}
+            if(solid){var box=r.gameObject.AddComponent<BoxCollider2D>();float depth=Mathf.Clamp(r.bounds.size.y*.46f,.4f,1.05f);box.size=new Vector2(r.sprite.bounds.size.x*.90f,depth/r.transform.localScale.y);box.offset=new Vector2(0,depth*.5f/r.transform.localScale.y);}
             furnitureObjectsV53[h.index].Add(r);return r;
         }
         public void FurnishV51(SnailHouseV50 h)
@@ -65,6 +65,7 @@ namespace AshenCoast
             LoadFurnitureV53();furnitureObjectsV53[h.index]=new List<SpriteRenderer>();
             var names=new[]{"ShellAmberV53","ShellIvoryV53","ShellTerraV53","ShellVioletV53"};
             var walls=Prop(h,"Fine carved shell interior "+h.index,RoomSpriteV53(names[h.index]),new Vector2(0,-4.15f),12,-3500);game.art.PixelStyle(walls);var block=new MaterialPropertyBlock();walls.GetPropertyBlock(block);block.SetFloat("_ArtStep",1);walls.SetPropertyBlock(block);
+            floorsV58[h.index]=new FloorPlanV58(walls,FloorPlanV58.Snails[h.index]);
             RoomPropV53(h,"Woven spiral rug",4,new Vector2(.65f,-2.9f),2.2f,false,-3400);
             RoomPropV53(h,"Writing desk against right wall",2,new Vector2(3.45f,-2.65f),1.55f);
             RoomPropV53(h,"Separate desk stool",3,new Vector2(2.4f,-2.85f),.55f);

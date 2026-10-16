@@ -35,6 +35,7 @@ namespace AshenCoast
             if(fortView)cameraFollow=FortCentre(cameraFollow,visible);
             float unit=2*game.cameraView.orthographicSize/game.pixelView.pixels.height;
             game.cameraView.transform.position=new Vector3(Mathf.Round(cameraFollow.x/unit)*unit,Mathf.Round(cameraFollow.y/unit)*unit,-20);
+            var rocking=game.SnailRockV58();game.cameraView.transform.position+=new Vector3(rocking.x,rocking.y,0);game.cameraView.transform.rotation=Quaternion.Euler(0,0,rocking.z);
             if(shakeLeft>0 && !game.paused)
             {
                 shakeLeft=Mathf.Max(0,shakeLeft-Time.deltaTime);float t=shakeDuration-shakeLeft,fade=shakeLeft/Mathf.Max(.001f,shakeDuration);

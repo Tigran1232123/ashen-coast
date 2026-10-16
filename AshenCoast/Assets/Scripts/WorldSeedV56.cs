@@ -6,7 +6,7 @@ namespace AshenCoast
 {
     public static class LanProtocolV49
     {
-        public const int Build=57;
+        public const int Build=58;
     }
 
     public static class SeededExteriorV56
@@ -112,7 +112,7 @@ namespace AshenCoast
             bool changed=game.meadow.AdoptSeedV56(welcome.seed);
             if(changed)
             {game.fort.AdoptSeedV56();game.cave.AdoptSeedV56();game.amazons.AdoptSeedV56();}
-            game.amazons.ApplyLayoutSeedV54(welcome.villageSeed);
+            game.amazons.ApplyLayoutSeedV54(welcome.villageSeed);game.ConfigureRiverWorldV58();
             Peer=welcome.peer;Online=true;Connecting=false;
             worldSeconds=welcome.seconds;receivedTime=Time.unscaledTime;
             networkBase=welcome.networkTime;networkReceived=Time.realtimeSinceStartup;

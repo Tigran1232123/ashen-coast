@@ -17,13 +17,13 @@ namespace AshenCoast
         public Vector2 Axis {get;private set;}
         public int Frame {get;private set;}
         public SpriteRenderer Lower=>lower;
-        public static PixelGait ForHumanoidV53(ArtBank bank,SpriteRenderer torso,float floor,Sprite source=null)
-        {var frames=new Sprite[4,4];for(int d=0;d<4;d++)for(int f=0;f<4;f++)frames[d,f]=source?source:torso.sprite;var gait=new PixelGait(bank,torso,frames,floor);gait.sideOnlyV53=true;return gait;}
+        public static PixelGait ForHumanoidV53(ArtBank bank,SpriteRenderer torso,float floor,Sprite source=null,Sprite[,] authored=null)
+        {var frames=new Sprite[4,4];for(int d=0;d<4;d++)for(int f=0;f<4;f++)frames[d,f]=source?source:torso.sprite;var gait=new PixelGait(bank,torso,frames,floor,authored);gait.sideOnlyV53=true;return gait;}
         public void PoseSideV53(float cycles,bool walking,Vector2 axis)
         {Pose(axis.x<0?3:1,cycles,walking,axis);}
         public float TorsoFloor=>(body.sprite.rect.height*cutoff-body.sprite.pivot.y)/body.sprite.pixelsPerUnit;
 
-        public PixelGait(ArtBank bank,SpriteRenderer torso,Sprite[,] frames,float floor)
+        public PixelGait(ArtBank bank,SpriteRenderer torso,Sprite[,] frames,float floor,Sprite[,] authored=null)
         {
             art=bank;body=torso;cutoff=floor;directions=frames.GetLength(0);
             var source=frames[0,3];
@@ -33,7 +33,7 @@ namespace AshenCoast
             clothTone=style==1?.78f:style==2?.65f:1;
             for(int view=0;view<4;view++)for(int frame=0;frame<9;frame++)
             {
-                var s=bank.lowerPoses[view,frame];var r=s.rect;
+                var s=authored!=null?authored[frame/5,frame%5]:bank.lowerPoses[view,frame];var r=s.rect;
                 poses[view,frame]=Sprite.Create(s.texture,r,new Vector2(s.pivot.x/r.width,1),r.height/(top-.014f),0,SpriteMeshType.FullRect);
             }
             var go=new GameObject("Authored paired leg poses");go.transform.SetParent(body.transform,false);
@@ -41,6 +41,7 @@ namespace AshenCoast
             lower.sprite=poses[0,0];lower.enabled=false;
             lower.transform.localPosition=new Vector3(0,top,0);
         }
+        public void ResetAnchorV58(){lower.transform.localPosition=new Vector2(0,top);}
         public void Pose(int facing,float cycles,bool walking,Vector2 forward,bool flip=false)
         {
             if(style==3){lower.enabled=false;body.GetPropertyBlock(block);block.SetFloat("_BodyFloor",0);body.SetPropertyBlock(block);return;}
@@ -48,7 +49,7 @@ namespace AshenCoast
             Phase=Mathf.Repeat(cycles,1);Walking=walking;
             if(forward.sqrMagnitude>.0001f)Axis=forward.normalized;
             int view;bool mirror;
-            if(sideOnlyV53){view=1;mirror=forward.x<0;}
+            if(sideOnlyV53){view=1;mirror=forward.x>=0;}
             else if(style==1){view=3;mirror=true;}
             else if(directions>=7)
             {

@@ -58,7 +58,7 @@ namespace AshenCoast
                 if(Vector2.Distance(Position,game.body.position)>1.2f && direction.magnitude>.025f)
                 {
                     var offset=Vector2.ClampMagnitude(direction,dt*.42f);
-                    renderer.transform.position+=(Vector3)offset;walkDistance+=offset.magnitude;
+                    if(!game.GroundAllowedV58(Position+offset,.3f))offset=Vector2.zero;renderer.transform.position+=(Vector3)offset;walkDistance+=offset.magnitude;
                     if(Mathf.Abs(offset.x)>.00001f)renderer.flipX=offset.x<0;
                 }
             }

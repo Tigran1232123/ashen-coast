@@ -20,7 +20,7 @@ namespace AshenCoast
             foreach(var a in amazons.people)if(a.Hired && a.Alive && !snails.Resting(a.Renderer) && !snails.Returning(a.Renderer) && (!CoopOnline || (coop.world.AllyOwner(a.Renderer)??coop.Peer)==owner))members.Add(a.Renderer);
             int index=Mathf.Max(0,members.IndexOf(actor)),row=index/2;var centre=trail.Behind(1.35f+row*.95f,out var heading);var side=new Vector2(-heading.y,heading.x)*((index%2==0?-1:1)*.49f);
             var goal=centre+side;
-            if(WorldBlocked(centre,goal,.23f))goal=centre;
+            if(!GroundAllowedV58(goal,.23f) || WorldBlocked(centre,goal,.23f))goal=centre;
             return goal;
         }
     }
@@ -63,6 +63,10 @@ namespace AshenCoast
             if(d.Weapon){lines.Add(d.damage+" урона");lines.Add("Дальность "+d.reach+" · "+(1/Mathf.Max(.01f,item.kind==ItemKind.Zen?Combat.ZenIntervalV44(game.survivor.hunger):d.cooldown)).ToString("0.0")+" атак/с");if(item.kind==ItemKind.Zen)lines.Add(game.survivor.hunger>0?"4 сытости за удар":"4 здоровья за удар");if(item.kind==ItemKind.Axe)lines.Add("+20% урона по бронированным целям");}
             else if(d.Book)lines.Add(item.opened?"Книга открыта":"Книга закрыта");
             else if(d.Food){lines.Add("Сытость +"+d.nourishment+(d.mana>0?" · Мана +"+d.mana:""));if(item.kind!=ItemKind.Brain)lines.Add("Свежесть: "+(item.freshness/360).ToString("0.0")+" дн.");}
+            if(item.kind==ItemKind.Bow){lines.Add("Стрелы · зажать ЛКМ на 2 с и отпустить");lines.Add("3 верёвки + 2 древесины → лук");}
+            if(item.kind==ItemKind.Crossbow){lines.Add("На землю · ПКМ: управление");lines.Add("Стрелы · ЛКМ: выстрел · Esc: встать");}
+            if(item.kind==ItemKind.Arrow){lines.Add("В стопке до 30 стрел");lines.Add("Перо + древесина → 5 стрел");}
+            if(item.kind==ItemKind.LeafTome)lines.Add("4 ячейки для свитков");
             if(d.Durable)lines.Add("Прочность: "+item.durability.ToString("0")+"%");
             if(item.kind==ItemKind.WaterBottle)lines.Add("Вода: "+(item.water*50).ToString("0")+"%");
             for(int i=0;i<Mathf.Min(4,lines.Count);i++)GUI.Label(new Rect(r.x+13,r.y+42+i*22,r.width-26,23),lines[i],small);

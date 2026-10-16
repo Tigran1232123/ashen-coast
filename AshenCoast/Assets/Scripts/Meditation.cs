@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace AshenCoast
 {
-    public sealed class Meditation
+    public sealed partial class Meditation
     {
         readonly CoastGame game;
         readonly SpriteRenderer torso,legs;
@@ -11,7 +11,7 @@ namespace AshenCoast
         public bool Active {get;private set;}
         public float Blend {get;private set;}
         public float DayOffset=>0;
-        public float DaySpeed=>Active?1+4*Mathf.SmoothStep(0,1,Mathf.Clamp01(elapsed/4)):1;
+        public float DaySpeed=>Active && (!game.CoopOnline || game.coop.AllMeditatingV58)?1+4*Mathf.SmoothStep(0,1,Mathf.Clamp01(elapsed/4)):1;
         public SpriteRenderer VisibleTorso=>Blend>.001f?torso:game.hero;
         public Meditation(CoastGame owner)
         {

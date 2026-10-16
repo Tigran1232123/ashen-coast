@@ -37,7 +37,7 @@ namespace AshenCoast
         public float PanelX=>CanvasWidth-PanelWidth;
         public float MainX=>PanelX+(PanelWidth-420)/2;
         public const float MainGridY=370;
-        public Rect ShipPanel=>new Rect(PanelX-474,95,460,405);
+        public Rect ShipPanel=>new Rect(PanelX-558,95,544,390);
         public Rect BagPanel=>new Rect(PanelX-264,shipOpen?514:95,250,286);
         public float WorldFraction=>!open?1:vendorOpen?1f/3:Mathf.Clamp((stationOpen!=null?StationPanel.x:shipOpen?ShipPanel.x:bagOpen?BagPanel.x:skatesOpen?SkatesPanel.x:PanelX)/CanvasWidth,.20f,1);
         public bool Dragging => dragItem!=null;
@@ -349,7 +349,7 @@ namespace AshenCoast
             {
                 var panel=ShipPanel;Window(panel,"Трюм");
                 if(Button(new Rect(panel.xMax-38,panel.y+10,26,26),"×")){shipOpen=false;Cancel();}
-                else {var g=new GridView {inventory=game.shipStorage,cell=42,rect=new Rect(panel.x+20,panel.y+50,420,336),accessible=game.ShipReachable};grids.Add(g);DrawGrid(g);}
+                else {var g=new GridView {inventory=game.shipStorage,cell=32,rect=new Rect(panel.x+16,panel.y+50,512,320),accessible=game.ShipReachable};grids.Add(g);DrawGrid(g);}
             }
             if(bagOpen)
             {
@@ -398,7 +398,7 @@ namespace AshenCoast
                 var d=item.Definition;var box=new Rect(r.x+item.x*c+2,r.y+item.y*c+2,d.width*c-4,d.height*c-4);
                 Fill(box,new Color(.19f,.18f,.12f,.80f));if(item.Definition.Divine)DrawSpectrumEdge(box);Border(box,new Color(.40f,.34f,.22f));
                 Color color=item==dragItem?new Color(1,1,1,.25f):grid==game.survivor.inventory && FirstLayerCovered(item)?new Color(1,1,1,.32f):Color.white;
-                var icon=ItemIconArea(item,box.center);
+                var icon=ItemIconArea(item,box.center);float iconScale=c/42;icon=new Rect(box.center.x-icon.width*iconScale*.5f,box.center.y-icon.height*iconScale*.5f,icon.width*iconScale,icon.height*iconScale);
                 if(OrbNeedsCloth(item,grid))DrawOrbCloth(icon);
                 DrawItemIcon(item,icon,color);
                 if(stationOpen!=null && grid==stationOpen.inventory)DrawFrying(item,box);

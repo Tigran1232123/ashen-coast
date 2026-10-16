@@ -47,10 +47,10 @@ namespace AshenCoast
                 if(item.contents!=null)foreach(var child in item.contents.items)Age(child);
                 if(item.spells!=null)foreach(var slot in item.spells)Age(slot.scroll);
             }
-            foreach(var grid in new[]{survivor.inventory,survivor.spatialInventory,shipStorage,ui.holding,journey.seller})foreach(var item in grid.items)Age(item);
-            if(amazons!=null)foreach(var actor in amazons.people)foreach(var item in actor.stock.items)Age(item);
+            foreach(var grid in new[]{survivor.inventory,survivor.spatialInventory,shipStorage,ui.holding})foreach(var item in grid.items)Age(item);
+            // NPC merchants preserve their stock until it changes ownership.
             foreach(var item in survivor.equipment)Age(item);
-            foreach(var station in buildings.stations)foreach(var item in station.inventory.items)Age(item);
+            foreach(var station in buildings.stations)if(!station.inventory.preserveFoodV58)foreach(var item in station.inventory.items)Age(item);
             foreach(var drop in loot)if(!drop.collected)Age(drop.item);
         }
         public Wildflower AddPlantV43(Vector2 at,int type,Transform parent,float scale=1,bool procedural=false,long id=0,float phase=0)

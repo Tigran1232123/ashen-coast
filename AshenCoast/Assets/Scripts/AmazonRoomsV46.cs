@@ -6,7 +6,7 @@ namespace AshenCoast
     {
         readonly Dictionary<AmazonHouseV46,GameObject> rooms=new Dictionary<AmazonHouseV46,GameObject>();
         public Rect RoomBounds=>new Rect(-7,-5.5f,14,11);
-        public Vector2 ClampRoom(Vector2 point){var q=new Vector2(point.x/6.1f,(point.y+.1f)/4.3f);if(q.magnitude>.98f)q=q.normalized*.98f;return new Vector2(q.x*6.1f,Mathf.Min(3.15f,q.y*4.3f-.1f));}
+        public Vector2 ClampRoom(Vector2 point)=>CurrentFloorV58?.Clamp(point,.22f)??point;
         void Floor(string name,Transform parent,Vector2 centre,Vector2 size,bool indoor)
         {
             var obj=GameObject.CreatePrimitive(PrimitiveType.Quad);Destroy(obj.GetComponent<Collider>());obj.name=name;obj.transform.SetParent(parent,true);obj.transform.position=new Vector3(centre.x,centre.y,4);obj.transform.localScale=new Vector3(size.x,size.y,1);

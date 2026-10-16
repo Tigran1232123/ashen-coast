@@ -30,7 +30,7 @@ namespace AshenCoast
         {
             var item=game.survivor.equipment[(int)GearSlot.Hand];
             if(game.MovementLocked || game.Meditating || item==null || !item.Usable || !item.Definition.Weapon || Attacking || game.journey.Cutscene || Time.time<readyAt) return false;
-            if(item.kind==ItemKind.Bow)return game.amazons.ShootPlayer(direction);
+            if(item.kind==ItemKind.Bow)return BeginBowV58(direction);
             if(item.kind==ItemKind.YoYo)return game.arcane.SetYoYoTarget((Vector2)game.hero.transform.position+new Vector2(0,.72f)+direction.normalized*5,true);
             if(item.kind==ItemKind.Lamp)return game.arcane.FireLampBurst(direction);
             if(item.kind==ItemKind.LastPrism)return game.prism.BeginChannel(direction);
@@ -157,6 +157,6 @@ namespace AshenCoast
             SetupWeapon(item);weapon.flipX=false;weapon.flipY=false;PoseIdle(item);
         }
         public void ResetForCheck()
-        { Attacking=false;dashRemainingV44=0;weapon.enabled=false;readyAt=0;hit=false;elapsed=0;previousPhase=0;tips.Clear();trail.positionCount=0;game.hero.transform.localScale=Vector3.one; }
+        { CancelBowV58();Attacking=false;dashRemainingV44=0;weapon.enabled=false;readyAt=0;hit=false;elapsed=0;previousPhase=0;tips.Clear();trail.positionCount=0;game.hero.transform.localScale=Vector3.one; }
     }
 }

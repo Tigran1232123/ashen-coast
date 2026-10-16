@@ -223,7 +223,7 @@ namespace AshenCoast
         {
             if(!game.SimulateWorldV49)return;
             foreach(var pair in lured.ToArray())
-            {if(!pair.Key || pair.Value<=clock || !pair.Key.enabled){lured.Remove(pair.Key);continue;}var from=(Vector2)pair.Key.transform.position;var goal=lurePoints.TryGetValue(pair.Key,out var point)?point:game.body.position;var delta=goal-from;if(delta.magnitude>2.5f && !game.spellcraft.ImmobilizedV44(pair.Key)){var next=from+delta.normalized*Mathf.Min(dt*2.1f,delta.magnitude-2.5f);if(!game.WorldBlocked(from,next,.2f))pair.Key.transform.position=next;}if(game.arcane.frogs.Any(f=>f.renderer==pair.Key))game.arcane.frogs.First(f=>f.renderer==pair.Key).LureV50(game.hero);}
+            {if(!pair.Key || pair.Value<=clock || !pair.Key.enabled){lured.Remove(pair.Key);continue;}var from=(Vector2)pair.Key.transform.position;var goal=lurePoints.TryGetValue(pair.Key,out var point)?point:game.body.position;var delta=goal-from;if(delta.magnitude>2.5f && !game.spellcraft.ImmobilizedV44(pair.Key)){var next=from+delta.normalized*Mathf.Min(dt*2.1f,delta.magnitude-2.5f);if(game.GroundAllowedV58(next,.2f) && !game.WorldBlocked(from,next,.2f))pair.Key.transform.position=next;}if(game.arcane.frogs.Any(f=>f.renderer==pair.Key))game.arcane.frogs.First(f=>f.renderer==pair.Key).LureV50(game.hero);}
         }
         public CaravanStateV50 Capture()
         {foreach(var t in troops.Values){var woman=Woman(t.key);var sprite=Sprite(t.key);if(sprite){t.x=sprite.transform.position.x;t.y=sprite.transform.position.y;}t.hp=t.key=="mage"?game.journey.companion.health:woman?.health??0;t.mana=t.key=="mage"?game.journey.companion.mana:0;}return new CaravanStateV50{camp=CaptureCampV51(),count=PlayerCount,peers=peers,snails=houses.Select(h=>new SnailStateV50{x=h.position.x,y=h.position.y,hp=h.health,hidden=h.hidden,damage=h.damage,window=h.window,moving=h.moving}).ToArray(),troops=troops.Values.ToArray(),stop=stopped,x=destination.x,y=destination.y,ordered=ordered};}
@@ -259,8 +259,7 @@ namespace AshenCoast
         public void Leave()
         {if(Inside<0)return;var h=houses[Inside];Inside=-1;game.journey.SetArea(WorldArea.Coast,h.Door+Vector2.down*1.4f);Visibility(false);doorWait=1;}
         public void Visibility(bool pocket){foreach(var h in houses)h.room.SetActive(!pocket && game.journey.Area==WorldArea.SnailHouse && Inside==h.index);}
-        public Vector2 Clamp(Vector2 point)
-        {var door=RoomDoorV51(Mathf.Clamp(Inside,0,3));if(Mathf.Abs(point.x-door.x)<.6f && point.y>-.8f)return new Vector2(Mathf.Clamp(point.x,door.x-.5f,door.x+.5f),Mathf.Clamp(point.y,-.85f,.15f));var centre=new Vector2(.6f,-1.95f);var p=point-centre;float x=p.x/3.65f,y=p.y/1.4f;float length=Mathf.Sqrt(x*x+y*y);if(length>1)p/=length;return centre+p;}
+        public Vector2 Clamp(Vector2 point)=>ClampFloorV58(point);
         public readonly List<SpriteRenderer> exit=new List<SpriteRenderer>();
         SpriteRenderer Prop(SnailHouseV50 h,string name,Sprite sprite,Vector2 at,float width,int depth=-999)
         {var r=game.art.Renderer(name,sprite,at,depth==-999?CoastGame.Depth(at.y):depth);r.transform.SetParent(h.room.transform,true);r.transform.localScale=Vector3.one*(width/sprite.bounds.size.x);return r;}

@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace AshenCoast
 {
-    public enum ItemKind { Brain, Soup, BeetleMeat, Rope, Sword, Dagger, Scythe, Spear, Sack, Helmet, Armor, Amulet, Ring, BlueFlower, WhiteFlower, PinkFlower, Orb, Tome, OpenTome, Boots, YoYo, Lamp, Wood, Campfire, Pyromancy, OpenPyromancy, AbyssTome, OpenAbyssTome, Coin, Pie, LastPrism, RawMeat, CraftingTable, IronIngot, Anvil, Clay, StoragePot, RoastMeat, RoastBeetle, MeatAssortment, RollerSkates, ShacklesScroll, CurseScroll, Spectrum, Cauldron, WaterBottle, Buttercup, Poppy, Bellflower, Clover, FourLeafClover, Rot, GoldenSpear, Zen, Axe, Stake, Bow, ReturnScroll }
+    public enum ItemKind { Brain, Soup, BeetleMeat, Rope, Sword, Dagger, Scythe, Spear, Sack, Helmet, Armor, Amulet, Ring, BlueFlower, WhiteFlower, PinkFlower, Orb, Tome, OpenTome, Boots, YoYo, Lamp, Wood, Campfire, Pyromancy, OpenPyromancy, AbyssTome, OpenAbyssTome, Coin, Pie, LastPrism, RawMeat, CraftingTable, IronIngot, Anvil, Clay, StoragePot, RoastMeat, RoastBeetle, MeatAssortment, RollerSkates, ShacklesScroll, CurseScroll, Spectrum, Cauldron, WaterBottle, Buttercup, Poppy, Bellflower, Clover, FourLeafClover, Rot, GoldenSpear, Zen, Axe, Stake, Bow, ReturnScroll, Arrow, Feather, Crossbow, LeafTome, OpenLeafTome }
     public enum GearSlot { Hand, Head, Body, Back, Amulet, RingLeft, RingRight, Feet }
 
     [Serializable]
@@ -23,7 +23,7 @@ namespace AshenCoast
         public bool Divine => kind==ItemKind.Spectrum || kind==ItemKind.Zen;
         public bool Melee => kind==ItemKind.Axe || kind==ItemKind.Stake || kind==ItemKind.Zen || kind==ItemKind.GoldenSpear || kind==ItemKind.Spectrum || kind==ItemKind.Sword || kind==ItemKind.Dagger || kind==ItemKind.Scythe || kind==ItemKind.Spear;
         public bool Durable=>Weapon || kind==ItemKind.Orb || kind==ItemKind.Helmet || kind==ItemKind.Armor || kind==ItemKind.Amulet || kind==ItemKind.Ring || kind==ItemKind.Boots;
-        public bool Book => kind==ItemKind.Tome || kind==ItemKind.OpenTome || kind==ItemKind.Pyromancy || kind==ItemKind.OpenPyromancy || kind==ItemKind.AbyssTome || kind==ItemKind.OpenAbyssTome;
+        public bool Book => kind==ItemKind.Tome || kind==ItemKind.OpenTome || kind==ItemKind.Pyromancy || kind==ItemKind.OpenPyromancy || kind==ItemKind.AbyssTome || kind==ItemKind.OpenAbyssTome || kind==ItemKind.LeafTome || kind==ItemKind.OpenLeafTome;
         public static readonly Dictionary<ItemKind, ItemDefinition> All = CreateDefinitions();
 
         static Dictionary<ItemKind, ItemDefinition> CreateDefinitions()
@@ -80,8 +80,13 @@ namespace AshenCoast
             AddWeapon(d,ItemKind.Zen,"Дзен",2,4,53,90,2,.46f/3,.58f/3,360);
             AddWeapon(d,ItemKind.Axe,"Топор",1,3,54,30,2,.45f,1,120);
             AddWeapon(d,ItemKind.Stake,"Боевой кол",1,4,55,24,3,.22f,.29f,0);
-            AddWeapon(d,ItemKind.Bow,"Лук",2,3,56,36,9,.72f,2f,0);
+            AddWeapon(d,ItemKind.Bow,"Лук",1,3,56,36,22,2f,2f,0);
             Add(d,ItemKind.ReturnScroll,"Свиток: Возвращение",1,2,57);
+            Add(d,ItemKind.Arrow,"Стрелы",1,3,58);
+            Add(d,ItemKind.Feather,"Перо чайки",1,1,59);
+            AddWeapon(d,ItemKind.Crossbow,"Стационарный арбалет",4,2,60,100,56,2,2,0);
+            Add(d,ItemKind.LeafTome,"Узелковая книга",2,1,61);
+            Add(d,ItemKind.OpenLeafTome,"Узелковая книга",2,3,62);
             return d;
         }
         static void Add(Dictionary<ItemKind, ItemDefinition> d, ItemKind k, string n, int w, int h, int icon, float food = 0, float duration = 0, int mana = 0)
@@ -107,13 +112,13 @@ namespace AshenCoast
         public void RefreshCookedFood(){freshness=shelfLife=360;}
         public bool Usable=>!Definition.Durable || durability>0;
         public void Wear(float amount){if(Definition.Durable)durability=Mathf.Max(0,durability-amount);}
-        public ItemDefinition Definition => ItemDefinition.All[opened?(kind==ItemKind.Tome?ItemKind.OpenTome:kind==ItemKind.Pyromancy?ItemKind.OpenPyromancy:kind==ItemKind.AbyssTome?ItemKind.OpenAbyssTome:kind):kind];
+        public ItemDefinition Definition => ItemDefinition.All[opened?(kind==ItemKind.Tome?ItemKind.OpenTome:kind==ItemKind.Pyromancy?ItemKind.OpenPyromancy:kind==ItemKind.AbyssTome?ItemKind.OpenAbyssTome:kind==ItemKind.LeafTome?ItemKind.OpenLeafTome:kind):kind];
         public Item(ItemKind kind) { this.kind=kind;spells=BookSpells.Create(kind);if(kind==ItemKind.RoastMeat || kind==ItemKind.RoastBeetle || kind==ItemKind.MeatAssortment)RefreshCookedFood();
             if(kind==ItemKind.Sack || VesselWaterV43.Vessel(kind)){int size=kind==ItemKind.Cauldron?4:5;contents=new GridInventory(size,size,kind==ItemKind.Sack?"Мешок":kind==ItemKind.Cauldron?"Котелок":"Горшок"){craftingEnabled=kind==ItemKind.Sack,containerKind=kind};} }
     }
 
     [Serializable]
-    public sealed class GridInventory
+    public sealed partial class GridInventory
     {
         public int columns, rows,waterRows;
         public string name;
@@ -121,11 +126,11 @@ namespace AshenCoast
         public int craftLimit=3;
         public bool craftingEnabled=true;
         public ItemKind? onlyKind,containerKind;
-        public bool allowOpenBooks,preserveOpenBooks;
+        public bool allowOpenBooks,preserveOpenBooks,preserveFoodV58;
         public Vector2Int? abyssCell;
         [NonSerialized] public Func<bool> insertionAllowed;
         public ItemDefinition PlacementDefinition(Item item)=>item.Definition.Book && !allowOpenBooks && !preserveOpenBooks?ItemDefinition.All[item.kind]:item.Definition;
-        public int StackLimit(Item item,int x,int y)=>abyssCell.HasValue && abyssCell.Value==new Vector2Int(x,y) && item.Definition.width==1 && item.Definition.height==1 && !item.Definition.Durable?25:item.kind==ItemKind.Coin?10:1;
+        public int StackLimit(Item item,int x,int y)=>item.kind==ItemKind.Arrow?30:abyssCell.HasValue && abyssCell.Value==new Vector2Int(x,y) && item.Definition.width==1 && item.Definition.height==1 && !item.Definition.Durable?25:item.kind==ItemKind.Coin?10:1;
         public GridInventory(int columns, int rows, string name) { this.columns = columns; this.rows = rows; this.name = name; }
         public Item At(int x, int y) => items.FirstOrDefault(i => x >= i.x && y >= i.y && x < i.x + i.Definition.width && y < i.y + i.Definition.height);
         public System.Func<Item,bool> acceptsItem;
@@ -155,6 +160,7 @@ namespace AshenCoast
         {
             if(insertionAllowed!=null && !insertionAllowed())return false;
             if(abyssCell.HasValue && StackLimit(item,abyssCell.Value.x,abyssCell.Value.y)==25){var old=At(abyssCell.Value.x,abyssCell.Value.y);if(old!=null && old.kind==item.kind && old.count+item.count<=25){old.count+=item.count;if(item.Definition.Food)old.freshness=Mathf.Min(old.freshness,item.freshness);return true;}if(old==null && item.count<=25)return Place(item,abyssCell.Value.x,abyssCell.Value.y);}
+            if(item.kind==ItemKind.Arrow)return AddArrowsV58(item);
             if(item.kind==ItemKind.Coin)
             {
                 if(items.Contains(item))return true;if(item.count<=0)return false;
@@ -203,7 +209,7 @@ namespace AshenCoast
             if(!TryRecipe(cells,out var output))return false;
             var selected = items.Where(i => cells.Overlaps(new RectInt(i.x, i.y, i.Definition.width, i.Definition.height))).ToList();
             // Selection identifies whole resources even when only their occupied first row is outlined.
-            var rope = new Item(output);
+            var rope = new Item(output){count=output==ItemKind.Arrow?5:1};
             // Check output space before consuming ingredients. This makes crafting atomic.
             GridInventory target=this;
             if(!FindSpace(rope,out var position,selected)){if(fallback==null || fallback==this || !fallback.FindSpace(rope,out position))return false;target=fallback;}
@@ -212,8 +218,11 @@ namespace AshenCoast
         }
         public bool TryRecipe(RectInt cells,out ItemKind output)
         {
-            output=(ItemKind)(-1);if(!craftingEnabled || cells.width<1 || cells.height<1 || cells.width>craftLimit || cells.height>craftLimit)return false;
+            output=(ItemKind)(-1);if(!craftingEnabled || cells.width<1 || cells.height<1)return false;
             var selected=items.Where(i=>cells.Overlaps(new RectInt(i.x,i.y,i.Definition.width,i.Definition.height))).ToList();
+            if(containerKind!=ItemKind.Anvil && selected.Count==5 && selected.Count(i=>i.kind==ItemKind.Rope)==3 && selected.Count(i=>i.kind==ItemKind.Wood)==2){output=ItemKind.Bow;return true;}
+            if(containerKind!=ItemKind.Anvil && selected.Count==2 && selected.Any(i=>i.kind==ItemKind.Feather) && selected.Any(i=>i.kind==ItemKind.Wood)){output=ItemKind.Arrow;return true;}
+            if(cells.width>craftLimit || cells.height>craftLimit)return false;
             if(containerKind==ItemKind.Anvil){output=MatchesCauldron(selected)?ItemKind.Cauldron:(ItemKind)(-1);return (int)output>=0;}
             output=selected.Count==2 && selected.All(i=>i.Definition.Flower)?ItemKind.Rope:selected.Count==2 && selected.All(i=>i.kind==ItemKind.Wood)?ItemKind.Campfire:selected.Count==3 && selected.All(i=>i.kind==ItemKind.Wood)?ItemKind.CraftingTable:MatchesAnvil(selected,cells)?ItemKind.Anvil:MatchesPot(selected)?ItemKind.StoragePot:(ItemKind)(-1);
             return (int)output>=0;
@@ -270,7 +279,7 @@ namespace AshenCoast
             {int take=Mathf.Min(price,coin.count);coin.count-=take;price-=take;if(coin.count==0)grid.items.Remove(coin);if(price==0)return true;}
             return false;
         }
-        public bool SpendMana(float amount){if(amount<0 || mana+.0001f<amount)return false;mana=Mathf.Max(0,mana-amount);return true;}
+        public bool SpendMana(float amount){if(InfiniteVitalsV58 && amount>=0){mana=MaxMana;return true;}if(amount<0 || mana+.0001f<amount)return false;mana=Mathf.Max(0,mana-amount);return true;}
         public void WearBook(ItemKind kind,float amount)
         {var book=OpenBook(kind);book?.Wear(amount);}
         public bool Refuel(Item wood,GridInventory source,Item lamp)
@@ -299,17 +308,19 @@ namespace AshenCoast
         }
         public void Tick(float delta)
         {
+            if(InfiniteVitalsV58){health=MaxHealth;mana=MaxMana;}
             foreach (var food in foods) food.remaining -= delta;
             foods.RemoveAll(f => f.remaining <= 0);
             hunger = Mathf.Clamp(hunger - delta * .035f, 0, HungerMax);
             if (health>0 && foods.Count >= 3) health = Mathf.Min(MaxHealth, health + delta * .6f);
             if (foods.Count >= 5) immunity = Mathf.Min(100, immunity + delta * .18f);
             if (hunger <= 0) health = Mathf.Max(0, health - delta * .1f);
-            // Mana deliberately has no regeneration path.
+            if(InfiniteVitalsV58){health=MaxHealth;mana=MaxMana;}
+            // Mana deliberately has no regeneration path outside the T cheat.
         }
         public static bool Fits(Item item, GearSlot slot)
         {
-            if (slot == GearSlot.Hand) return item.Definition.Weapon || item.kind == ItemKind.Orb;
+            if (slot == GearSlot.Hand) return item.kind!=ItemKind.Crossbow && item.Definition.Weapon || item.kind == ItemKind.Orb;
             if (slot == GearSlot.Head) return item.kind == ItemKind.Helmet;
             if (slot == GearSlot.Body) return item.kind == ItemKind.Armor;
             if (slot == GearSlot.Back) return item.kind == ItemKind.Sack;
@@ -360,7 +371,7 @@ namespace AshenCoast
         public static float Rain(float seconds) => 1 - Mathf.SmoothStep(0, 1, (seconds - 18) / 2);
         public static GridInventory CreateShipStorage()
         {
-            var ship = new GridInventory(10, 8, "Трюм");
+            var ship = new GridInventory(16, 10, "Трюм");
             for (int i = 0; i < 3; i++) ship.Add(new Item(ItemKind.Brain));
             ship.Add(new Item(ItemKind.Soup));
             for (int i = 0; i < 3; i++) ship.Add(new Item(ItemKind.BeetleMeat));
@@ -374,6 +385,8 @@ namespace AshenCoast
             for(int i=0;i<2;i++)if(!ship.Add(new Item(ItemKind.Wood)))throw new InvalidOperationException("Extra wood does not fit in hold");
             for(int i=0;i<5;i++)if(!ship.Add(new Item(ItemKind.IronIngot)))throw new InvalidOperationException("Iron ingots do not fit in the hold");
             for(int i=0;i<14;i++)if(!ship.Add(new Item(ItemKind.Clay)))throw new InvalidOperationException("Clay does not fit in the hold");
+            ship.Add(new Item(ItemKind.Crossbow));ship.Add(new Item(ItemKind.LeafTome));
+            ship.Add(new Item(ItemKind.Bow));ship.Add(new Item(ItemKind.Arrow){count=30});
             return ship;
         }
     }

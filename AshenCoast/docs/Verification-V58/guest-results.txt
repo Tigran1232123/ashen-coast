@@ -1,0 +1,17 @@
+PASS host ready
+PASS V58 welcome and inventory synchronized
+PASS guest adopts same river geometry from different seed
+PASS shared hold and thirty arrows survive synchronization
+PASS bow charge and articulated arms synchronize
+PASS host meditation state synchronized
+PASS awake guest remains at normal speed
+PASS host confirms both meditate
+PASS guest accelerates only with all players
+PASS host standing state arrives
+PASS host standing stops guest acceleration
+PASS placed crossbow synchronized
+PASS guest mounts placed stationary weapon
+PASS guest fires using own arrow stack
+PASS authority acknowledges damage
+PASS no synchronization failure during new mechanics
+RESULT 16 passed; 0 failed

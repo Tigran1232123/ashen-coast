@@ -6,7 +6,7 @@ namespace AshenCoast
     public sealed class VillageArrowV46
     {
         public LineRenderer line;public SpriteRenderer shadow,source;public Vector2 point,ground,velocity;
-        public bool player,practice,stuck;public VillageActorV46 practiceTargetV53;public float age,height,verticalSpeed;
+        public bool player,practice,stuck,straightV58;public float damageV58=36,rangeV58,traveledV58;public readonly HashSet<SpriteRenderer> touchedV58=new HashSet<SpriteRenderer>();public VillageActorV46 practiceTargetV53;public float age,height,verticalSpeed;
     }
     public sealed partial class AmazonSettlementV46
     {
@@ -14,7 +14,7 @@ namespace AshenCoast
         public bool ShootPlayer(Vector2 direction)
         {
             if(Time.time<game.combat.readyAt)return false;var bow=game.survivor.equipment[0];if(bow?.kind!=ItemKind.Bow || !bow.Usable)return false;
-            bow.Wear(.3f);game.combat.readyAt=Time.time+bow.Definition.cooldown;
+            if(!game.survivor.ConsumeArrowV58()){game.ui.Notice("Нужны стрелы");return false;}bow.Wear(.3f);game.combat.readyAt=Time.time;
             SpawnArrow(game.body.position,direction,game.hero,true,Mathf.Clamp(direction.magnitude,2.5f,11.5f));game.PlaySwish();return true;
         }
         public void Shoot(VillageActorV46 actor,Vector2 direction)=>SpawnArrow(actor.Position,direction,actor.Renderer,actor.Hired,actor.TargetDistanceV54);
@@ -48,13 +48,13 @@ namespace AshenCoast
                 int pieces=Mathf.Max(1,Mathf.CeilToInt(dt/.025f));float step=dt/pieces;
                 for(int sub=0;sub<pieces && !a.stuck;sub++)
                 {
-                    var old=a.point;var nextGround=a.ground+a.velocity*step;a.verticalSpeed-=9.8f*step;float nextHeight=a.height+a.verticalSpeed*step;var next=nextGround+Vector2.up*Mathf.Max(0,nextHeight);
+                    var old=a.point;var groundStep=a.straightV58?Vector2.ClampMagnitude(a.velocity*step,Mathf.Max(0,a.rangeV58-a.traveledV58)):a.velocity*step;var nextGround=a.ground+groundStep;if(!a.straightV58)a.verticalSpeed-=9.8f*step;float nextHeight=a.straightV58?a.height:a.height+a.verticalSpeed*step;var next=nextGround+Vector2.up*Mathf.Max(0,nextHeight);
                     bool wall=game.WorldBlocked(a.ground,nextGround,.025f),hit=false;
                     if(!wall && a.practice && a.practiceTargetV53!=null)
                     {var centre=(Vector2)a.practiceTargetV53.Renderer.bounds.center;if(FortWorld.SegmentDistance(centre,old,next)<.46f){TrainingImpactV48(centre);hit=true;}}
                     if(!wall && !hit && !a.practice)foreach(var target in creatures)
                     {
-                        if(!target.Alive || target.Renderer==a.source || target is PracticeTargetV46)continue;
+                        if(!target.Alive || a.touchedV58.Contains(target.Renderer) || target.Renderer==a.source || target is PracticeTargetV46)continue;
                         bool hunter=people.Any(p=>p.Renderer==a.source && !p.Hostile && !p.Hired);
                         bool bandit=plains.bandits.Any(p=>p.Renderer==a.source) || game.fort.bandits.Any(p=>p.Renderer==a.source);
                         if(hunter && !(target is PlainBanditV48 || target is WoodlouseActor || Enemy(target) && !(target is VillageActorV46)))continue;
@@ -62,9 +62,10 @@ namespace AshenCoast
                         if(!hunter && !a.player && !(target is HeroCombatActor || target is RemotePlayerV49 || target is MageCombatActor || target is SnailHouseV50 || target is VillageActorV46 friendly && (friendly.Hired || bandit)))continue;
                         var centre=target is SnailHouseV50?target.Position+Vector2.up*.9f:(Vector2)target.Renderer.bounds.center;
                         float radius=target is SnailHouseV50?1.5f:Mathf.Clamp(Mathf.Min(target.Renderer.bounds.size.x,target.Renderer.bounds.size.y)*.44f,.20f,.7f);
-                        if(FortWorld.SegmentDistance(centre,old,next)>radius)continue;
-                        game.HurtTarget(target,36,a.source);hit=true;break;
+                        if(a.straightV58){centre=target.Position;if(FortWorld.SegmentDistance(centre,a.ground,nextGround)>radius)continue;}else if(FortWorld.SegmentDistance(centre,old,next)>radius)continue;
+                        game.HurtTarget(target,a.damageV58,a.source);a.touchedV58.Add(target.Renderer);if(!a.straightV58){hit=true;break;}
                     }
+                    if(a.straightV58){a.traveledV58+=groundStep.magnitude;if(a.traveledV58>=a.rangeV58){a.stuck=true;a.age=18;}}
                     if(wall || hit){a.stuck=true;a.age=15.5f;a.point=wall?old:next;a.ground=wall?a.ground:nextGround;a.height=Mathf.Max(0,nextHeight);}
                     else {a.ground=nextGround;a.height=Mathf.Max(0,nextHeight);a.point=next;if(nextHeight<=0){a.stuck=true;a.verticalSpeed=0;a.point=a.ground+Vector2.up*.035f;}}
                     PoseArrowV54(a);

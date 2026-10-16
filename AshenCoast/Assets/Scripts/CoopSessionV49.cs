@@ -63,7 +63,7 @@ namespace AshenCoast
                 catch(Exception e){RecordSyncErrorV55(packet,e);if(IsHost)transport?.Drop(incoming.peer);else{Disconnect(false);Status=e.Message=="Protocol mismatch"?"Разные версии игры":"Не удалось синхронизировать игру";MenuOpen=true;}}
             }
             if(!Online)return;
-            if(!IsHost)game.seconds=worldSeconds+Time.unscaledTime-receivedTime-(game.meditation?.DayOffset??0);
+            if(!IsHost)game.seconds=worldSeconds+(Time.unscaledTime-receivedTime)*worldSpeedV58-(game.meditation?.DayOffset??0);
             inventory.TickPrivateV49();world.UpdateAlliesV49();fx?.Tick();
             foreach(var proxy in remote.Values)proxy.Tick(Time.unscaledDeltaTime);
             if(!CanSimulate)world.TickReplicas(Time.unscaledDeltaTime);
@@ -76,7 +76,7 @@ namespace AshenCoast
             {nextWorld=Time.unscaledTime+.5f;FullFramesV57++;Send(new LanPacketV49{kind="world",region=Region,body=JsonUtility.ToJson(world.Capture(Region))});}
             if(CanSimulate && Time.unscaledTime>=nextMotionV57){nextMotionV57=Time.unscaledTime+.1f;MotionFramesV57++;Send(new LanPacketV49{kind="motion",region=Region,body=JsonUtility.ToJson(world.CaptureMotionV57(Region))});}
             if(CanSimulate && Time.unscaledTime>=nextAuthorityV57){nextAuthorityV57=Time.unscaledTime+.5f;inventory.TickAuthority();}
-            if(IsHost && Time.unscaledTime>=nextTime){nextTime=Time.unscaledTime+1;Send(new LanPacketV49{kind="time",body=JsonUtility.ToJson(new LanClockV49{seconds=game.DaySeconds,networkTime=Time.realtimeSinceStartup})});foreach(var p in lastSeen.ToArray())if(Time.unscaledTime-p.Value>10)transport.Drop(p.Key);}
+            if(IsHost && Time.unscaledTime>=nextTime){nextTime=Time.unscaledTime+1;Send(new LanPacketV49{kind="time",body=JsonUtility.ToJson(new LanClockV49{seconds=game.DaySeconds,networkTime=Time.realtimeSinceStartup,speed=Time.timeScale})});foreach(var p in lastSeen.ToArray())if(Time.unscaledTime-p.Value>10)transport.Drop(p.Key);}
         }
         string CleanName(string name)=>string.IsNullOrWhiteSpace(name)?"Игрок":new string(name.Trim().Where(c=>!char.IsControl(c)).Take(20).ToArray());
         public void Send(LanPacketV49 packet)
@@ -128,7 +128,7 @@ namespace AshenCoast
                 case "roster":var roster=JsonUtility.FromJson<LanRosterV49>(packet.body);var previous=new Dictionary<string,int>(owners);owners.Clear();foreach(var o in roster.owners)owners[o.region]=o.peer;foreach(var p in roster.players){players[p.peer]=p;if(p.peer!=Peer)UpdateProxy(p);}foreach(var p in remote.Keys.ToArray())if(!roster.players.Any(s=>s.peer==p)){remote[p].Dispose();fx?.RemovePeer(p);remote.Remove(p);players.Remove(p);}if(Online && owners.TryGetValue(Region,out var own) && own==Peer && (!previous.TryGetValue(Region,out var old) || old!=Peer) && snapshots.TryGetValue(Region,out var latest))ApplyWorld(Region,latest,true);break;
                 case "motion":ReceiveMotionV57(packet);break;
                 case "world":motionSnapshotsV57.Remove(packet.region);snapshots[packet.region]=packet.body;if(Online && (packet.region==Region || IsHost) && packet.peer!=Peer)ApplyWorld(packet.region,packet.body,false);break;
-                case "time":var clock=JsonUtility.FromJson<LanClockV49>(packet.body);worldSeconds=clock.seconds;receivedTime=Time.unscaledTime;networkBase=clock.networkTime;networkReceived=Time.realtimeSinceStartup;break;
+                case "time":var clock=JsonUtility.FromJson<LanClockV49>(packet.body);worldSpeedV58=Mathf.Clamp(clock.speed,1,5);worldSeconds=clock.seconds;receivedTime=Time.unscaledTime;networkBase=clock.networkTime;networkReceived=Time.realtimeSinceStartup;break;
                 case "corpses":game.corpses.Receive(packet.body);break;
                 case "corpseDrop":if(packet.region==Region && CanSimulate)game.corpses.DropBodyLootV53(JsonUtility.FromJson<CorpseDataV51>(packet.body));break;
                 case "raisePlayer":game.corpses.RaiseLocalPlayer(JsonUtility.FromJson<CorpseDataV51>(packet.body));break;

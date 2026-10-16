@@ -26,11 +26,11 @@ namespace AshenCoast
     public sealed partial class AmazonSettlementV46
     {
         public int LayoutSeedV54 {get;private set;}=Guid.NewGuid().GetHashCode();
-        public Sprite[,] combatV54,captivesV54,leanV54;
+        public Sprite[,] combatV54,captivesV54,leanV54,amazonLowerV58;
         GameObject pavingV54;readonly List<Vector2> roadNodesV54=new List<Vector2>();
         public IReadOnlyList<Vector2> RoadNodesV54=>roadNodesV54;
         void LoadArtV54()
-        {combatV54=AtlasV54.Actors(game.art,"AmazonCombatFramesV54",4,8,1.72f);captivesV54=AtlasV54.Actors(game.art,"CaptivesV54",4,8,1.65f);leanV54=AtlasV54.Actors(game.art,"SlaverLeanV54",1,6,1.72f);}
+        {amazonLowerV58=AtlasV54.Actors(game.art,"AmazonLowerV58",2,5,.8f);combatV54=AtlasV54.Actors(game.art,"AmazonCombatFramesV54",4,8,1.72f);captivesV54=AtlasV54.Actors(game.art,"CaptivesV54",4,8,1.65f);leanV54=AtlasV54.Actors(game.art,"SlaverLeanV54",1,6,1.72f);}
         public Vector2[] LayoutPointsV54(int seed)
         {
             var rng=new System.Random(seed);var positions=new List<Vector2>();
@@ -106,16 +106,16 @@ namespace AshenCoast
                 var t=game.art.Load("AmazonHome"+index+"V54");var sprite=game.art.Slice(t,new RectInt(0,0,t.width,t.height),new Vector2(.5f,.5f),100);
                 var r=Prop("Hand-furnished "+HouseRoleV54(index),sprite,new Vector2(0,.65f),15.1f,group.transform,-3500);var block=new MaterialPropertyBlock();r.GetPropertyBlock(block);block.SetFloat("_ArtStep",1);r.SetPropertyBlock(block);
                 // Furniture has floor footprints; the central passage and front threshold stay clear.
-                RoomObstacleV54(group.transform,new Vector2(-4.5f,.4f),new Vector2(2.5f,2.7f));RoomObstacleV54(group.transform,new Vector2(4.4f,.7f),new Vector2(2.8f,2.7f));
-                RoomObstacleV54(group.transform,new Vector2(0,3.15f),new Vector2(10.8f,1.0f));
+                floorsV58[house]=new FloorPlanV58(r,FloorPlanV58.Village);FurnitureFromArtV58(group.transform,r,index);
                 var pot=game.buildings.CreateStation(ItemKind.StoragePot,new Vector2Int(2,-3),false,null,group.transform);pot.inventory.Add(new Item(ItemKind.RawMeat));pot.inventory.Add(new Item(ItemKind.BeetleMeat));pot.inventory.Add(new Item(ItemKind.Wood));house.furnishings.Add(pot);
                 if(house.chief){var supply=game.buildings.CreateStation(ItemKind.StoragePot,new Vector2Int(-3,-3),false,null,group.transform);supply.inventory.Add(new Item(ItemKind.Axe));supply.inventory.Add(new Item(ItemKind.Stake));house.furnishings.Add(supply);var flame=Prop("Chieftain hearth animated flame",game.art.flame[0],new Vector2(-2.1f,.03f),.67f,group.transform);roomFlames.Add(flame);}
+                foreach(var storage in house.furnishings){storage.inventory.preserveFoodV58=true;}
                 foreach(var storage in house.furnishings)storage.renderer.transform.position+=Vector3.up*storage.renderer.bounds.extents.y;
             }
         }
         void RoomObstacleV54(Transform parent,Vector2 at,Vector2 size)
         {var o=new GameObject("Solid furniture footprint");o.transform.SetParent(parent,false);o.transform.localPosition=at;o.AddComponent<BoxCollider2D>().size=size;}
         public static string HouseRoleV54(int i)=>new[]{"Дом вождя","Дом охотницы","Дом следопытки","Дом ткачихи","Дом травницы","Дом лучницы","Дом воительницы","Дом торговки","Общая кухня","Дом хранительницы венков"}[i];
-        public bool RoomWalkableV54(Vector2 p)=>Mathf.Pow(p.x/6.25f,2)+Mathf.Pow((p.y+.1f)/4.45f,2)<1 && p.y<3.25f;
+        public bool RoomWalkableV54(Vector2 p)=>CurrentFloorV58!=null && CurrentFloorV58.Contains(p,.20f);
     }
 }

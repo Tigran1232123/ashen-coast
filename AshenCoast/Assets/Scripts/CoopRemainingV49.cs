@@ -23,7 +23,7 @@ namespace AshenCoast
             if(IsHost)SendToV49(peer,p);else Send(p);
         }
     }
-    [Serializable] public sealed class LanClockV49 {public float seconds,networkTime;}
+    [Serializable] public sealed class LanClockV49 {public float seconds,networkTime,speed=1;}
     [Serializable] public sealed class LanWebV49 {public float x,y,radius,age;}
     [Serializable] public sealed class LanFogV49 {public float x,y,remaining;}
     public sealed partial class CoopWorldV49

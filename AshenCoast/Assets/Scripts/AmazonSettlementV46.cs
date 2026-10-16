@@ -49,7 +49,7 @@ namespace AshenCoast
             var r=game.art.Renderer(name,sprite,at,order??CoastGame.Depth(at.y));r.transform.localScale=Vector3.one*(width/sprite.bounds.size.x);r.transform.SetParent(parent,true);game.art.PixelStyle(r);return r;
         }
         BoxCollider2D Barrier(string name,Vector2 at,Vector2 size)
-        {var o=new GameObject(name);o.transform.SetParent(root.transform,true);o.transform.position=at;var collider=o.AddComponent<BoxCollider2D>();collider.size=size;barriers.Add(new Rect(at-size*.5f,size));return collider;}
+        {var o=new GameObject(name);o.transform.SetParent(root.transform,true);o.transform.position=at;var collider=o.AddComponent<BoxCollider2D>();collider.size=size;barriers.Add(new Rect(at-size*.5f,size));if(name.Contains("hearth") || name.Contains("pedestal") || name.Contains("foundation"))RoundBarrierV58(collider,barriers.Count-1);return collider;}
         void CreateVillage()
         {
             Floor("Worn training ground",root.transform,Centre,new Vector2(21,18),false);
@@ -72,7 +72,7 @@ namespace AshenCoast
             {
                 var p=layout[i];
                 var h=new AmazonHouseV46{entrance=p,chief=i==0};h.sprite=Prop(i==0?"Дом вождя":"Дом амазонок",art.props[i==0?1:0],p,i==0?10:6,root.transform);houses.Add(h);
-                h.barrierIndexV54=barriers.Count;h.foundationV54=Barrier("Straw house foundation",p+Vector2.up*1.5f,new Vector2(i==0?8.2f:4.7f,2.0f));
+                h.barrierIndexV54=barriers.Count;h.foundationV54=Barrier("Straw house foundation",p+Vector2.up*1.5f,new Vector2(i==0?9.1f:5.45f,2.5f));
                 if(i%2==1)h.fireV54=CreateFire(p+new Vector2(3.7f,-2.2f),2.4f,i*.7f);
             }
             var weapons=new[]{ItemKind.Stake,ItemKind.Bow,ItemKind.Stake,ItemKind.Axe,ItemKind.Dagger,ItemKind.Bow};
@@ -118,7 +118,7 @@ namespace AshenCoast
         {
             if(Interior)return !RoomWalkableV54(to) || Physics2D.CircleCastAll(from+Vector2.up*.13f,radius,to-from,Vector2.Distance(from,to)).Any(h=>h.collider && !h.collider.isTrigger && h.collider.gameObject!=game.hero.gameObject);
             if(!game.journey.IsCoast || game.magic.InPocket || Vector2.Distance(to,Centre)>55)return false;
-            foreach(var b in barriers){var expanded=new Rect(b.xMin-radius,b.yMin-radius,b.width+radius*2,b.height+radius*2);if(expanded.Contains(to) && !expanded.Contains(from))return true;}
+            for(int i=0;i<barriers.Count;i++)if(BarrierContainsV58(i,to,radius) && !BarrierContainsV58(i,from,radius))return true;
             foreach(var t in trees)if(t.Standing && Vector2.Distance(to,t.position)<radius+.23f && Vector2.Distance(from,t.position)>=radius+.23f)return true;return false;
         }
         public Renderer InteractionAt(Vector2 point,out string name)

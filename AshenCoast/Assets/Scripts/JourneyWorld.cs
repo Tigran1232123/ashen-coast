@@ -16,7 +16,7 @@ namespace AshenCoast
     public sealed class Poplar
     {public SpriteRenderer sprite;public MeshRenderer canopy;public float alpha=1,phase;public Vector2 position;}
     public sealed class BeachGull:ICombatTarget
-    {public SpriteRenderer sprite;public Vector2 home,point,flight=Vector2.right;public float phase,age,health=30;public int frame,state;public bool Alive=>health>0;public SpriteRenderer Renderer=>sprite;public Vector2 Position=>point;public float Hurt(float n){float hit=Mathf.Min(n,health);health-=hit;return hit;}public void TakeOff(Vector2 player,CoastGame game){if(state>=2)return;state=2;age=0;flight=(point-player+Vector2.up*1.2f).normalized;game.soundscape?.GullFlight();}}
+    {public CoastGame game;public SpriteRenderer sprite;public Vector2 home,point,flight=Vector2.right;public float phase,age,health=30;public int frame,state;public bool Alive=>health>0;public SpriteRenderer Renderer=>sprite;public Vector2 Position=>point;public float Hurt(float n){float hit=Mathf.Min(n,health);health-=hit;if(health<=0 && hit>0 && game)for(int i=0,featherCount=UnityEngine.Random.Range(1,3);i<featherCount;i++)game.ScatterLoot(new Item(ItemKind.Feather),point,point);return hit;}public void TakeOff(Vector2 player,CoastGame game){if(state>=2)return;state=2;age=0;flight=(point-player+Vector2.up*1.2f).normalized;game.soundscape?.GullFlight();}}
     public sealed partial class JourneyWorld : MonoBehaviour
     {
         public CoastGame game;
@@ -32,7 +32,7 @@ namespace AshenCoast
         public int RidePhase=>ridePhase;
         public float BlackFade {get;private set;}
         public Vector3 CutsceneCamera {get;private set;}
-        public readonly GridInventory seller=new GridInventory(10,5,"Трактирщик");
+        public readonly GridInventory seller=new GridInventory(10,5,"Трактирщик"){preserveFoodV58=true};
         public readonly List<TavernActor> actors=new List<TavernActor>();
         public readonly List<Poplar> trees=new List<Poplar>();
         public readonly List<BeachGull> gulls=new List<BeachGull>();
@@ -163,7 +163,7 @@ namespace AshenCoast
             }
         }
         void CreateGulls()
-        {for(int i=0;i<4;i++){var p=new Vector2(10+i*1.4f,-3.7f+(i%2)*.4f);var s=Prop("Four winged beach gull",art.gulls[0,0],p,.9f,game.coastRoot.transform);s.enabled=false;gulls.Add(new BeachGull{sprite=s,home=p,point=p,phase=i*1.8f,state=4,age=18});}}
+        {for(int i=0;i<4;i++){var p=new Vector2(10+i*1.4f,-3.7f+(i%2)*.4f);var s=Prop("Four winged beach gull",art.gulls[0,0],p,.9f,game.coastRoot.transform);s.enabled=false;gulls.Add(new BeachGull{game=game,sprite=s,home=p,point=p,phase=i*1.8f,state=4,age=18});}}
         public void SetVisibility(bool pocket)
         {hidden=pocket;game.snails?.Visibility(pocket);game.coastRoot.SetActive(!pocket && IsCoast);fieldRoot.SetActive(!pocket && Area==WorldArea.GoldenField);tavernRoot.SetActive(!pocket && Interior);if(game.fort!=null)game.fort.root.SetActive(!pocket && InFort);if(game.cave!=null)game.cave.root.SetActive(!pocket && InCatacombs);if(game.amazons!=null)game.amazons.roomRoot.SetActive(!pocket && Area==WorldArea.AmazonHouse);if(companion!=null)companion.sprite.gameObject.SetActive(companion.Hired);}
         public void SetArea(WorldArea area,Vector2 at)
@@ -357,7 +357,7 @@ namespace AshenCoast
             bool unobstructed=ClearLine(Position,followGoal);
             if(delta.magnitude>.32f || ((world.Interior || world.InFort || world.InCatacombs) && !unobstructed))
             {
-                Vector2 move=(world.Interior || world.InFort || world.InCatacombs) && !unobstructed?FollowRoute(followGoal,dt):Steer(delta.normalized,Mathf.Min(delta.magnitude,dt*FollowSpeed));sprite.transform.position+=(Vector3)move;distance+=move.magnitude;frame=Mathf.FloorToInt(distance/1.65f*8)%8;walking=move.sqrMagnitude>.00001f;walkDirection=move;if(walking)direction=Facing(move);
+                Vector2 move=world.IsCoast && !RiverNavigationV58.Clear(Position,followGoal)?FollowRiverV58(followGoal,dt):(world.Interior || world.InFort || world.InCatacombs) && !unobstructed?FollowRoute(followGoal,dt):Steer(delta.normalized,Mathf.Min(delta.magnitude,dt*FollowSpeed));sprite.transform.position+=(Vector3)move;distance+=move.magnitude;frame=Mathf.FloorToInt(distance/1.65f*8)%8;walking=move.sqrMagnitude>.00001f;walkDirection=move;if(walking)direction=Facing(move);
                 if(delta.magnitude>16 && !suppressCatchUp)Warp(game.body.position+new Vector2(-1,-.4f));
             }
             else {frame=3;walking=false;}
@@ -368,7 +368,7 @@ namespace AshenCoast
         Vector2 Steer(Vector2 seek,float step)
         {
             Vector2 best=Vector2.zero;float score=-999;float[] turns={0,30,-30,60,-60,90,-90,120,-120};
-            foreach(float a in turns){var d=(Vector2)(Quaternion.Euler(0,0,a)*seek);bool solid=Physics2D.CircleCastAll(Position+Vector2.up*.13f,.21f,d,Mathf.Max(.40f,step)).Any(h=>!h.collider.isTrigger && h.collider.gameObject!=game.hero.gameObject);if(solid)continue;float s=Vector2.Dot(d,seek)-Mathf.Abs(a)*.001f;if(s>score){score=s;best=d;}}
+            foreach(float a in turns){var d=(Vector2)(Quaternion.Euler(0,0,a)*seek);bool solid=Physics2D.CircleCastAll(Position+Vector2.up*.13f,.21f,d,Mathf.Max(.40f,step)).Any(h=>!h.collider.isTrigger && h.collider.gameObject!=game.hero.gameObject);if(solid || !game.GroundAllowedV58(Position+d*Mathf.Max(.40f,step)))continue;float s=Vector2.Dot(d,seek)-Mathf.Abs(a)*.001f;if(s>score){score=s;best=d;}}
             return best*step;
         }
         bool ClearLine(Vector2 from,Vector2 to)

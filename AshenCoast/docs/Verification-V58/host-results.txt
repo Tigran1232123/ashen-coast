@@ -1,0 +1,15 @@
+PASS host starts V58 session
+PASS guest joined
+PASS shared enlarged hold and stack thirty
+PASS host begins bow draw with ammunition
+PASS guest sees fully drawn bow pose
+PASS host alone cannot accelerate time
+PASS guest meditation arrives over TCP
+PASS both meditating enable acceleration
+PASS guest also enabled acceleration
+PASS guest stops acceleration when host stands
+PASS guest fires crossbow
+PASS piercing damage reaches authority for both targets
+PASS each aligned enemy receives exactly 100 once
+PASS guest checks complete
+RESULT 14 passed; 0 failed

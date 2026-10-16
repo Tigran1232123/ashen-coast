@@ -1,0 +1,97 @@
+PASS V58 application and network version
+PASS hold doubled and one crossbow present
+PASS closed leaf book and four empty slots
+PASS open leaf book footprint
+PASS shapeless bow recipe 0
+PASS shapeless bow recipe 1
+PASS shapeless bow recipe 2
+PASS shapeless bow recipe 3
+PASS shapeless bow recipe 4
+PASS shapeless bow recipe 5
+PASS shapeless bow recipe 6
+PASS shapeless bow recipe 7
+PASS shapeless bow recipe 8
+PASS shapeless bow recipe 9
+PASS shapeless bow recipe 10
+PASS shapeless bow recipe 11
+PASS feather and wood yield five arrows
+PASS arrow stacks cap at thirty and spill without overlap
+PASS thirty-arrow stacks survive network serialization
+PASS T infinite health and mana
+PASS T restores normal damage
+PASS NPC stock stays fresh while carried food spoils
+PASS bow draw starts with arrows
+PASS early release consumes no arrow
+PASS bow uses four articulated arm segments
+PASS two-second draw fires and consumes exactly one arrow
+PASS bow cannot fire without arrows
+PASS Amazon authored walk step and right-facing boots 0
+PASS Amazon authored walk step and right-facing boots 1
+PASS Amazon authored walk step and right-facing boots 2
+PASS Amazon authored walk step and right-facing boots 3
+PASS Amazon authored walk step and right-facing boots 4
+PASS Amazon authored walk step and right-facing boots 5
+PASS Amazon authored walk step and right-facing boots 6
+PASS Amazon authored walk step and right-facing boots 7
+PASS moving snail rocks interior camera
+PASS interior rocking fades after stop
+PASS ground route uses bridge 0
+PASS bridge 0 crosses full river
+PASS water blocks passage beside bridge 0
+PASS ground route uses bridge 1
+PASS bridge 1 crosses full river
+PASS water blocks passage beside bridge 1
+PASS ground route uses bridge 2
+PASS bridge 2 crosses full river
+PASS water blocks passage beside bridge 2
+PASS river is painted blue on world map
+PASS fort and catacomb entries remain dry across sixty-four random worlds
+PASS rounded Y junction
+PASS crossbow collision follows the wooden pedestal
+PASS stationary crossbow can be mounted
+PASS crossbow consumes ammo and enforces two seconds
+PASS compact crossbow fires high-speed straight piercing projectile for 100
+PASS Escape closes inventory without pausing
+PASS Amazon home 0 entry lies inside authored floor
+PASS Amazon home 0 walls constrain movement
+PASS Amazon home 0 entry has no invisible furniture collision
+PASS Amazon home 1 entry lies inside authored floor
+PASS Amazon home 1 walls constrain movement
+PASS Amazon home 1 entry has no invisible furniture collision
+PASS Amazon home 2 entry lies inside authored floor
+PASS Amazon home 2 walls constrain movement
+PASS Amazon home 2 entry has no invisible furniture collision
+PASS Amazon home 3 entry lies inside authored floor
+PASS Amazon home 3 walls constrain movement
+PASS Amazon home 3 entry has no invisible furniture collision
+PASS Amazon home 4 entry lies inside authored floor
+PASS Amazon home 4 walls constrain movement
+PASS Amazon home 4 entry has no invisible furniture collision
+PASS Amazon home 5 entry lies inside authored floor
+PASS Amazon home 5 walls constrain movement
+PASS Amazon home 5 entry has no invisible furniture collision
+PASS Amazon home 6 entry lies inside authored floor
+PASS Amazon home 6 walls constrain movement
+PASS Amazon home 6 entry has no invisible furniture collision
+PASS Amazon home 7 entry lies inside authored floor
+PASS Amazon home 7 walls constrain movement
+PASS Amazon home 7 entry has no invisible furniture collision
+PASS Amazon home 8 entry lies inside authored floor
+PASS Amazon home 8 walls constrain movement
+PASS Amazon home 8 entry has no invisible furniture collision
+PASS Amazon home 9 entry lies inside authored floor
+PASS Amazon home 9 walls constrain movement
+PASS Amazon home 9 entry has no invisible furniture collision
+PASS snail 0 entry lies on timber floor
+PASS snail 0 curved wall constrains movement
+PASS snail 1 entry lies on timber floor
+PASS snail 1 curved wall constrains movement
+PASS snail 2 entry lies on timber floor
+PASS snail 2 curved wall constrains movement
+PASS snail 3 entry lies on timber floor
+PASS snail 3 curved wall constrains movement
+PASS gull death drops one or two feathers
+PASS all eight Amazon lower-body gait frames are distinct
+PASS Amazon boots face left when moving left
+PASS enlarged hold fits the inventory canvas
+RESULT 96 passed; 0 failed

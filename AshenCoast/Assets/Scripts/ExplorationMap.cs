@@ -26,7 +26,7 @@ namespace AshenCoast
             width=Mathf.CeilToInt(area.width/resolution);height=Mathf.CeilToInt(area.height/resolution);
             visibility=new byte[width*height];colors=new Color32[visibility.Length];
             land=new bool[visibility.Length];int total=0;
-            for(int y=0;y<height;y++)for(int x=0;x<width;x++){int i=y*width+x;Vector2 p=new Vector2(area.xMin+(x+.5f)*resolution,area.yMin+(y+.5f)*resolution);land[i]=kind!=MapRegion.Coast || WorldShape.Land(p);colors[i]=land[i]?Unknown(x,y):Color.clear;if(land[i])total++;}landCells=total;
+            for(int y=0;y<height;y++)for(int x=0;x<width;x++){int i=y*width+x;Vector2 p=new Vector2(area.xMin+(x+.5f)*resolution,area.yMin+(y+.5f)*resolution);land[i]=kind!=MapRegion.Coast || WorldShape.Land(p);colors[i]=land[i]?Unknown(x,y):kind==MapRegion.Coast && WorldShape.CoastDistanceV58(p)>0 && RiverV58.Bank(p)<0?new Color(.12f,.27f,.32f):Color.clear;if(land[i])total++;}landCells=total;
             texture=new Texture2D(width,height,TextureFormat.RGBA32,false){name="Visited map / "+kind,filterMode=FilterMode.Point,wrapMode=TextureWrapMode.Clamp};
             texture.SetPixels32(colors);texture.Apply(false);
         }
@@ -69,7 +69,8 @@ namespace AshenCoast
                 return wall?new Color(.36f,.29f,.19f):new Color(.63f,.49f,.30f)*(1+(grain-.5f)*.12f);
             }
             if(region==MapRegion.GoldenField)return Color.Lerp(new Color(.52f,.47f,.24f),new Color(.66f,.57f,.31f),grain);
-            if(p.y<MeadowLayout.Shore(p.x))return new Color(.27f,.40f,.43f)*(1+(grain-.5f)*.1f);
+            if(RiverV58.OnBridge(p))return new Color(.48f,.32f,.17f);
+            if(RiverV58.Bank(p)<0 || WorldShape.CoastDistanceV58(p)<0)return new Color(.27f,.40f,.43f)*(1+(grain-.5f)*.1f);
             if(p.y<4.1f+Mathf.Sin(p.x*.15f)*.55f)return new Color(.70f,.62f,.43f)*(1+(grain-.5f)*.1f);
             if(p.y>32 && MeadowLayout.PathDistance(p)<1.9f)return new Color(.61f,.55f,.36f);
             var grass=Color.Lerp(new Color(.39f,.45f,.27f),new Color(.47f,.51f,.31f),grain);
@@ -218,6 +219,7 @@ namespace AshenCoast
             if(Region==CurrentRegion){var playerPoint=MapPoint(game.body.position);labelSpace.Add(new Rect(playerPoint.x-14,playerPoint.y-14,28,28));}
             if(Region==MapRegion.Coast)
             {Landmark(game.cave.Position,"◇","Катакомбы",new Color(.66f,.62f,.77f),true);Landmark(game.fort.Position,"♜","Разрушенный форт",new Color(.78f,.65f,.40f),true);Landmark(game.ShipBase,"◆","Корабль",gold);Landmark(game.DummyBase,"+","Манекен",gold);if(game.journey.IsCoast)Landmark(game.journey.CartPosition,"◇","Повозка",gold);}
+            if(Region==MapRegion.Coast)for(int arm=0;arm<3;arm++)Landmark(RiverV58.Centre(arm,RiverV58.BridgeT(arm)),"=","Речной мост",new Color(.74f,.57f,.31f),true);
             if(Region==MapRegion.GoldenField)Landmark(game.journey.InnEntrance,"⌂","Таверна",gold);
             if(Region==MapRegion.Tavern){Landmark(game.journey.TavernExit,"↓","Выход",gold);Landmark(game.journey.keeper.position,"◆","Трактирщик",gold);}
             if(Region==MapRegion.Fort)Landmark(game.fort.ExitPoint,"↓","Выход",gold);

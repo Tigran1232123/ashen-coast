@@ -31,7 +31,7 @@ namespace AshenCoast
         void UpdateSelectionEnd()
         {
             var cell=craftGrid.Cell(Pointer);
-            int cap=(stationOpen!=null && stationOpen.Heated && craftGrid.inventory==stationOpen.inventory?4:craftGrid.inventory.craftLimit)-1;
+            int cap=(stationOpen!=null && stationOpen.Heated && craftGrid.inventory==stationOpen.inventory?4:Mathf.Max(craftGrid.inventory.columns,craftGrid.inventory.rows))-1;
             craftEnd=new Vector2Int(Mathf.Clamp(cell.x,bookFrame?0:Mathf.Max(0,craftStart.x-cap),bookFrame?craftGrid.inventory.columns-1:Mathf.Min(craftGrid.inventory.columns-1,craftStart.x+cap)),Mathf.Clamp(cell.y,bookFrame?0:Mathf.Max(0,craftStart.y-cap),bookFrame?craftGrid.inventory.rows-1:Mathf.Min(craftGrid.inventory.rows-1,craftStart.y+cap)));
             selectionMoved|=Vector2.Distance(Pointer,selectionPress)>6 && cell!=craftStart;
         }

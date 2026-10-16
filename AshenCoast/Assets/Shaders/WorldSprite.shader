@@ -18,7 +18,7 @@ Shader "AshenCoast/WorldSprite"
    sampler2D _MainTex; fixed4 _Color;float4 _MainTex_TexelSize,_SpriteRect;float _ClothTone;float _ArtStep,_BodyFloor,_WindStrength,_WindHeight,_WindPhase,_StormWind,_WindTime,_Emission,_AlphaCut,_GroundClip,_GroundY,_Hover,_InteractPulse,_Orb,_OrbClock,_OcclusionAlpha,_GroundCoin,_Prism,_PrismClock,_Spectrum;
    struct appdata { float4 vertex:POSITION; float2 uv:TEXCOORD0; fixed4 color:COLOR; };
    float _SeatedLegs,_SpectrumGround,_SpectrumClock,_SpectrumPlanted;float4 _SpectrumRopeRect;
-   float _CorpseDissolve,_RaisedArm;float4 _RaisedArmRect;
+   float _ArcheryV58;float _CorpseDissolve,_RaisedArm;float4 _RaisedArmRect;
    float LegDistance(float2 p,float2 a,float2 b)
    {float2 v=b-a;return length(p-a-v*saturate(dot(p-a,v)/dot(v,v)));}
    struct v2f { float4 vertex:SV_POSITION; float2 uv:TEXCOORD0; float2 world:TEXCOORD1; fixed4 color:COLOR; };
@@ -60,6 +60,7 @@ Shader "AshenCoast/WorldSprite"
      uv.y+=sin(_SpectrumClock*2.0+rope.x*7)*.017*freeEnd*weight*_SpriteRect.w;
     }
     fixed4 c=(_Prism>0?PrismSurface(_MainTex,uv,_SpriteRect,_PrismClock):_Orb>0?OrbSurface(_MainTex,uv,_SpriteRect,_OrbClock):tex2D(_MainTex,uv))*i.color;
+    if(_ArcheryV58>.5){float2 local=(uv-_SpriteRect.xy)/_SpriteRect.zw;float hand=step(.42,c.r)*step(.25,c.g)*step(c.g*1.18,c.r);if(local.y>.28 && local.y<.64 && hand>.5)clip(-1);}
     if(_CorpseDissolve>0)
     {
      float2 p=(uv-_SpriteRect.xy)/_SpriteRect.zw;

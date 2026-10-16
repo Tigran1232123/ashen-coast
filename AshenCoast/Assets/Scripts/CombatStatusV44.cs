@@ -54,7 +54,7 @@ namespace AshenCoast
         {
             var s=game.survivor;float hunger=Mathf.Min(s.hunger,4),healthCost=4-hunger;
             if(s.health<=healthCost){game.ui.Notice("Недостаточно здоровья");return false;}
-            s.hunger-=hunger;s.health-=healthCost;return true;
+            s.hunger-=hunger;if(!s.InfiniteVitalsV58)s.health-=healthCost;return true;
         }
         public static bool ThrustV44(ItemKind kind)=>kind==ItemKind.Stake || kind==ItemKind.Spear || kind==ItemKind.GoldenSpear;
         public static bool VerticalV44(ItemKind kind)=>kind==ItemKind.Axe || kind==ItemKind.Stake || kind==ItemKind.Zen || kind==ItemKind.GoldenSpear;

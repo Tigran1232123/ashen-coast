@@ -42,7 +42,7 @@ namespace AshenCoast
             foreach(var other in village.people)if(other!=this && other.Alive && !other.Captive && other.Renderer.gameObject.activeInHierarchy)
             {var apart=Position-other.Position;float distance=apart.magnitude;if(distance>.01f && distance<.50f)wanted+=apart/distance*(.50f-distance)*2.5f;}
             velocity=Vector2.MoveTowards(velocity,wanted,dt*13);var move=Vector2.ClampMagnitude(velocity*dt,delta.magnitude);
-            if(village.game.WorldBlocked(Position,Position+move,.24f) || village.Interior && Physics2D.OverlapCircleAll(Position+move+Vector2.up*.13f,.20f).Any(c=>!c.isTrigger && c.gameObject!=village.game.hero.gameObject))
+            if(!village.game.GroundAllowedV58(Position+move,.24f) || village.game.WorldBlocked(Position,Position+move,.24f) || village.Interior && Physics2D.OverlapCircleAll(Position+move+Vector2.up*.13f,.20f).Any(c=>!c.isTrigger && c.gameObject!=village.game.hero.gameObject))
             {velocity=Vector2.zero;route.Clear();return false;}
             Renderer.transform.position+=(Vector3)move;step+=move.magnitude;
             if(move.sqrMagnitude>.000001f){aim=Vector2.Lerp(aim,move.normalized,Mathf.Min(1,dt*9)).normalized;return true;}return false;

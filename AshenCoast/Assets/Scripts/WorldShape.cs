@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace AshenCoast
 {
-    public static class WorldShape
+    public static partial class WorldShape
     {
         public static Vector2? AmazonPosition;
         public static bool AmazonFootprint(Vector2 point)=>AmazonPosition.HasValue && Vector2.Distance(point,AmazonPosition.Value)<30;
@@ -12,7 +12,7 @@ namespace AshenCoast
         public static readonly Vector2 Centre=new Vector2(0,450);
         public static void Configure(int seed)
         {
-            AmazonPosition=null;Seed=seed;Phase=MeadowLayout.Value(3,7,seed,17)*Mathf.PI*2;
+            AmazonPosition=null;RiverV58.Ready=false;Shader.SetGlobalFloat("_RiverReadyV58",0);Seed=seed;Phase=MeadowLayout.Value(3,7,seed,17)*Mathf.PI*2;
             var random=new System.Random(seed^0x51ab);
             FortPosition=new Vector2(120,240);
             for(int i=0;i<200;i++)
@@ -23,13 +23,14 @@ namespace AshenCoast
             Shader.SetGlobalFloat("_LandPhase",Phase);
         }
         // Smooth radial outline with bays and headlands. Its poles stay inside the old broad bounds.
-        public static float Distance(Vector2 p)
+        public static float CoastDistanceV58(Vector2 p)
         {
             var q=new Vector2(p.x/410,(p.y-450)/450);float a=Mathf.Atan2(q.y,q.x);
-            float radius=1+.12f*Mathf.Sin(a*3+Phase)+.055f*Mathf.Sin(a*5-Phase*1.7f)+.040f*Mathf.Sin(a*9+Phase*.4f)+.018f*Mathf.Sin(a*17+Phase*1.3f);
-            radius=Mathf.Max(radius,1.075f*Mathf.Pow(Mathf.Max(0,-Mathf.Sin(a)),6));
-            return Mathf.Min((radius-q.magnitude)*350,p.y-MeadowLayout.Shore(p.x));
+            float radius=1+.12f*Mathf.Sin(a*3+Phase)+.055f*Mathf.Sin(a*5-Phase*1.7f)+.025f*Mathf.Sin(a*9+Phase*.4f);
+            radius=-RiverV58.SmoothMin(-radius,-1.075f*Mathf.Pow(Mathf.Max(0,-Mathf.Sin(a)),6),.045f);
+            return RiverV58.SmoothMin((radius-q.magnitude)*350,p.y-MeadowLayout.Shore(p.x),8);
         }
+        public static float Distance(Vector2 p)=>Mathf.Min(CoastDistanceV58(p),RiverV58.OnBridge(p)?1000:RiverV58.Bank(p));
         public static bool Land(Vector2 p,float margin=0)=>Distance(p)>=margin;
         public static bool FortFootprint(Vector2 p)=>Mathf.Abs(p.x-FortPosition.x)<9 && p.y>FortPosition.y-2.5f && p.y<FortPosition.y+12;
         public static Vector2 NearestLand(Vector2 p,float margin=.6f)

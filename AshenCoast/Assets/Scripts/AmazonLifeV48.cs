@@ -73,13 +73,14 @@ namespace AshenCoast
         public void EndTrainingV48(){foreach(var p in people)p.SparringPartnerV48=null;}
         public bool WalkableV48(Vector2 point,float radius=.28f)
         {
-            foreach(var b in barriers)if(new Rect(b.xMin-radius,b.yMin-radius,b.width+radius*2,b.height+radius*2).Contains(point))return false;
+            if(game.journey.IsCoast && !game.GroundAllowedV58(point,radius))return false;
+            for(int i=0;i<barriers.Count;i++)if(BarrierContainsV58(i,point,radius))return false;
             return !trees.Any(t=>t.Standing && Vector2.Distance(t.position,point)<radius+.24f);
         }
         public List<Vector2> PathV48(Vector2 from,Vector2 destination)
         {
             // Persistent waypoints prevent frame-by-frame left/right obstacle oscillation.
-            if(Vector2.Distance(from,Centre)>60 || Vector2.Distance(destination,Centre)>60)return new List<Vector2>{destination};
+            if(Vector2.Distance(from,Centre)>60 || Vector2.Distance(destination,Centre)>60)return RiverNavigationV58.Plan(from,destination);
             int samples=Mathf.CeilToInt(Vector2.Distance(from,destination)/.3f);bool clear=true;
             for(int i=1;i<=samples;i++)if(!WalkableV48(Vector2.Lerp(from,destination,(float)i/samples))){clear=false;break;}
             if(clear)return new List<Vector2>{destination};

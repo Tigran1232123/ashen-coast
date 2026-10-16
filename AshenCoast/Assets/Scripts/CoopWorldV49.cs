@@ -173,7 +173,7 @@ namespace AshenCoast
                 {
                     var d=JsonUtility.FromJson<LanDamageV49>(packet.body);var binding=Find(d.key);if(binding==null || d.amount<=0 || !LanItemV49.Finite(d.amount))return;
                     var source=packet.peer==session.Peer?G.hero:session.remote.TryGetValue(packet.peer,out var remote)?remote.Renderer:null;
-                    if(!source || Vector2.Distance(source.transform.position,binding.renders[0].transform.position)>45)return;
+                    if(!source || Vector2.Distance(source.transform.position,binding.renders[0].transform.position)>120)return;
                     if(d.key=="dummy"){float actual=Mathf.Min(G.dummyHealth,d.amount);G.DamageDummy(Mathf.RoundToInt(d.amount),false);if(d.effect!=0)session.SendDpsV49(packet.peer,"dummy",actual);return;}
                     if(binding.target==null)return;float hp=binding.health();
                     bool previous=G.spellcraft.BypassDamage;G.spellcraft.BypassDamage=d.bypass;

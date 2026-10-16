@@ -62,7 +62,7 @@ namespace AshenCoast
             if(victim!=null)
             {var delta=victim.Position-Position;aim=delta.normalized;float reach=Archer?8:1.8f;if(delta.magnitude<=reach && ready<=0 && !town.game.WorldBlocked(Position,victim.Position,.05f)){attack=0;delivered=false;ready=Archer?2f:1.05f;town.game.WorldSwishV53(Renderer);}else if(delta.magnitude>reach*.85f)destination=victim.Position-aim*reach*.7f;else destination=Position;}
             var direction=destination-Position;velocity=Vector2.MoveTowards(velocity,direction.magnitude>.2f?direction.normalized*(victim!=null?3:1.6f):Vector2.zero,dt*12);
-            var move=Vector2.ClampMagnitude(velocity*dt,direction.magnitude);if(town.game.WorldBlocked(Position,Position+move,.25f))move=Vector2.zero;Renderer.transform.position+=(Vector3)move;step+=move.magnitude;if(move.sqrMagnitude>.000001f && victim==null)aim=move.normalized;Pose(move.sqrMagnitude>.000001f);
+            var move=Vector2.ClampMagnitude(velocity*dt,direction.magnitude);if(!town.game.GroundAllowedV58(Position+move,.25f) || town.game.WorldBlocked(Position,Position+move,.25f))move=Vector2.zero;Renderer.transform.position+=(Vector3)move;step+=move.magnitude;if(move.sqrMagnitude>.000001f && victim==null)aim=move.normalized;Pose(move.sqrMagnitude>.000001f);
         }
         void Pose(bool walking)
         {

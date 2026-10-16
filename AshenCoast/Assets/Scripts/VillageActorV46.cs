@@ -8,7 +8,7 @@ namespace AshenCoast
         public readonly AmazonSettlementV46 village;
         public readonly SpriteRenderer Renderer,weaponSprite,shadow;public PixelGait gaitV53;
         SpriteRenderer ICombatTarget.Renderer=>Renderer;
-        public readonly GridInventory stock=new GridInventory(10,5,"Охотница"),weaponSlot=new GridInventory(2,4,"Оружие"){singleItem=true,craftingEnabled=false,acceptsItem=i=>i.Definition.Melee};
+        public readonly GridInventory stock=new GridInventory(10,5,"Охотница"){preserveFoodV58=true},weaponSlot=new GridInventory(2,4,"Оружие"){singleItem=true,craftingEnabled=false,acceptsItem=i=>i.Definition.Melee};
         public SpriteRenderer cage,Aggressor;
         public readonly bool IsSlave,Hunter,Slaver;
         public bool Hired,Captive,hostile,HoldPosition;
@@ -32,7 +32,7 @@ namespace AshenCoast
             weaponSprite=bank.Renderer("Amazon held weapon",bank.icons[54],at,Renderer.sortingOrder+2);weaponSprite.transform.SetParent(Renderer.transform,true);weaponSprite.enabled=!slave;
             shadow=village.game.Shadow("Amazon contact shadow",at,new Vector2(.68f,.23f),.25f);shadow.transform.SetParent(Renderer.transform,true);
             if(hunter){for(int i=0;i<6;i++)stock.Add(new Item(ItemKind.RawMeat));for(int i=0;i<10;i++)stock.Add(new Item(ItemKind.BeetleMeat));}
-            gaitV53=PixelGait.ForHumanoidV53(bank,Renderer,.43f);Pose(false);
+            gaitV53=PixelGait.ForHumanoidV53(bank,Renderer,IsSlave?.43f:.48f,IsSlave?null:village.combatV54[CombatRowV54,0],IsSlave?null:village.amazonLowerV58);Pose(false);
         }
         public void Warp(Vector2 at){Renderer.transform.position=at;victim=null;attackAge=-1;step=0;ResetRouteV48();Pose(false);}
         public float Hurt(float amount)=>HurtFrom(amount,village.game.hero);
@@ -92,7 +92,7 @@ namespace AshenCoast
             var game=village.game;foreach(float angle in new[]{0f,35,-35,70,-70,100,-100})
             {
                 var move=(Vector2)(Quaternion.Euler(0,0,angle)*desired)*length;var next=Position+move;
-                if(game.WorldBlocked(Position,next,.24f))continue;
+                if(!game.GroundAllowedV58(next,.24f) || game.WorldBlocked(Position,next,.24f))continue;
                 bool solid=Physics2D.OverlapCircleAll(next+Vector2.up*.13f,.22f).Any(c=>!c.isTrigger && c.gameObject!=game.hero.gameObject);
                 if(!solid)return move;
             }
