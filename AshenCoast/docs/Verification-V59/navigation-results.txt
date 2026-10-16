@@ -1,0 +1,19 @@
+PASS V59 application and handshake version
+PASS all 25921 cached cells match exact ground and obstacle geometry
+PASS house route unchanged (-129.65, 260.84)
+PASS house route unchanged (-166.38, 232.32)
+PASS house route unchanged (-126.35, 212.51)
+PASS house route unchanged (-146.75, 255.85)
+PASS house route unchanged (-114.13, 210.51)
+PASS house route unchanged (-137.76, 251.90)
+PASS house route unchanged (-114.89, 240.25)
+PASS house route unchanged (-156.89, 212.53)
+PASS house route unchanged (-103.27, 231.62)
+PASS house route unchanged (-110.40, 220.13)
+PASS cut tree invalidates cached obstacles on next frame
+PASS changed river geometry invalidates cache
+PASS bridge passes and adjacent water blocks 0
+PASS bridge passes and adjacent water blocks 1
+PASS bridge passes and adjacent water blocks 2
+PASS changed world seed invalidates cache
+RESULT 18 passed; 0 failed

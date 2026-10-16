@@ -1,0 +1,6 @@
+PASS host ready
+PASS V59 handshake and inventories synchronized
+PASS guest adopts host seed
+PASS guest cache matches adopted world
+PASS host and guest obtain same ten house routes
+RESULT 5 passed; 0 failed

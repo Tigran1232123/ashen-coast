@@ -79,16 +79,22 @@ namespace AshenCoast
         }
         public List<Vector2> PathV48(Vector2 from,Vector2 destination)
         {
+            if(!PerformanceProbeV59.Measuring)return PathCoreV59(from,destination);
+            long start=System.Diagnostics.Stopwatch.GetTimestamp();try{return PathCoreV59(from,destination);}
+            finally{PerformanceProbeV59.PathTicks+=System.Diagnostics.Stopwatch.GetTimestamp()-start;PerformanceProbeV59.PathCalls++;}
+        }
+        List<Vector2> PathCoreV59(Vector2 from,Vector2 destination)
+        {
             // Persistent waypoints prevent frame-by-frame left/right obstacle oscillation.
             if(Vector2.Distance(from,Centre)>60 || Vector2.Distance(destination,Centre)>60)return RiverNavigationV58.Plan(from,destination);
             int samples=Mathf.CeilToInt(Vector2.Distance(from,destination)/.3f);bool clear=true;
             for(int i=1;i<=samples;i++)if(!WalkableV48(Vector2.Lerp(from,destination,(float)i/samples))){clear=false;break;}
             if(clear)return new List<Vector2>{destination};
-            const int side=161;const float cell=.75f;var origin=Centre-Vector2.one*60;
+            PrepareNavigationV59();const int side=NavSideV59;const float cell=NavCellV59;var origin=Centre-Vector2.one*60;
             Vector2Int Cell(Vector2 p)=>new Vector2Int(Mathf.Clamp(Mathf.RoundToInt((p.x-origin.x)/cell),0,side-1),Mathf.Clamp(Mathf.RoundToInt((p.y-origin.y)/cell),0,side-1));
             Vector2 Point(int id)=>origin+new Vector2(id%side,id/side)*cell;
             var start=Cell(from);var end=Cell(destination);int first=start.y*side+start.x,goal=end.y*side+end.x;
-            if(!WalkableV48(Point(goal))){float best=float.MaxValue;for(int y=-3;y<=3;y++)for(int x=-3;x<=3;x++){var c=end+new Vector2Int(x,y);if(c.x<0 || c.y<0 || c.x>=side || c.y>=side)continue;int id=c.y*side+c.x;float distance=Vector2.SqrMagnitude(Point(id)-destination);if(WalkableV48(Point(id)) && distance<best){best=distance;goal=id;}}}
+            if(!NavigationCellV59(goal)){float best=float.MaxValue;for(int y=-3;y<=3;y++)for(int x=-3;x<=3;x++){var c=end+new Vector2Int(x,y);if(c.x<0 || c.y<0 || c.x>=side || c.y>=side)continue;int id=c.y*side+c.x;float distance=Vector2.SqrMagnitude(Point(id)-destination);if(NavigationCellV59(id) && distance<best){best=distance;goal=id;}}}
             var open=new MinHeapV53<int>();open.Push(first,0);var previous=new Dictionary<int,int>();var costs=new Dictionary<int,float>{{first,0}};var closed=new HashSet<int>();int found=-1;
             for(int iterations=0;open.Count>0 && iterations<4000;iterations++)
             {
@@ -96,8 +102,9 @@ namespace AshenCoast
                 for(int y=-1;y<=1;y++)for(int x=-1;x<=1;x++)
                 {
                     if(x==0 && y==0)continue;int xx=at%side+x,yy=at/side+y;if(xx<0 || yy<0 || xx>=side || yy>=side)continue;int next=yy*side+xx;
-                    if(closed.Contains(next) || !WalkableV48(Point(next)) || CoastBlockedV53(Point(at),Point(next),.28f))continue;
-                    if(x!=0 && y!=0 && (!WalkableV48(Point(at)+new Vector2(x*cell,0)) || !WalkableV48(Point(at)+new Vector2(0,y*cell))))continue;
+                    // A walkable destination already lies outside every barrier and tree footprint.
+                    if(closed.Contains(next) || !NavigationCellV59(next) || ReferenceNavigationV59 && CoastBlockedV53(Point(at),Point(next),.28f))continue;
+                    if(x!=0 && y!=0 && (!NavigationCellV59(at+x) || !NavigationCellV59(at+y*side)))continue;
                     float cost=costs[at]+cell*(x==0 || y==0?1:1.414f);if(costs.TryGetValue(next,out var old) && old<=cost)continue;costs[next]=cost;previous[next]=at;open.Push(next,cost+Vector2.Distance(Point(next),Point(goal)));
                 }
             }

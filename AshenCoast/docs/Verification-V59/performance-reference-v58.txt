@@ -1,0 +1,6 @@
+GPU NVIDIA GeForce RTX 3050 6GB Laptop GPU; CPU 12th Gen Intel(R) Core(TM) i5-12600H; screen 1440x900
+spawn / normal: FPS=387,4 p50=2,5ms p95=3,1ms; navigation=0,0ms/sec calls=0
+spawn / AI disabled: FPS=785,8 p50=1,2ms p95=1,5ms; navigation=0,0ms/sec calls=0
+village / normal: FPS=357,8 p50=2,7ms p95=3,5ms; navigation=0,5ms/sec calls=2
+village / AI disabled: FPS=932,5 p50=1,0ms p95=1,4ms; navigation=0,0ms/sec calls=0
+village / rendering disabled: FPS=525,0 p50=1,4ms p95=2,0ms; navigation=240,9ms/sec calls=11

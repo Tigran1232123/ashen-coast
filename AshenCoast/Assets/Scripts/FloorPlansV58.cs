@@ -42,7 +42,7 @@ namespace AshenCoast
         readonly HashSet<int> roundedV58=new HashSet<int>();
         public FloorPlanV58 CurrentFloorV58=>currentHouse!=null?floorsV58[currentHouse]:null;
         public bool BarrierContainsV58(int index,Vector2 point,float radius)
-        {var b=barriers[index];if(!roundedV58.Contains(index))return new Rect(b.xMin-radius,b.yMin-radius,b.width+2*radius,b.height+2*radius).Contains(point);var q=point-b.center;return Mathf.Pow(q.x/(b.width*.5f+radius),2)+Mathf.Pow(q.y/(b.height*.5f+radius),2)<1;}
+        {var b=barriers[index];if(!roundedV58.Contains(index))return new Rect(b.xMin-radius,b.yMin-radius,b.width+2*radius,b.height+2*radius).Contains(point);var q=point-b.center;float x=q.x/(b.width*.5f+radius),y=q.y/(b.height*.5f+radius);return x*x+y*y<1;}
         void RoundBarrierV58(BoxCollider2D box,int index)
         {roundedV58.Add(index);box.enabled=false;var polygon=box.gameObject.AddComponent<PolygonCollider2D>();var points=new Vector2[24];for(int i=0;i<points.Length;i++){float a=i*Mathf.PI*2/points.Length;points[i]=new Vector2(Mathf.Cos(a)*box.size.x*.5f,Mathf.Sin(a)*box.size.y*.5f);}polygon.points=points;}
         void FurnitureFromArtV58(Transform parent,SpriteRenderer art,int home)

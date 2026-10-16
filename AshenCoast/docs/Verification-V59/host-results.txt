@@ -1,0 +1,4 @@
+PASS host starts V59
+PASS V59 guest joins
+PASS guest completed seed and path checks
+RESULT 3 passed; 0 failed

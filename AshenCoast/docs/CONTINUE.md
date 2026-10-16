@@ -1,3 +1,8 @@
+# V59 — оптимизация навигации
+
+Релиз: https://github.com/Tigran1232123/ashen-coast/releases/tag/v59
+Изменения — CHANGELOG-V59.md; проверки — CHECKS-V59.md. Не закрывать пользовательскую игру.
+
 # V58 — завершённое обновление мира и оружия
 
 Релиз: https://github.com/Tigran1232123/ashen-coast/releases/tag/v58
